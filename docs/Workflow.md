@@ -77,12 +77,12 @@ git push origin feat/7-sequence-diagram
 
 ## 2. Quy định về Cấu trúc Thư mục và File
 
-Để tránh "Spaghetti code", thành viên phải tuân thủ vị trí lưu trữ:
-- `/src`: Toàn bộ mã nguồn C++.
-    - `/src/Entities`: Player, Enemy, Items.
-    - `/src/Framework`: Engine, Camera, Physics, Collision.
-    - `/src/Scenes`: Menu, Level 1, GameOver.
-- `/assets`: Chứa Texture, Sound, Map (JSON/CSV).
+Để tránh "Spaghetti code", thành viên phải tuân thủ vị trí lưu trữ theo cấu trúc hiện tại của repository:
+- `/engine`: Mã nguồn core engine (rendering, input, physics, collision, v.v.).
+- `/game`: Logic gameplay, trạng thái game, scene/level.
+- `/systems`: Các hệ thống xử lý (ECS systems, update loop, v.v.).
+- `/content`: Chứa texture, sound, sprite sheet, bản đồ, asset thô.
+- `/data`: Chứa dữ liệu cấu hình, map (JSON/CSV) và resource liên quan.
 - `/docs`: Chứa tài liệu workflow, thiết kế, sơ đồ sequence.
 
 ---
