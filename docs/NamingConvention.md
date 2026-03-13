@@ -1,8 +1,8 @@
 # C++ Naming Convention
 
 ## 1. Tệp và Thư mục (Files & Directories)
-* **Thư mục:** Chữ thường, phân cách bằng dấu gạch dưới (`snake_case`).
-    * Ví dụ: `content`, `texture_assets`, `core_engine`.
+* **Thư mục:** Chữ thường; dùng dấu gạch dưới (`snake_case`) khi tên có nhiều từ.
+    * Ví dụ: `engine`, `game`, `systems`, `gameover`, `game_over`.
 * **Tệp mã nguồn (.h, .cpp):** `PascalCase`. Bắt buộc trùng khớp chính xác với tên Class/Struct chứa bên trong.
     * Ví dụ: `PlayerController.cpp`, `AnimationSystem.h`.
 
