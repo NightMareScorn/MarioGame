@@ -42,6 +42,19 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 
 	if (hr != S_OK)
 	{
+		DebugOut((wchar_t*)L"[INFO] D3D10_DRIVER_TYPE_HARDWARE failed, trying WARP... \n");
+		hr = D3D10CreateDeviceAndSwapChain(NULL,
+			D3D10_DRIVER_TYPE_WARP,
+			NULL,
+			0,
+			D3D10_SDK_VERSION,
+			&swapChainDesc,
+			&pSwapChain,
+			&pD3DDevice);
+	}
+
+	if (hr != S_OK)
+	{
 		DebugOut((wchar_t*)L"[ERROR] D3D10CreateDeviceAndSwapChain has failed %s %d", _W(__FILE__), __LINE__);
 		return;
 	}
@@ -73,6 +86,9 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 	viewPort.TopLeftX = 0;
 	viewPort.TopLeftY = 0;
 	pD3DDevice->RSSetViewports(1, &viewPort);
+
+	cam_x = 0.0f;
+	cam_y = 0.0f;
 
 	D3D10_BLEND_DESC StateDesc;
 	ZeroMemory(&StateDesc, sizeof(D3D10_BLEND_DESC));
@@ -142,7 +158,7 @@ void CGame::Draw(float x, float y, LPTEXTURE tex, RECT* rect, float alpha, int s
 	sprite.TexSize.x = 1.0f;
 	sprite.TexSize.y = 1.0f;
 	sprite.ColorModulate = D3DXCOLOR(1.0f, 1.0f, 1.0f, alpha);
-	sprite.MatWorld = matTransform;
+	sprite.matWorld = matTransform;
 	sprite.TextureIndex = 0;
 
 	if (rect != NULL)

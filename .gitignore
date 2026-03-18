@@ -401,8 +401,7 @@ FodyWeavers.xsd
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+!.vscode/c_cpp_properties.json
 
 # Local History for Visual Studio Code
 .history/
@@ -416,3 +415,17 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Project notes
+TODO.md
+LESSONS.MD
+
+# Tutorials reference
+game-dev-intro/
+
+# NuGet executable
+nuget.exe
+
+# Local build scripts
+# Whitelisted so team can build like me
+!build.bat

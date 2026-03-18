@@ -20,6 +20,8 @@ class CGame
 	ID3D10BlendState* pBlendStateAlpha = NULL;
 
 	LPD3DX10SPRITE spriteObject;
+	float cam_x = 0.0f;
+	float cam_y = 0.0f;
 
 	HINSTANCE hInstance;
 
@@ -54,6 +56,9 @@ public:
 	static CGame* GetInstance();
 
 	void SetPointSamplerState();
+
+	void GetCamPos(float& x, float& y) { x = cam_x; y = cam_y; }
+	void SetCamPos(float x, float y) { cam_x = x; cam_y = y; }
 
 	~CGame();
 };
