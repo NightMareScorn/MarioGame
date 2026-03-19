@@ -411,8 +411,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-<<<<<<< Updated upstream
-=======
+
 
 # Project notes
 TODO.md
@@ -436,4 +435,3 @@ build/
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
->>>>>>> Stashed changes
