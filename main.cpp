@@ -1,6 +1,4 @@
 #include <windows.h>
-#include <d3d10.h>
-#include <d3dx10.h>
 
 #include "Engine/Utils/debug.h"
 #include "Engine/Core/Game.h"
