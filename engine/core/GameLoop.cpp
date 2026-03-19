@@ -1,6 +1,5 @@
 #include "GameLoop.h"
 #include "Game.h"
-#include "Window.h"
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
