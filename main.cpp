@@ -5,6 +5,7 @@
 #include "Engine/Utils/debug.h"
 #include "Engine/Core/Game.h"
 #include "engine/input/KeyboardManager.h"
+#include "game/entities/player/Mario.h"
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
 #define MAIN_WINDOW_TITLE L"Mario Game Base Engine"
@@ -14,6 +15,8 @@
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
+
+Mario* mario = nullptr;
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -77,6 +80,9 @@ void Update(DWORD dt)
 		DebugOut(L"[TEST] SPACE RELEASED\n");
 	}
 	//Task 11 -------------------------------------------------
+	//Task 14 -------------------------------------------------
+	mario->Update((float)dt);
+	//Task 14 -------------------------------------------------
 }
 
 void Render()
@@ -194,6 +200,7 @@ int WINAPI WinMain(
 
 	LPGAME game = CGame::GetInstance();
 	game->Init(hWnd, hInstance);
+	mario = new Mario();
 
 	SetWindowPos(hWnd, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 
