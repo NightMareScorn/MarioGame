@@ -2,8 +2,8 @@
 #include <d3d10.h>
 #include <d3dx10.h>
 
-#include "Engine/Utils/debug.h"
-#include "Engine/Core/Game.h"
+#include "engine/utils/debug.h"
+#include "engine/core/Game.h"
 #include "engine/input/KeyboardManager.h"
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
@@ -15,15 +15,15 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WinProc(HWND hWnd, int message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
 		// Task 11 -------------------------------------------------
 	case WM_KEYDOWN:
-		KeyboardManager::GetInstance()->SetKeyState((UINT)wParam, true);
+		KeyboardManager::GetInstance()->SetKeyState((int)wParam, true);
 		break;
 	case WM_KEYUP:
-		KeyboardManager::GetInstance()->SetKeyState((UINT)wParam, false);
+		KeyboardManager::GetInstance()->SetKeyState((int)wParam, false);
 		break;
 		// Task 11 -------------------------------------------------
 	case WM_DESTROY:
@@ -39,6 +39,7 @@ void Update(DWORD dt)
 {
 	// TODO: Handle updates for game objects / scene management
 	// Task 11 -------------------------------------------------
+	#ifdef _DEBUG
 	auto kb = KeyboardManager::GetInstance();
 
 	// TEST NHẤN (Chỉ hiện 1 lần duy nhất khi vừa bấm xuống)
@@ -76,6 +77,7 @@ void Update(DWORD dt)
 	if (kb->IsKeyReleased(VK_SPACE)) {
 		DebugOut(L"[TEST] SPACE RELEASED\n");
 	}
+	#endif
 	//Task 11 -------------------------------------------------
 }
 

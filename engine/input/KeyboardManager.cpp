@@ -17,18 +17,21 @@ void KeyboardManager::Update() {
     memcpy(previousKeys, currentKeys, sizeof(currentKeys));
 }
 
-void KeyboardManager::SetKeyState(UINT key, bool down) {
-    if (key < 256) currentKeys[key] = down;
+void KeyboardManager::SetKeyState(int key, bool down) {
+    if (key >= 0 && key < 256) currentKeys[key] = down;
 }
 
 bool KeyboardManager::IsKeyDown(int key) {
+    if (key < 0 || key >= 256) return false;
     return currentKeys[key];
 }
 
 bool KeyboardManager::IsKeyPressed(int key) {
+    if (key < 0 || key >= 256) return false;
     return currentKeys[key] && !previousKeys[key];
 }
 
 bool KeyboardManager::IsKeyReleased(int key) {
+    if (key < 0 || key >= 256) return false;
     return !currentKeys[key] && previousKeys[key];
 }
