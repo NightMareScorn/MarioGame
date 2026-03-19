@@ -48,9 +48,11 @@ HWND CreateGameWindow(HINSTANCE hInstance, int nCmdShow, int ScreenWidth, int Sc
 
 	if (!hWnd)
 	{
-		OutputDebugString(L"[ERROR] CreateWindow failed");
 		DWORD ErrCode = GetLastError();
-		return FALSE;
+		wchar_t buf[256];
+		wsprintf(buf, L"[ERROR] CreateWindow failed. GetLastError=%lu", ErrCode);
+		OutputDebugString(buf);
+		return nullptr;
 	}
 
 	ShowWindow(hWnd, nCmdShow);
