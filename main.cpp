@@ -1,9 +1,10 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <d3d10.h>
 #include <d3dx10.h>
 
 #include "Engine/Utils/debug.h"
 #include "Engine/Core/Game.h"
+#include "engine/input/KeyboardManager.h"
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
 #define MAIN_WINDOW_TITLE L"Mario Game Base Engine"
@@ -17,6 +18,14 @@
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
+		// Task 11 -------------------------------------------------
+	case WM_KEYDOWN:
+		KeyboardManager::GetInstance()->SetKeyState((UINT)wParam, true);
+		break;
+	case WM_KEYUP:
+		KeyboardManager::GetInstance()->SetKeyState((UINT)wParam, false);
+		break;
+		// Task 11 -------------------------------------------------
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
@@ -29,6 +38,45 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 void Update(DWORD dt)
 {
 	// TODO: Handle updates for game objects / scene management
+	// Task 11 -------------------------------------------------
+	auto kb = KeyboardManager::GetInstance();
+
+	// TEST NHẤN (Chỉ hiện 1 lần duy nhất khi vừa bấm xuống)
+	if (kb->IsKeyPressed(VK_SPACE)) {
+		DebugOut(L"[TEST] Space JUST PRESSED\n");
+	}
+	if (kb->IsKeyPressed(VK_LEFT)) {
+		DebugOut(L"[TEST] Left JUST PRESSED\n");
+	}
+	if (kb->IsKeyPressed(VK_RIGHT)) {
+		DebugOut(L"[TEST] Right JUST PRESSED\n");
+	}
+
+	// TEST GIỮ (Hiện liên tục khi đang đè phím)
+	if (kb->IsKeyDown(VK_RIGHT)) {
+		DebugOut(L"[TEST] Holding RIGHT\n");
+	}
+
+	if (kb->IsKeyDown(VK_LEFT)) {
+		DebugOut(L"[TEST] Holding LEFT\n");
+	}
+
+	if (kb->IsKeyDown(VK_SPACE)) {
+		DebugOut(L"[TEST] Holding SPACE\n");
+	}
+	// TEST THẢ (Chỉ hiện 1 lần khi vừa buông tay)
+	if (kb->IsKeyReleased(VK_RIGHT)) {
+		DebugOut(L"[TEST] RIGHT RELEASED\n");
+	}
+
+	if (kb->IsKeyReleased(VK_LEFT)) {
+		DebugOut(L"[TEST] LEFT RELEASED\n");
+	}
+
+	if (kb->IsKeyReleased(VK_SPACE)) {
+		DebugOut(L"[TEST] SPACE RELEASED\n");
+	}
+	//Task 11 -------------------------------------------------
 }
 
 void Render()
@@ -123,8 +171,8 @@ int Run()
 		if (dt >= tickPerFrame)
 		{
 			frameStart = now;
-
 			Update(dt);
+			KeyboardManager::GetInstance()->Update(); // Task 11
 			Render();
 		}
 		else
