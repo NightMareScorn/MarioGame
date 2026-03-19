@@ -1,7 +1,5 @@
 #pragma once
 #include <windows.h>
-#include <d3d10.h>
-#include <d3dx10.h>
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
 #define MAIN_WINDOW_TITLE L"Mario"
