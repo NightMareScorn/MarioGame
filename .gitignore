@@ -429,3 +429,10 @@ nuget.exe
 # Local build scripts
 # Whitelisted so team can build like me
 !build.bat
+
+.vscode/
+build/
+output/
+*.exe
+*.obj
+*.pdb
