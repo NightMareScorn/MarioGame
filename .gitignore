@@ -411,6 +411,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+<<<<<<< Updated upstream
+=======
 
 # Project notes
 TODO.md
@@ -425,3 +427,13 @@ nuget.exe
 # Local build scripts
 # Whitelisted so team can build like me
 !build.bat
+
+# CMake build directories
+build/
+
+# Auto-generated project files (CMake)
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+>>>>>>> Stashed changes
