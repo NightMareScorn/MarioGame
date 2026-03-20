@@ -431,7 +431,8 @@ nuget.exe
 build/
 
 # Auto-generated project files (CMake)
-*.sln
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
+# These were previously ignored, but will now be tracked again as requested.
+# *.sln
+# *.vcxproj
+# *.vcxproj.filters
+# *.vcxproj.user
