@@ -432,7 +432,12 @@ nuget.exe
 
 .vscode/
 build/
-output/
-*.exe
-*.obj
-*.pdb
+
+CMakeLists.txt
+
+# Auto-generated project files (CMake)
+# These were previously ignored, but will now be tracked again as requested.
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
