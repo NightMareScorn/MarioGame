@@ -427,12 +427,15 @@ nuget.exe
 # Whitelisted so team can build like me
 !build.bat
 
-# CMake build directories
+.vscode/
 build/
+
+CMakeLists.txt
+CMakePresets.json
 
 # Auto-generated project files (CMake)
 # These were previously ignored, but will now be tracked again as requested.
-# *.sln
-# *.vcxproj
-# *.vcxproj.filters
-# *.vcxproj.user
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user

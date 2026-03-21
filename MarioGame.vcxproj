@@ -146,6 +146,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="engine\input\KeyboardManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="engine\core\Game.cpp" />
     <ClCompile Include="engine\core\Window.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="engine\Graphics\Sprites.h" />
     <ClInclude Include="engine\Graphics\Texture.h" />
     <ClInclude Include="engine\Graphics\Textures.h" />
+    <ClInclude Include="engine\input\KeyboardManager.h" />
     <ClInclude Include="engine\utils\debug.h" />
     <ClInclude Include="game\entities\Entity.h" />
     <ClInclude Include="game\scenes\Scene.h" />

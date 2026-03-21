@@ -1,8 +1,15 @@
 #include "Window.h"
+#include "../input/KeyboardManager.h"
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
+	case WM_KEYDOWN:
+        KeyboardManager::GetInstance()->SetKeyState((int)wParam, true);
+        break;
+    case WM_KEYUP:
+        KeyboardManager::GetInstance()->SetKeyState((int)wParam, false);
+        break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
