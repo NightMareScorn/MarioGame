@@ -149,6 +149,8 @@
     <ClCompile Include="engine\input\KeyboardManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="engine\core\Game.cpp" />
+    <ClCompile Include="engine\core\Window.cpp" />
+    <ClCompile Include="engine\core\GameLoop.cpp" />
     <ClCompile Include="engine\Graphics\Animation.cpp" />
     <ClCompile Include="engine\Graphics\Animations.cpp" />
     <ClCompile Include="engine\Graphics\Sprite.cpp" />
@@ -161,6 +163,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\core\Game.h" />
+    <ClInclude Include="engine\core\Window.h" />
+    <ClInclude Include="engine\core\GameLoop.h" />
     <ClInclude Include="engine\Graphics\Animation.h" />
     <ClInclude Include="engine\Graphics\AnimationFrame.h" />
     <ClInclude Include="engine\Graphics\Animations.h" />
