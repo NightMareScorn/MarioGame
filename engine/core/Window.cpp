@@ -30,7 +30,7 @@ HWND CreateGameWindow(HINSTANCE hInstance, int nCmdShow, int ScreenWidth, int Sc
 	wc.lpfnWndProc = (WNDPROC)WinProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hIcon = (HICON)LoadImage(hInstance, WINDOW_ICON_PATH, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(101));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.lpszMenuName = NULL;

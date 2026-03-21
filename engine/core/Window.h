@@ -3,7 +3,6 @@
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
 #define MAIN_WINDOW_TITLE L"Mario"
-#define WINDOW_ICON_PATH L"mario.ico"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
