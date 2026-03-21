@@ -4,22 +4,18 @@
 class KeyboardManager {
 private:
     static KeyboardManager* instance;
-    bool currentKeys[256];  // Trạng thái phím frame hiện tại
-    bool previousKeys[256]; // Trạng thái phím frame trước đó
+    bool currentKeys[256];
+    bool previousKeys[256];
 
     KeyboardManager();
+    bool IsValidKey(int key) const;
 
 public:
     static KeyboardManager* GetInstance();
-
-    // Copy current sang previous ở ĐẦU mỗi frame
-    void Update(); 
-
-    // Hàm nhận tín hiệu từ Windows Message Loop (WndProc)
+    void Update();
     void SetKeyState(int key, bool down);
 
-    // KIỂM TRA TRẠNG THÁI
-    bool IsKeyDown(int key);     // Đang giữ phím (cho di chuyển)
-    bool IsKeyPressed(int key);  // Vừa mới nhấn (cho nhảy)
-    bool IsKeyReleased(int key); // Vừa mới thả (để test)
+    bool IsKeyDown(int key);
+    bool IsKeyPressed(int key);
+    bool IsKeyReleased(int key);
 };

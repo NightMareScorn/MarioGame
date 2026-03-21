@@ -103,6 +103,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -119,6 +120,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -134,6 +136,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -151,6 +154,8 @@
     <ClCompile Include="game\entities\player\Mario.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="engine\core\Game.cpp" />
+    <ClCompile Include="engine\core\Window.cpp" />
+    <ClCompile Include="engine\core\GameLoop.cpp" />
     <ClCompile Include="engine\Graphics\Animation.cpp" />
     <ClCompile Include="engine\Graphics\Animations.cpp" />
     <ClCompile Include="engine\Graphics\Sprite.cpp" />
@@ -164,6 +169,8 @@
   <ItemGroup>
     <ClInclude Include="engine\core\Game.h" />
     <ClInclude Include="engine\core\GameObject.h" />
+    <ClInclude Include="engine\core\Window.h" />
+    <ClInclude Include="engine\core\GameLoop.h" />
     <ClInclude Include="engine\Graphics\Animation.h" />
     <ClInclude Include="engine\Graphics\AnimationFrame.h" />
     <ClInclude Include="engine\Graphics\Animations.h" />
