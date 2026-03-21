@@ -66,7 +66,7 @@ include_directories(
 )
 
 # Create executable
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS} resource.rc)
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
