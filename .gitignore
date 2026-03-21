@@ -430,9 +430,6 @@ nuget.exe
 .vscode/
 build/
 
-CMakeLists.txt
-CMakePresets.json
-
 # Auto-generated project files (CMake)
 # These were previously ignored, but will now be tracked again as requested.
 *.sln
