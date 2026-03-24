@@ -1,4 +1,4 @@
-﻿#include <windows.h>
+#include <windows.h>
 #include "engine/core/Game.h"
 #include "engine/core/GameLoop.h"
 #include "engine/core/Window.h"
@@ -13,8 +13,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     game->Init(hWnd, hInstance);
 
     SetWindowPos(hWnd, 0, 0, 0, 640, 480, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-    Run(); 
-	
+    Run(); 	
+
     return 0;
 }
 
