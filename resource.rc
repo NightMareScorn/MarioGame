@@ -1,1 +1,6 @@
+<<<<<<< Updated upstream
 101 ICON "mario.ico"
+=======
+#include "engine/core/resource.h"
+IDI_ICON1 ICON "mario.ico"
+>>>>>>> Stashed changes

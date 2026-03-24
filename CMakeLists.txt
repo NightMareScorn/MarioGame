@@ -62,6 +62,9 @@ list(APPEND HEADERS ${ENGINE_HEADERS} ${GAME_HEADERS} ${SYSTEMS_HEADERS})
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/engine/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/rendering
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/Graphics
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/utils
     ${DXSDK_INCLUDE_DIR}
 )
 

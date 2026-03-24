@@ -1,5 +1,5 @@
 #include "Animation.h"
-#include "../Utils/debug.h"
+#include "debug.h"
 
 void CAnimation::Add(int spriteId, DWORD time)
 {

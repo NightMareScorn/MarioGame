@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "../Utils/debug.h"
+#include "debug.h"
 
 CGame * CGame::__instance = NULL;
 
@@ -86,9 +86,6 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 	viewPort.TopLeftX = 0;
 	viewPort.TopLeftY = 0;
 	pD3DDevice->RSSetViewports(1, &viewPort);
-
-	cam_x = 0.0f;
-	cam_y = 0.0f;
 
 	D3D10_BLEND_DESC StateDesc;
 	ZeroMemory(&StateDesc, sizeof(D3D10_BLEND_DESC));

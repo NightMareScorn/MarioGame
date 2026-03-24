@@ -29,11 +29,17 @@ void HandleDebugInput() {
 
 void Update(DWORD dt)
 {
+<<<<<<< Updated upstream
     InputManager::GetInstance()->Update();
 
 	HandleDebugInput();
 
     KeyboardManager::GetInstance()->Update(); 
+=======
+	// TODO: Handle updates for game objects / scene management
+	// Example: CCamera::GetInstance()->Update(player->x, player->y, dt);
+	CCamera::GetInstance()->Update(0, 0, dt); // Default target for now
+>>>>>>> Stashed changes
 }
 
 void Render()

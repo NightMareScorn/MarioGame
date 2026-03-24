@@ -1,8 +1,8 @@
 #include <Windows.h>
 
-#include "../Utils/debug.h"
-#include "../Core/Game.h"
-#include "textures.h"
+#include "debug.h"
+#include "Game.h"
+#include "Textures.h"
 
 CTextures* CTextures::__instance = NULL;
 
