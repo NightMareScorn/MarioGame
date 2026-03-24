@@ -2,36 +2,25 @@
 #include "Game.h"
 #include "../input/KeyboardManager.h"
 #include "../input/InputManager.h"
-#include "../utils/debug.h"
+#include "../../game/entities/player/Mario.h"
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
-void HandleDebugInput() {
-#ifdef _DEBUG
-    auto kb = KeyboardManager::GetInstance();
-
-    // --- Debug phím A ---
-    if (kb->IsKeyPressed('A'))    DebugOut(L"[A] - JUST PRESSED\n");
-    if (kb->IsKeyDown('A'))      DebugOut(L"[A] - HOLDING\n");
-    if (kb->IsKeyReleased('A'))   DebugOut(L"[A] - RELEASED\n");
-
-    // --- Debug phím D ---
-    if (kb->IsKeyPressed('D'))    DebugOut(L"[D] - JUST PRESSED\n");
-    if (kb->IsKeyDown('D'))      DebugOut(L"[D] - HOLDING\n");
-    if (kb->IsKeyReleased('D'))   DebugOut(L"[D] - RELEASED\n");
-
-    // --- Debug phím Space ---
-    if (kb->IsKeyPressed(VK_SPACE))  DebugOut(L"[SPACE] - JUST PRESSED\n");
-    if (kb->IsKeyDown(VK_SPACE))    DebugOut(L"[SPACE] - HOLDING\n");
-    if (kb->IsKeyReleased(VK_SPACE)) DebugOut(L"[SPACE] - RELEASED\n");
-#endif
-}
+Mario* mario = nullptr;
 
 void Update(DWORD dt)
 {
+    if (mario == nullptr) {
+        mario = new Mario();
+        mario->x = 100.0f;
+        mario->y = 100.0f;
+    }
+
     InputManager::GetInstance()->Update();
 
-	HandleDebugInput();
+    if (mario != nullptr) {
+        mario->Update((float)dt);
+    }
 
     KeyboardManager::GetInstance()->Update(); 
 }
