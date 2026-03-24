@@ -1,5 +1,6 @@
 #include "GameLoop.h"
 #include "Game.h"
+#include "Time.h"
 #include "../input/KeyboardManager.h"
 #include "../input/InputManager.h"
 #include "../utils/debug.h"
@@ -64,18 +65,7 @@ int Run()
 	MSG msg;
 	int done = 0;
 
-	LARGE_INTEGER timerFreq;
-	QueryPerformanceFrequency(&timerFreq);
-
-	LARGE_INTEGER timeNow;
-	QueryPerformanceCounter(&timeNow);
-
-	float accumulator = 0.0f;
-	const float dt = 0.0166667f; // 60Hz
-
-	int updateCount = 0;
-	int renderCount = 0;
-	float timeElapsed = 0.0f;
+	Time time(60.0f);
 
 	while (!done)
 	{
@@ -87,37 +77,18 @@ int Run()
 			DispatchMessage(&msg);
 		}
 
-		LARGE_INTEGER timeNext;
-		QueryPerformanceCounter(&timeNext);
+		time.Tick();
 
-		float frameTime = (float)(timeNext.QuadPart - timeNow.QuadPart) / timerFreq.QuadPart;
-		timeNow = timeNext;
-
-		// Clamp frameTime to max 0.25s
-		if (frameTime > 0.25f)
-			frameTime = 0.25f;
-
-		accumulator += frameTime;
-
-		while (accumulator >= dt)
+		while (time.ShouldUpdate())
 		{
-			Update(dt);
-			updateCount++;
-			accumulator -= dt;
+			Update(time.GetDeltaTime());
+			time.OnUpdate();
 		}
 
 		Render();
-		renderCount++;
+		time.OnRender();
 
-		timeElapsed += frameTime;
-		if (timeElapsed >= 1.0f)
-		{
-			// In FPS vào Terminal VS Code
-			printf("MarioGame | Update: %d | Render: %d\n", updateCount, renderCount);
-			updateCount = 0;
-			renderCount = 0;
-			timeElapsed -= 1.0f;
-		}
+		time.PrintFPS();
 	}
 
 	return 1;
