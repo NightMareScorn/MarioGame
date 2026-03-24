@@ -3,8 +3,13 @@
 #include "engine/core/GameLoop.h"
 #include "engine/core/Window.h"
 #include "engine/utils/debug.h"
+#include <stdio.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    AllocConsole();
+    FILE* fDummy;
+    freopen_s(&fDummy, "CONOUT$", "w", stdout);
+    freopen_s(&fDummy, "CONOUT$", "w", stderr);
     HWND hWnd = CreateGameWindow(hInstance, nCmdShow, 640, 480);
     SetDebugWindow(hWnd);
 

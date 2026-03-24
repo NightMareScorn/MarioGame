@@ -4,8 +4,6 @@
 #include <d3dx10.h>
 #include "../Graphics/Texture.h"
 
-#define MAX_FRAME_RATE 100
-
 class CGame
 {
 	static CGame* __instance;

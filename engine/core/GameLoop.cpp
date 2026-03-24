@@ -3,6 +3,7 @@
 #include "../input/KeyboardManager.h"
 #include "../input/InputManager.h"
 #include "../utils/debug.h"
+#include <stdio.h>
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
@@ -27,7 +28,7 @@ void HandleDebugInput() {
 #endif
 }
 
-void Update(DWORD dt)
+void Update(float dt)
 {
     InputManager::GetInstance()->Update();
 
@@ -62,8 +63,19 @@ int Run()
 {
 	MSG msg;
 	int done = 0;
-	ULONGLONG frameStart = GetTickCount64();
-	DWORD tickPerFrame = 1000 / MAX_FRAME_RATE;
+
+	LARGE_INTEGER timerFreq;
+	QueryPerformanceFrequency(&timerFreq);
+
+	LARGE_INTEGER timeNow;
+	QueryPerformanceCounter(&timeNow);
+
+	float accumulator = 0.0f;
+	const float dt = 0.0166667f; // 60Hz
+
+	int updateCount = 0;
+	int renderCount = 0;
+	float timeElapsed = 0.0f;
 
 	while (!done)
 	{
@@ -75,18 +87,37 @@ int Run()
 			DispatchMessage(&msg);
 		}
 
-		ULONGLONG now = GetTickCount64();
-		DWORD dt = (DWORD)(now - frameStart);
+		LARGE_INTEGER timeNext;
+		QueryPerformanceCounter(&timeNext);
 
-		if (dt >= tickPerFrame)
+		float frameTime = (float)(timeNext.QuadPart - timeNow.QuadPart) / timerFreq.QuadPart;
+		timeNow = timeNext;
+
+		// Clamp frameTime to max 0.25s
+		if (frameTime > 0.25f)
+			frameTime = 0.25f;
+
+		accumulator += frameTime;
+
+		while (accumulator >= dt)
 		{
-			frameStart = now;
-
 			Update(dt);
-			Render();
+			updateCount++;
+			accumulator -= dt;
 		}
-		else
-			Sleep(tickPerFrame - dt);
+
+		Render();
+		renderCount++;
+
+		timeElapsed += frameTime;
+		if (timeElapsed >= 1.0f)
+		{
+			// In FPS vào Terminal VS Code
+			printf("MarioGame | Update: %d | Render: %d\n", updateCount, renderCount);
+			updateCount = 0;
+			renderCount = 0;
+			timeElapsed -= 1.0f;
+		}
 	}
 
 	return 1;
