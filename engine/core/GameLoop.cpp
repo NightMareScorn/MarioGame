@@ -1,14 +1,17 @@
 #include "GameLoop.h"
 #include "Game.h"
+#include "Time.h"
 #include "../input/KeyboardManager.h"
 #include "../input/InputManager.h"
+#include "../utils/debug.h"
+#include <stdio.h>
 #include "../../game/entities/player/Mario.h"
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
 Mario* mario = nullptr;
 
-void Update(DWORD dt)
+void Update(float dt)
 {
     if (mario == nullptr) {
         mario = new Mario();
@@ -51,8 +54,8 @@ int Run()
 {
 	MSG msg;
 	int done = 0;
-	ULONGLONG frameStart = GetTickCount64();
-	DWORD tickPerFrame = 1000 / MAX_FRAME_RATE;
+
+	Time time(60.0f);
 
 	while (!done)
 	{
@@ -64,18 +67,18 @@ int Run()
 			DispatchMessage(&msg);
 		}
 
-		ULONGLONG now = GetTickCount64();
-		DWORD dt = (DWORD)(now - frameStart);
+		time.Tick();
 
-		if (dt >= tickPerFrame)
+		while (time.ShouldUpdate())
 		{
-			frameStart = now;
-
-			Update(dt);
-			Render();
+			Update(time.GetDeltaTime());
+			time.OnUpdate();
 		}
-		else
-			Sleep(tickPerFrame - dt);
+
+		Render();
+		time.OnRender();
+
+		time.PrintFPS();
 	}
 
 	return 1;
