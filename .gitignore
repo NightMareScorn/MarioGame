@@ -439,3 +439,6 @@ CMakePresets.json
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+MarioGame.vcxproj
+engine_manual.md
+MarioGame.vcxproj

@@ -166,7 +166,9 @@ void CGame::Draw(float x, float y, LPTEXTURE tex, RECT* rect, float alpha, int s
 		sprite.TexSize.y = (rect->bottom - rect->top) / (float)tex->getHeight();
 	}
 
-	spriteObject->SetProjectionTransform(NULL);
+	D3DXMATRIX matOrtho;
+	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)backBufferWidth, 0, (float)backBufferHeight, 0.1f, 10.0f);
+	spriteObject->SetProjectionTransform(&matOrtho);
 
 	spriteObject->DrawSpritesBuffered(&sprite, 1);
 }

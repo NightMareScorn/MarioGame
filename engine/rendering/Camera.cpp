@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "../core/Game.h"
+#include <cmath>
 
 CCamera* CCamera::__instance = NULL;
 
@@ -11,10 +12,6 @@ CCamera* CCamera::GetInstance()
 
 void CCamera::Update(float targetX, float targetY, DWORD dt)
 {
-	// Simple interpolation for smooth movement
-	// cam_x = targetX - (screenWidth / 2)
-	// cam_y = targetY - (screenHeight / 2)
-	
 	CGame* g = CGame::GetInstance();
 	float screenWidth = (float)g->GetBackBufferWidth();
 	float screenHeight = (float)g->GetBackBufferHeight();
@@ -22,10 +19,15 @@ void CCamera::Update(float targetX, float targetY, DWORD dt)
 	float destX = targetX - screenWidth / 2.0f;
 	float destY = targetY - screenHeight / 2.0f;
 
-	// Clamp or handle world boundaries if needed (not requested yet)
+	// Better interpolation for smoother movement
+	float lerpFactor = 0.05f; // Slower follow for "weight"
 	
-	// Interpolation (lerp)
-	float lerpFactor = 0.1f; // Adjust for smoothness
-	cam_x += (destX - cam_x) * lerpFactor;
-	cam_y += (destY - cam_y) * lerpFactor;
+	// Optional: Deadzone (target must move 5px before camera starts following)
+	if (fabsf(destX - cam_x) > 5.0f) {
+		cam_x += (destX - cam_x) * lerpFactor;
+	}
+	
+	if (fabsf(destY - cam_y) > 5.0f) {
+		cam_y += (destY - cam_y) * lerpFactor;
+	}
 }

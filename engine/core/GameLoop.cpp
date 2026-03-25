@@ -1,33 +1,15 @@
 #include "GameLoop.h"
 #include "Game.h"
 #include "../input/KeyboardManager.h"
-#include "../input/InputManager.h"
+#include "../input/CInputManager.h"
 #include "../rendering/Textures.h"
 #include "../rendering/Camera.h"
 #include "../utils/debug.h"
+#include "../../game/entities/player/CMario.h"
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
-void HandleDebugInput() {
-#ifdef _DEBUG
-    auto kb = KeyboardManager::GetInstance();
-
-    // --- Debug phím A ---
-    if (kb->IsKeyPressed('A'))    DebugOut(L"[A] - JUST PRESSED\n");
-    if (kb->IsKeyDown('A'))      DebugOut(L"[A] - HOLDING\n");
-    if (kb->IsKeyReleased('A'))   DebugOut(L"[A] - RELEASED\n");
-
-    // --- Debug phím D ---
-    if (kb->IsKeyPressed('D'))    DebugOut(L"[D] - JUST PRESSED\n");
-    if (kb->IsKeyDown('D'))      DebugOut(L"[D] - HOLDING\n");
-    if (kb->IsKeyReleased('D'))   DebugOut(L"[D] - RELEASED\n");
-
-    // --- Debug phím Space ---
-    if (kb->IsKeyPressed(VK_SPACE))  DebugOut(L"[SPACE] - JUST PRESSED\n");
-    if (kb->IsKeyDown(VK_SPACE))    DebugOut(L"[SPACE] - HOLDING\n");
-    if (kb->IsKeyReleased(VK_SPACE)) DebugOut(L"[SPACE] - RELEASED\n");
-#endif
-}
+CMario* mario = nullptr;
 
 // --- Player state ---
 float marioX = 300.0f;
@@ -36,7 +18,13 @@ const float MARIO_SPEED = 0.2f;
 
 void UpdateInput()
 {
-    InputManager::GetInstance()->Update();
+    if (mario == nullptr) {
+        mario = new CMario();
+        mario->x = 100.0f;
+        mario->y = 100.0f;
+    }
+
+    CInputManager::GetInstance()->Update();
     KeyboardManager::GetInstance()->Update();
     HandleDebugInput();
 }
@@ -57,6 +45,12 @@ void Update(DWORD dt)
 {
     UpdateInput();
     UpdatePlayer(dt);
+    if (mario != nullptr) {
+        mario->Update((float)dt);
+        // Sync global marioX/Y with object for camera if needed
+        marioX = mario->x;
+        marioY = mario->y;
+    }
     UpdateCamera(dt);
 }
 

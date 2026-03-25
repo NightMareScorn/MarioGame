@@ -32,7 +32,7 @@ CSprite::CSprite(int id, int left, int top, int right, int bottom, LPTEXTURE tex
 	D3DXMatrixScaling(&this->matScaling, (FLOAT)spriteWidth, (FLOAT)spriteHeight, 1.0f);
 }
 
-void CSprite::Draw(float x, float y)
+void CSprite::Draw(float x, float y, int nx)
 {
 	CCamera* cam = CCamera::GetInstance();
 	float cx, cy;
@@ -41,14 +41,21 @@ void CSprite::Draw(float x, float y)
 	cx = (FLOAT)floor(cx);
 	cy = (FLOAT)floor(cy);
 
-	D3DXMATRIX matTranslation;
-
 	x = (FLOAT)floor(x);
 	y = (FLOAT)floor(y);
 
+	D3DXMATRIX matTranslation;
 	D3DXMatrixTranslation(&matTranslation, x - cx, y - cy, 0.1f);
 
-	this->sprite.matWorld = (this->matScaling * matTranslation);
+	D3DX10_SPRITE s = this->sprite;
+	s.matWorld = (this->matScaling * matTranslation);
 
-	CGame::GetInstance()->GetSpriteHandler()->DrawSpritesImmediate(&sprite, 1, 0, 0);
+	if (nx < 0)
+	{
+		float texWidth = (float)texture->getWidth();
+		s.TexCoord.x = (this->left + (this->right - this->left + 1)) / texWidth;
+		s.TexSize.x = -(this->right - this->left + 1) / texWidth;
+	}
+
+	CGame::GetInstance()->GetSpriteHandler()->DrawSpritesBuffered(&s, 1);
 }
