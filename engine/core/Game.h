@@ -2,8 +2,9 @@
 #include <Windows.h>
 #include <d3d10.h>
 #include <d3dx10.h>
-#include "../Graphics/Texture.h"
+#include "Texture.h"
 
+#include "Camera.h"
 class CGame
 {
 	static CGame* __instance;
@@ -18,8 +19,6 @@ class CGame
 	ID3D10BlendState* pBlendStateAlpha = NULL;
 
 	LPD3DX10SPRITE spriteObject;
-	float cam_x = 0.0f;
-	float cam_y = 0.0f;
 
 	HINSTANCE hInstance;
 
@@ -55,8 +54,8 @@ public:
 
 	void SetPointSamplerState();
 
-	void GetCamPos(float& x, float& y) { x = cam_x; y = cam_y; }
-	void SetCamPos(float x, float y) { cam_x = x; cam_y = y; }
+	void GetCamPos(float& x, float& y) { CCamera::GetInstance()->GetCamPos(x, y); }
+	void SetCamPos(float x, float y) { CCamera::GetInstance()->SetCamPos(x, y); }
 
 	~CGame();
 };

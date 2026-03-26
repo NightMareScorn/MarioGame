@@ -1,6 +1,6 @@
 #include "Sprites.h"
-#include "../Core/Game.h"
-#include "../Utils/debug.h"
+#include "Game.h"
+#include "debug.h"
 
 CSprites* CSprites::__instance = NULL;
 

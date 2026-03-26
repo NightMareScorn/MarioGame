@@ -1,0 +1,3 @@
+# ID | Path
+1 content/textures/mario.png
+2 content/textures/misc.png

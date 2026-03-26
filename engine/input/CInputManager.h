@@ -2,14 +2,14 @@
 #include "KeyboardManager.h"
 #include "InputState.h"
 
-class InputManager {
+class CInputManager {
 private:
-    static InputManager* instance;
+    static CInputManager* instance;
     InputState state;
-    InputManager() {}
+    CInputManager() {}
 
 public:
-    static InputManager* GetInstance();
+    static CInputManager* GetInstance();
     void Update();
     const InputState& GetState() const { return state; }
 };

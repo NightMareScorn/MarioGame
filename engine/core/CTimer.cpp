@@ -1,7 +1,7 @@
-#include "Time.h"
+#include "CTimer.h"
 #include <stdio.h>
 
-Time::Time(float targetFPS)
+CTimer::CTimer(float targetFPS)
 {
     QueryPerformanceFrequency(&timerFreq);
     QueryPerformanceCounter(&timeNow);
@@ -12,7 +12,7 @@ Time::Time(float targetFPS)
     timeElapsedSec = 0.0f;
 }
 
-void Time::Tick()
+void CTimer::Tick()
 {
     LARGE_INTEGER timeNext;
     QueryPerformanceCounter(&timeNext);
@@ -27,7 +27,7 @@ void Time::Tick()
     timeElapsedSec += frameTime;
 }
 
-bool Time::ShouldUpdate()
+bool CTimer::ShouldUpdate()
 {
     if (accumulator >= dt)
     {
@@ -37,22 +37,22 @@ bool Time::ShouldUpdate()
     return false;
 }
 
-float Time::GetDeltaTime() const
+float CTimer::GetDeltaTime() const
 {
     return dt;
 }
 
-void Time::OnUpdate()
+void CTimer::OnUpdate()
 {
     updateCount++;
 }
 
-void Time::OnRender()
+void CTimer::OnRender()
 {
     renderCount++;
 }
 
-void Time::PrintFPS()
+void CTimer::PrintFPS()
 {
     if (timeElapsedSec >= 1.0f)
     {

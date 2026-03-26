@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "../Utils/debug.h"
+#include "debug.h"
 
 CGame * CGame::__instance = NULL;
 
@@ -87,9 +87,6 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 	viewPort.TopLeftY = 0;
 	pD3DDevice->RSSetViewports(1, &viewPort);
 
-	cam_x = 0.0f;
-	cam_y = 0.0f;
-
 	D3D10_BLEND_DESC StateDesc;
 	ZeroMemory(&StateDesc, sizeof(D3D10_BLEND_DESC));
 	StateDesc.AlphaToCoverageEnable = FALSE;
@@ -169,7 +166,9 @@ void CGame::Draw(float x, float y, LPTEXTURE tex, RECT* rect, float alpha, int s
 		sprite.TexSize.y = (rect->bottom - rect->top) / (float)tex->getHeight();
 	}
 
-	spriteObject->SetProjectionTransform(NULL);
+	D3DXMATRIX matOrtho;
+	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)backBufferWidth, 0, (float)backBufferHeight, 0.1f, 10.0f);
+	spriteObject->SetProjectionTransform(&matOrtho);
 
 	spriteObject->DrawSpritesBuffered(&sprite, 1);
 }

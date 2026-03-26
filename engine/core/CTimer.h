@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 
-class Time
+class CTimer
 {
 private:
     LARGE_INTEGER timerFreq;
@@ -14,7 +14,7 @@ private:
     float timeElapsedSec;
 
 public:
-    Time(float targetFPS = 60.0f);
+    CTimer(float targetFPS = 60.0f);
 
     void Tick();
     bool ShouldUpdate();

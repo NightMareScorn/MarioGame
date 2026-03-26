@@ -62,11 +62,20 @@ list(APPEND HEADERS ${ENGINE_HEADERS} ${GAME_HEADERS} ${SYSTEMS_HEADERS})
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/engine/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/rendering
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/Graphics
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/utils
     ${DXSDK_INCLUDE_DIR}
 )
 
 # Create executable
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS}) #resource.rc)
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS} resource.rc)
+
+# Copy assets to build directory
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/content"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/content")
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME}

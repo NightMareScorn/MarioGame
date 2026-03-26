@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include "resource.h"
 
 #define WINDOW_CLASS_NAME L"BaseEngineWindow"
 #define MAIN_WINDOW_TITLE L"Mario"
