@@ -2,6 +2,7 @@
 #include "../../registry/CResourceRegistry.h"
 #include "../../../engine/rendering/Camera.h"
 #include "../../entities/blocks/CBrick.h"
+#include "../../../engine/utils/debug.h"
 
 void CPlayScene::Load() {
     auto registry = CResourceRegistry::GetInstance();
@@ -12,8 +13,9 @@ void CPlayScene::Load() {
     mario->y = 100.0f;
 
     for (int i = 0; i < 20; i++) {
-        blocks.push_back(new CBrick(i * 48.02f, 50.02f));
+        blocks.push_back(new CBrick(i * 16.02f, 50.02f));
     }
+    DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d\n", blocks.size());
 }
 
 void CPlayScene::Update(float dt) {

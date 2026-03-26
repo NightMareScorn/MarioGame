@@ -11,18 +11,41 @@ CAnimations* CAnimations::GetInstance()
 
 void CAnimations::Add(int id, LPANIMATION ani)
 {
-	if (animations[id] != NULL)
+	if (animations.find(id) != animations.end())
 		DebugOut(L"[WARNING] Animation %d already exists\n", id);
 
 	animations[id] = ani;
 }
 
+void CAnimations::Add(std::string name, int id, LPANIMATION ani)
+{
+	Add(id, ani);
+	nameToId[name] = id;
+}
+
 LPANIMATION CAnimations::Get(int id)
 {
-	LPANIMATION ani = animations[id];
-	if (ani == NULL)
+	if (animations.find(id) == animations.end()) {
 		DebugOut(L"[ERROR] Animation ID %d not found\n", id);
-	return ani;
+		return NULL;
+	}
+	return animations[id];
+}
+
+LPANIMATION CAnimations::Get(std::string name)
+{
+	if (nameToId.find(name) == nameToId.end()) {
+		DebugOut(L"[ERROR] Animation name %hs not found\n", name.c_str());
+		return NULL;
+	}
+	return Get(nameToId[name]);
+}
+
+void CAnimations::Render(std::string name, float x, float y, int nx)
+{
+	LPANIMATION ani = Get(name);
+	if (ani != NULL)
+		ani->Render(x, y, nx);
 }
 
 void CAnimations::Clear()
@@ -34,4 +57,5 @@ void CAnimations::Clear()
 	}
 
 	animations.clear();
+	nameToId.clear();
 }

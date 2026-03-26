@@ -11,6 +11,7 @@ void DebugOut(const wchar_t* fmt, ...)
 	vswprintf_s(dbg_out, fmt, argp);
 	va_end(argp);
 	OutputDebugString(dbg_out);
+	wprintf(L"%llu: %s", GetTickCount64(), dbg_out);
 }
 
 void DebugOutTitle(const wchar_t* fmt, ...)

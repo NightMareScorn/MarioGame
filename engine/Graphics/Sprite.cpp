@@ -45,10 +45,15 @@ void CSprite::Draw(float x, float y, int nx)
 	y = (FLOAT)floor(y);
 
 	D3DXMATRIX matTranslation;
+	CGame* g = CGame::GetInstance();
 	D3DXMatrixTranslation(&matTranslation, x - cx, y - cy, 0.1f);
 
 	D3DX10_SPRITE s = this->sprite;
 	s.matWorld = (this->matScaling * matTranslation);
+
+	D3DXMATRIX matOrtho;
+	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)g->GetBackBufferWidth(), 0, (float)g->GetBackBufferHeight(), 0.1f, 10.0f);
+	g->GetSpriteHandler()->SetProjectionTransform(&matOrtho);
 
 	if (nx < 0)
 	{

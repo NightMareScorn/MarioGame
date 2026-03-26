@@ -84,5 +84,5 @@ void CMario::Render() {
         default: aniName = "ANI_MARIO_IDLE"; break;
     }
 
-    CResourceRegistry::GetInstance()->RenderAnimation(aniName, x, y, nx);
+    CAnimations::GetInstance()->Render(aniName, x, y, nx);
 }

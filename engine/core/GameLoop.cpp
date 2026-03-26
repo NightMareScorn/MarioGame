@@ -1,67 +1,52 @@
 #include "GameLoop.h"
 #include "Game.h"
+#include "CTimer.h"
 #include "../input/KeyboardManager.h"
 #include "../input/CInputManager.h"
 #include "../rendering/Textures.h"
 #include "../rendering/Camera.h"
 #include "../utils/debug.h"
-#include "../../game/entities/player/CMario.h"
+#include <stdio.h>
+#include "../../game/scenes/play/CPlayScene.h"
 
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
-CMario* mario = nullptr;
+CPlayScene* scene = nullptr;
 
-// --- Player state ---
-float marioX = 300.0f;
-float marioY = 100.0f;
-const float MARIO_SPEED = 0.2f;
+void HandleDebugInput() {
+#ifdef _DEBUG      
+    auto kb = KeyboardManager::GetInstance();
 
-void UpdateInput()
+    if (kb->IsKeyPressed('A')) DebugOut(L"[A] - JUST PRESSED\n");
+    if (kb->IsKeyReleased('A')) DebugOut(L"[A] - RELEASED\n");
+
+    if (kb->IsKeyPressed('D')) DebugOut(L"[D] - JUST PRESSED\n");
+    if (kb->IsKeyReleased('D')) DebugOut(L"[D] - RELEASED\n");
+
+    if (kb->IsKeyPressed(VK_SPACE)) DebugOut(L"[SPACE] - JUST PRESSED\n");
+    if (kb->IsKeyReleased(VK_SPACE)) DebugOut(L"[SPACE] - RELEASED\n");
+#endif
+}
+
+void Update(float dt)
 {
-    if (mario == nullptr) {
-        mario = new CMario();
-        mario->x = 100.0f;
-        mario->y = 100.0f;
+    if (scene == nullptr) {
+        scene = new CPlayScene();
+        scene->Load();
     }
 
     CInputManager::GetInstance()->Update();
-    KeyboardManager::GetInstance()->Update();
     HandleDebugInput();
-}
 
-void UpdatePlayer(DWORD dt)
-{
-    auto state = InputManager::GetInstance()->GetState();
-    if (state.left) marioX -= MARIO_SPEED * dt;
-    if (state.right) marioX += MARIO_SPEED * dt;
-}
+    scene->Update(dt);
 
-void UpdateCamera(DWORD dt)
-{
-    CCamera::GetInstance()->Update(marioX, marioY, dt);
-}
-
-void Update(DWORD dt)
-{
-    UpdateInput();
-    UpdatePlayer(dt);
-    if (mario != nullptr) {
-        mario->Update((float)dt);
-        // Sync global marioX/Y with object for camera if needed
-        marioX = mario->x;
-        marioY = mario->y;
-    }
-    UpdateCamera(dt);
+    // Update keyboard state at the very end
+    KeyboardManager::GetInstance()->Update();
 }
 
 void LoadAssets()
 {
-    static bool assetsLoaded = false;
-    if (assetsLoaded) return;
-
-    CTextures::GetInstance()->Add(1, L"content/textures/mario.png");
-    CTextures::GetInstance()->Add(2, L"content/textures/misc.png");
-    assetsLoaded = true;
+    // CPlayScene::Load() handles this via Registry
 }
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
@@ -69,42 +54,10 @@ void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D1
     pD3DDevice->ClearRenderTargetView(pRenderTargetView, BACKGROUND_COLOR);
 }
 
-void RenderPlayer(CGame* g)
+void RenderGame(CGame* g)
 {
-    LPTEXTURE texMario = CTextures::GetInstance()->Get(1);
-    float camX, camY;
-    CCamera::GetInstance()->GetCamPos(camX, camY);
-
-    // CSS: -123px 0; width: 6px; height: 8px;
-    RECT rect;
-    rect.left = 123;
-    rect.top = 0;
-    rect.right = 129;
-    rect.bottom = 8;
-
-    // Draw scale: 4x (24x32)
-    g->Draw(marioX - camX, marioY - camY, texMario, &rect, 1.0f, 24, 32);
-}
-
-void RenderEnvironment(CGame* g)
-{
-    LPTEXTURE texMisc = CTextures::GetInstance()->Get(2);
-    float camX, camY;
-    CCamera::GetInstance()->GetCamPos(camX, camY);
-
-    // Block CSS: -150 -58; Assume 16x16
-    RECT rect;
-    rect.left = 150;
-    rect.top = 58;
-    rect.right = 166;
-    rect.bottom = 74;
-
-    // Draw a row of blocks for camera testing
-    for (int i = 0; i < 20; i++)
-    {
-        float blockX = i * 48.0f; // 16x3 = 48
-        float blockY = 50.0f;
-        g->Draw(blockX - camX, blockY - camY, texMisc, &rect, 1.0f, 48, 48);
+    if (scene != nullptr) {
+        scene->Render();
     }
 }
 
@@ -125,8 +78,7 @@ void Render()
     FLOAT NewBlendFactor[4] = { 0,0,0,0 };
     pD3DDevice->OMSetBlendState(g->GetAlphaBlending(), NewBlendFactor, 0xffffffff);
 
-    RenderEnvironment(g);
-    RenderPlayer(g);
+    RenderGame(g);
 
     spriteHandler->End();
     pSwapChain->Present(0, 0);
@@ -136,8 +88,8 @@ int Run()
 {
 	MSG msg;
 	int done = 0;
-	ULONGLONG frameStart = GetTickCount64();
-	DWORD tickPerFrame = 1000 / MAX_FRAME_RATE;
+
+	CTimer time(60.0f);
 
 	while (!done)
 	{
@@ -149,18 +101,18 @@ int Run()
 			DispatchMessage(&msg);
 		}
 
-		ULONGLONG now = GetTickCount64();
-		DWORD dt = (DWORD)(now - frameStart);
+		time.Tick();
 
-		if (dt >= tickPerFrame)
+		while (time.ShouldUpdate())
 		{
-			frameStart = now;
-
-			Update(dt);
-			Render();
+			Update(time.GetDeltaTime() * 1000.0f);
+			time.OnUpdate();
 		}
-		else
-			Sleep(tickPerFrame - dt);
+
+		Render();
+		time.OnRender();
+
+		time.PrintFPS();
 	}
 
 	return 1;

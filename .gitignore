@@ -441,4 +441,7 @@ CMakePresets.json
 *.vcxproj.user
 MarioGame.vcxproj
 engine_manual.md
+GameLoop_ours.cpp
+.gitignore
 MarioGame.vcxproj
+instruction.md

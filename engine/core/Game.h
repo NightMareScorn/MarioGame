@@ -5,8 +5,6 @@
 #include "Texture.h"
 
 #include "Camera.h"
-#define MAX_FRAME_RATE 100
-
 class CGame
 {
 	static CGame* __instance;

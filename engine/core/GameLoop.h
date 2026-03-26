@@ -1,6 +1,6 @@
 #pragma once
 #include <windows.h>
 
-void Update(DWORD dt);
+void Update(float dt);
 void Render();
 int Run();
