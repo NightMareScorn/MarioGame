@@ -12,19 +12,20 @@ static const float MARIO_H = 32.0f;
 
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
+    
+    // Handle input before resetting ground state, so we know if we were on the ground last frame!
     HandleInput(input,dt);
+
+    // Update state based on current velocities and ground status BEFORE clearing it
+    UpdateState(input);
+
+    // Reset ground state before applying physics/collision for the current frame
+    SetOnGround(false);
+
     ApplyPhysics(dt);
 
     x += vx * dt;
     y += vy * dt;
-
-    if (y < MarioConfig::GROUND_Y) {
-        y = MarioConfig::GROUND_Y;
-        vy = 0;
-        SetOnGround(true);
-    }
-
-    UpdateState(input);
 }
 
 void CMario::HandleInput(const InputState& input, float dt) {
@@ -55,7 +56,7 @@ void CMario::HandleInput(const InputState& input, float dt) {
 }
 
 void CMario::UpdateState(const InputState& input) {
-    if (y > MarioConfig::GROUND_Y) {
+    if (!IsOnGround()) {
         state = EMarioState::JUMP;
     }
     else if (vx != 0) {
