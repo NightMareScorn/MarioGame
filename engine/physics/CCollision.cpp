@@ -28,16 +28,9 @@ void CCollision::ResolveCollision(CGameObject* obj, const std::vector<CGameObjec
         float overlapY = (std::min)(b1,b2) - (std::max)(t1,t2);
 
         const float EPS_NUDGE = 0.5f;
-        const float AXIS_EPS = 0.01f;
 
-        bool preferY = false;
-        // prefer Y resolution when object has vertical motion
-        if (std::abs(obj->vy) > 0.0001f) preferY = true;
-
-        if (!preferY) {
-            // choose minimal axis
-            preferY = (overlapY <= overlapX + AXIS_EPS);
-        }
+        // Choose minimal axis to resolve (shortest penetration distance)
+        bool preferY = (overlapY <= overlapX);
 
         if (!preferY) {
             // resolve X axis
