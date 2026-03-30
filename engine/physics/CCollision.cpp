@@ -50,15 +50,14 @@ void CCollision::ResolveCollision(CGameObject* obj, const std::vector<CGameObjec
         } else {
             // resolve Y axis
             float objHeight = b1 - t1;
-            if (t1 < t2) {
-                // obj is above other -> land on top
-                // place obj exactly on top of other
-                obj->y = t2 - objHeight;
+            if (t1 > t2) {
+                // obj hits from above -> land on top
+                obj->y = b2;
                 obj->vy = 0;
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else {
                 // obj hits from below -> push down
-                obj->y = b2;
+                obj->y = t2 - objHeight;
                 obj->vy = 0;
             }
         }
