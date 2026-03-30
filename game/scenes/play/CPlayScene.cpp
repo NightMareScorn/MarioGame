@@ -3,6 +3,7 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../entities/blocks/CBrick.h"
 #include "../../../engine/utils/debug.h"
+#include "../../../engine/physics/CCollision.h"
 
 void CPlayScene::Load() {
     auto registry = CResourceRegistry::GetInstance();
@@ -21,6 +22,11 @@ void CPlayScene::Load() {
 void CPlayScene::Update(float dt) {
     mario->Update(dt);
     for (auto b : blocks) b->Update(dt);
+
+    std::vector<CGameObject*> coObjects;
+    coObjects.reserve(blocks.size());
+    for (auto b : blocks) coObjects.push_back(b);
+    CCollision::ResolveCollision(mario, coObjects);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 }
 

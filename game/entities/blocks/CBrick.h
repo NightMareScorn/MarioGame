@@ -6,4 +6,5 @@ public:
     CBrick(float x, float y) : CBlock(x, y) {}
     void Update(float dt) override {}
     void Render() override;
+    void GetBoundingBox(float &l, float &t, float &r, float &b) override;
 };

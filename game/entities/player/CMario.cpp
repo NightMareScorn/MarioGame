@@ -7,6 +7,9 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
 
+static const float MARIO_W = 16.0f;
+static const float MARIO_H = 32.0f;
+
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
     HandleInput(input,dt);
@@ -18,6 +21,7 @@ void CMario::Update(float dt) {
     if (y < MarioConfig::GROUND_Y) {
         y = MarioConfig::GROUND_Y;
         vy = 0;
+        SetOnGround(true);
     }
 
     UpdateState(input);
@@ -44,8 +48,9 @@ void CMario::HandleInput(const InputState& input, float dt) {
         }
     }
 
-    if (input.jump && y <= MarioConfig::GROUND_Y) {
+    if (input.jump && IsOnGround()) {
         vy = MarioConfig::JUMP_FORCE;
+        SetOnGround(false);
     }
 }
 
@@ -72,6 +77,14 @@ void CMario::ApplyPhysics(float dt) {
     if (vx > MarioConfig::MAX_SPEED_X) vx = MarioConfig::MAX_SPEED_X;
     if (vx < -MarioConfig::MAX_SPEED_X) vx = -MarioConfig::MAX_SPEED_X;
 }
+
+void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {
+    l = x;
+    t = y;
+    r = x + MARIO_W;
+    b = y + MARIO_H;
+}
+
 
 #include "../../registry/CResourceRegistry.h"
 
