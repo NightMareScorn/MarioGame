@@ -7,20 +7,25 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
 
+static const float MARIO_W = 14.0f;
+static const float MARIO_H = 28.0f;
+
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
+    
+    // Handle input before resetting ground state, so we know if we were on the ground last frame!
     HandleInput(input,dt);
+
+    // Update state based on current velocities and ground status BEFORE clearing it
+    UpdateState(input);
+
+    // Reset ground state before applying physics/collision for the current frame
+    SetOnGround(false);
+
     ApplyPhysics(dt);
 
     x += vx * dt;
     y += vy * dt;
-
-    if (y < MarioConfig::GROUND_Y) {
-        y = MarioConfig::GROUND_Y;
-        vy = 0;
-    }
-
-    UpdateState(input);
 }
 
 void CMario::HandleInput(const InputState& input, float dt) {
@@ -44,13 +49,14 @@ void CMario::HandleInput(const InputState& input, float dt) {
         }
     }
 
-    if (input.jump && y <= MarioConfig::GROUND_Y) {
+    if (input.jump && IsOnGround()) {
         vy = MarioConfig::JUMP_FORCE;
+        SetOnGround(false);
     }
 }
 
 void CMario::UpdateState(const InputState& input) {
-    if (y > MarioConfig::GROUND_Y) {
+    if (!IsOnGround()) {
         state = EMarioState::JUMP;
     }
     else if (vx != 0) {
@@ -72,6 +78,14 @@ void CMario::ApplyPhysics(float dt) {
     if (vx > MarioConfig::MAX_SPEED_X) vx = MarioConfig::MAX_SPEED_X;
     if (vx < -MarioConfig::MAX_SPEED_X) vx = -MarioConfig::MAX_SPEED_X;
 }
+
+void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {
+    l = x;
+    t = y;
+    r = x + MARIO_W;
+    b = y + MARIO_H;
+}
+
 
 #include "../../registry/CResourceRegistry.h"
 
