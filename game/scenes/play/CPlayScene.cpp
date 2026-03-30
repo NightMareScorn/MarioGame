@@ -10,11 +10,33 @@ void CPlayScene::Load() {
     registry->LoadResourcesForPlayScene();
 
     mario = new CMario();
-    mario->x = 300.0f;
-    mario->y = 100.0f;
+    mario->x = 100.0f;
+    mario->y = 150.0f; // Di chuyển Mario lại gần đầu map để xem cột
 
-    for (int i = 0; i < 20; i++) {
-        blocks.push_back(new CBrick(i * 16.02f, 50.02f));
+    // 1. Mặt đất cơ bản (dài 45 ô)
+    for (int i = 0; i < 45; i++) {
+        blocks.push_back(new CBrick(i * 16.0f, 50.0f));
+    }
+
+    // 2. Cột thẳng đứng bên trái (ở vị trí x = 0, chồng cao lên 7 ô)
+    for (int i = 1; i <= 7; i++) {
+        blocks.push_back(new CBrick(0.0f, 50.0f + i * 16.0f));
+    }
+
+    // 3. Cầu thang 5 bậc bên phải (bắt đầu từ cột 20)
+    int stairStartX = 20;
+    for (int step = 1; step <= 5; step++) {
+        for (int h = 1; h <= step; h++) {
+            blocks.push_back(new CBrick((stairStartX + step - 1) * 16.0f, 50.0f + h * 16.0f));
+        }
+    }
+
+    // 4. Đoạn thẳng 5 ô nối sau bậc cao nhất của cầu thang
+    int flatStartX = stairStartX + 5;
+    for (int i = 0; i < 5; i++) {
+        for (int h = 1; h <= 5; h++) {
+            blocks.push_back(new CBrick((flatStartX + i) * 16.0f, 50.0f + h * 16.0f));
+        }
     }
     DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d\n", blocks.size());
 }
