@@ -45,8 +45,14 @@ void CSprite::Draw(float x, float y, int nx)
 	y = (FLOAT)floor(y);
 
 	D3DXMATRIX matTranslation;
-	CGame* g = CGame::GetInstance();
-	D3DXMatrixTranslation(&matTranslation, x - cx, y - cy, 0.1f);
+	CGame* g = CGame::GetInstance();	
+	
+	// D3DX10_SPRITE draws its quad with the origin at the CENTER of the image.
+	// To make the visual bounding box perfectly match the Physics Bounding Box [x, x + W] and [y, y + H],
+	// we must translate the center to x + width/2 and y + height/2.
+	int spriteWidth = (this->right - this->left + 1);
+	int spriteHeight = (this->bottom - this->top + 1);
+	D3DXMatrixTranslation(&matTranslation, (x - cx) + spriteWidth / 2.0f, (y - cy) + spriteHeight / 2.0f, 0.1f);
 
 	D3DX10_SPRITE s = this->sprite;
 	s.matWorld = (this->matScaling * matTranslation);
