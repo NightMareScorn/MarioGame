@@ -48,7 +48,7 @@ void CPlayScene::Update(float dt) {
     std::vector<CGameObject*> coObjects;
     coObjects.reserve(blocks.size());
     for (auto b : blocks) coObjects.push_back(b);
-    CCollision::ResolveCollision(mario, coObjects);
+    CCollision::ResolveCollision(mario, dt, coObjects);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 }
 
