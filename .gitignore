@@ -396,13 +396,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# VS Code files for those working on multiple tools
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# VS Code files
+.vscode/
 
 # Local History for Visual Studio Code
 .history/
@@ -416,3 +411,37 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+# Project notes
+TODO.md
+LESSONS.MD
+
+# Tutorials reference
+game-dev-intro/
+
+# NuGet executable
+nuget.exe
+
+# Local build scripts
+# Whitelisted so team can build like me
+!build.bat
+
+.vscode/
+build/
+
+CMakeLists.txt
+CMakePresets.json
+
+# Auto-generated project files (CMake)
+# These were previously ignored, but will now be tracked again as requested.
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+MarioGame.vcxproj
+engine_manual.md
+GameLoop_ours.cpp
+.gitignore
+MarioGame.vcxproj
+instruction.md
