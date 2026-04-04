@@ -38,6 +38,11 @@ void CPlayScene::Load() {
             blocks.push_back(new CBrick((flatStartX + i) * 16.0f, 50.0f + h * 16.0f));
         }
     }
+
+    // 5. Hàng gạch làm trần nhà để test đụng đầu
+    for (int i = 0; i < 5; i++) {
+        blocks.push_back(new CBrick((flatStartX + i) * 16.0f, 50.0f + 9 * 16.0f));
+    }
     DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d\n", blocks.size());
 }
 
