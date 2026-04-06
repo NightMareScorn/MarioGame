@@ -11,5 +11,5 @@ public:
     static bool CheckAABB(const Box &a, const Box &b);
 
     // Resolve collisions between `obj` and list of coObjects (static blocks etc.)
-    static void ResolveCollision(CGameObject* obj, const std::vector<CGameObject*>& coObjects);
+    static void ResolveCollision(CGameObject* obj, float dt, const std::vector<CGameObject*>& coObjects);
 };

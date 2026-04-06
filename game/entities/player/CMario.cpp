@@ -23,9 +23,6 @@ void CMario::Update(float dt) {
     SetOnGround(false);
 
     ApplyPhysics(dt);
-
-    x += vx * dt;
-    y += vy * dt;
 }
 
 void CMario::HandleInput(const InputState& input, float dt) {
