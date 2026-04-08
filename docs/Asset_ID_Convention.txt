@@ -1,0 +1,33 @@
+# QUY CHUẨN TÀI NGUYÊN (ASSETS) VÀ ID TILEMAP / OBJECT
+
+## 1. Nguồn Tài Nguyên (Assets)
+- **Quyết định:** Sử dụng bộ Asset của giáo viên cung cấp (hiện đã được load trong project).
+- **Các Asset còn thiếu (Cần bổ sung):** Cần tìm kiếm và download thêm từ **The Spriters Resource**:
+  1. Water (Nước)
+  2. Flagpole (Cột cờ kết thúc màn)
+  3. Pipe ngầm (Ống nước khu vực dưới lòng đất)
+  4. Sprite Mario chết
+
+## 2. Bảng Đồng Bộ Khóa ID Cho Tilemap
+Cấu trúc ID sau sẽ được dùng trong các file CSV để parse Map và Code có chung tiếng nói:
+- `0` = Trống (Empty / Background)
+- `1` = Gạch nền (Ground Block)
+- `2` = Mây (Cloud)
+- `3` = Bụi cỏ (Bush)
+- `4` = Gạch ẩn / Gạch hỏi chấm (Question Block)
+*(Ghi chú: Các ID tiếp theo sẽ được bổ sung tiếp vào file này khi có thêm Tile mới)*
+
+## 3. Định Dạng Cấu Trúc Object và Extra Properties
+Để giải quyết luồng việc (pipeline) giữa khâu làm Map (phân bố Object) và Code (logic Game), thống nhất sử dụng cấu trúc CSV/JSON chung như sau:
+**Định dạng cơ bản:** `type, x, y, extra`
+
+**Quy chuẩn riêng cho Object Ống nước (Pipe):**
+
+- **Ống nước bình thường (Chỉ để cản đường):**
+  `type: pipe, x: <giá_trị>, y: <giá_trị>, extra: is_solid=true`
+
+- **Ống nước có quái (Piranha Plant):**
+  `type: pipe, x: <giá_trị>, y: <giá_trị>, extra: has_piranha=true`
+
+- **Ống nước có thể chui được (Dùng để chuyển Map):**
+  `type: pipe, x: <giá_trị>, y: <giá_trị>, extra: dest_map=1_1_underground, enter_direction=down`
