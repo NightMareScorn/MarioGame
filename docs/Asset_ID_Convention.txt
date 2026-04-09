@@ -5,7 +5,7 @@
 
 ## 2. Cấu Trúc File CSV (Map Format)
 File CSV Map sẽ chia làm 3 phần chính để tách biệt nền (background) và các vật thể động (dynamic entities):
-- `# SETTINGS`: Chứa cấu hình map (VD: cell_size,16).
+- `# SETTINGS`: Chứa cấu hình map (VD: cell_size,16). Có thể gán thêm `theme,underground` để báo game dùng gạch nền/chạc tĩnh màu tối.
 - `# TILEMAP`: Chứa ma trận các ID lưới (grid) định nghĩa cảnh quan cố định.
 - `# OBJECTS`: Chứa danh sách các đối tượng động (dynamic objects) và vật phẩm phụ.
 
@@ -21,6 +21,7 @@ Cấu trúc ID sau sẽ được dùng trong phần `# TILEMAP` (dạng ma trậ
 - `7` = Gạch đập được (Brick Block)
 - `8` = Cột cờ (Flagpole)
 - `9` = Lâu đài (Castle - Door/Body)
+- `10` = Đồng xu tĩnh (Static Coin - dùng xếp chữ Warp Zone)
 *(Ghi chú: Các ID tiếp theo sẽ được bổ sung tiếp vào phần này khi có thêm khối Tile mới, vd: ID dung nham, nước...)*
 
 ## 4. Định Dạng Cấu Trúc Object và Extra Properties
@@ -36,6 +37,8 @@ Cấu trúc ID sau sẽ được dùng trong phần `# TILEMAP` (dạng ma trậ
 - **Kẻ thù / Quái vât:**
   - Goomba: `goomba, <x>, <y>, patrol_left=<giới_hạn_trái>, patrol_right=<giới_hạn_phải>`
   - Koopa (Rùa): `koopa, <x>, <y>, type=green_walking`
+  - Buzzy Beetle (Bọ úp): `buzzy_beetle, <x>, <y>`
+  - Piranha Plant (hoa ăn thịt đứng riêng): `piranha, <x>, <y>`
 
 - **Vật phẩm (Items):**
   - Đồng xu (Coin): `coin, <x>, <y>` (nếu ở ngoài)
@@ -43,6 +46,9 @@ Cấu trúc ID sau sẽ được dùng trong phần `# TILEMAP` (dạng ma trậ
   - Nấm (Mushroom): `mushroom, <x>, <y>, hidden_in_block=true`
   - Ngôi sao bạch kim (Star): `star, <x>, <y>, hidden_in_block=true`
   - Mạng 1-Up (1-Up Mushroom): `1-up, <x>, <y>, hidden_in_block=true, invisible_block=true`
+
+- **Nền tảng di chuyển (Elevator/Moving Platform):**
+  - Thang máy: `elevator, <x>, <y>, direction=up` (hoặc `down`, `left`, `right`)
 
 - **Ống nước động (Pipe):**
   - Vừa đóng vai trò chướng ngại, vừa có thể tương tác:
