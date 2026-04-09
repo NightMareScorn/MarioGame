@@ -54,6 +54,7 @@ void CPlayScene::Update(float dt) {
     coObjects.reserve(blocks.size());
     for (auto b : blocks) coObjects.push_back(b);
     CCollision::ResolveCollision(mario, dt, coObjects);
+    mario->UpdateState(); 
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 }
 
