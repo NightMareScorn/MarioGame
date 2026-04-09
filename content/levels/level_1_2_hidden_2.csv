@@ -18,7 +18,8 @@ theme,underground
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 # OBJECTS
-type,x,y,extrapipe,240,0,dest_map=hidden,enter_direction=up
+type,x,y,extra
+pipe,240,0,dest_map=hidden,enter_direction=up
 coin,64,96
 coin,80,96
 coin,96,96
