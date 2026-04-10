@@ -1,4 +1,6 @@
 # ID | Path
-1 content/textures/mario.png
-2 content/textures/misc.png
-3 content/textures/small_mario.png
+1 content/textures/small_mario.png
+2 content/tilesets/tileset.png
+3 content/tilesets/brick-blocks.png
+4 content/tilesets/object.png
+5 content/textures/enemies-ground-ow.png
