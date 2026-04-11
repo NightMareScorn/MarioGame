@@ -7,8 +7,9 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
 
-static const float MARIO_W = 14.0f;
-static const float MARIO_H = 28.0f;
+// Small Mario sprite: MARIO_IDLE = 2,0,13,15 → 12x16 pixels
+static const float MARIO_W = 12.0f;
+static const float MARIO_H = 16.0f;
 
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
@@ -28,11 +29,11 @@ void CMario::Update(float dt) {
 void CMario::HandleInput(const InputState& input, float dt) {
     if (input.right) {
         vx += MarioConfig::ACCEL_X * dt;
-        nx = 1;
+        if (vx >= 0) nx = 1;
     }
     else if (input.left) {
         vx -= MarioConfig::ACCEL_X * dt;
-        nx = -1;
+        if (vx <= 0) nx = -1;
     }
     else {
         // Simple friction
