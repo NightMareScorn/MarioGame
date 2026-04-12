@@ -19,5 +19,4 @@ private:
 
     void HandleInput(const InputState& input, float dt);
     void ApplyPhysics(float dt);
-    void UpdateState(const InputState& input);
 };

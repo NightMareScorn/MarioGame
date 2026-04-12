@@ -1,3 +1,4 @@
+#include <cmath>
 #include "CMario.h"
 #include "MarioConfig.h"
 #include "../../../engine/input/CInputManager.h"
@@ -51,13 +52,12 @@ void CMario::UpdateState() {
         else state = EMarioState::FALL;
     }
     else {
-        if (abs(vx) > 0.01f) {
+        if (std::abs(vx) > 0.01f) {
             if ((vx > 0 && input.left) || (vx < 0 && input.right)) state = EMarioState::SKID;
             else state = EMarioState::WALK;
         }
         else {
             vx = 0;
-            state = EMarioState::IDLE;
         }
     }
 
@@ -91,7 +91,6 @@ void CMario::Render() {
         case EMarioState::FALL: aniName = "ANI_MARIO_JUMP"; break;
         case EMarioState::SKID: aniName = "ANI_MARIO_SKID"; break;
         case EMarioState::DIE:  aniName = "ANI_MARIO_DIE";  break;
-        default:                aniName = "ANI_MARIO_IDLE"; break;
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
