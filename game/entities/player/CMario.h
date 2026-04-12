@@ -2,19 +2,14 @@
 #include "../CGameObject.h"
 #include "../../engine/input/CInputManager.h"
 #include "../../engine/input/InputState.h"
-
-enum class EMarioState {
-    IDLE,
-    WALK,
-    JUMP,
-    SKID
-};
+#include "MarioConfig.h"
 
 class CMario : public CGameObject {
 public:
     void Update(float dt) override; 
     void Render() override;
     void GetBoundingBox(float &l, float &t, float &r, float &b) override;
+    void UpdateState();
     void SetOnGround(bool v) { onGround = v; }
     bool IsOnGround() const { return onGround; }
 private:
@@ -24,5 +19,4 @@ private:
 
     void HandleInput(const InputState& input, float dt);
     void ApplyPhysics(float dt);
-    void UpdateState(const InputState& input);
 };
