@@ -8,8 +8,8 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
 
-static const float MARIO_W = 14.0f;
-static const float MARIO_H = 28.0f;
+static const float MARIO_W = 12.0f; //14
+static const float MARIO_H = 15.0f; //28
 
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
@@ -58,6 +58,7 @@ void CMario::UpdateState() {
         }
         else {
             vx = 0;
+            state = EMarioState::IDLE;
         }
     }
 
