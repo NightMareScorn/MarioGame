@@ -91,6 +91,7 @@ void CMario::Render() {
         case EMarioState::FALL: aniName = "ANI_MARIO_JUMP"; break;
         case EMarioState::SKID: aniName = "ANI_MARIO_SKID"; break;
         case EMarioState::DIE:  aniName = "ANI_MARIO_DIE";  break;
+        default:                aniName = "ANI_MARIO_IDLE"; break;
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
