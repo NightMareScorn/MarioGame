@@ -13,11 +13,14 @@ CCamera* CCamera::GetInstance()
 void CCamera::Update(float targetX, float targetY, DWORD dt)
 {
 	CGame* g = CGame::GetInstance();
-	float screenWidth = (float)g->GetBackBufferWidth();
-	float screenHeight = (float)g->GetBackBufferHeight();
+	float screenWidth = (float)g->GetViewportWidth();
+	float screenHeight = (float)g->GetViewportHeight();
 
 	float destX = targetX - screenWidth / 2.0f;
 	float destY = targetY - screenHeight / 2.0f;
+
+	// In typical SMB, the camera does not go below 0 so the ground sits exactly at the bottom of the screen.
+	if (destY < 0.0f) destY = 0.0f;
 
 	// Better interpolation for smoother movement
 	float lerpFactor = 0.05f; // Slower follow for "weight"

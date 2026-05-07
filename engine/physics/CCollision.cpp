@@ -62,9 +62,10 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
                 obj->vy = 0;
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else if (obj->vy > 0) {
-                // Jumping up, hit bottom side of 'other' (Ceiling)
+                // Jumping up, hit bottom side of 'other' (Ceiling) // <--- THIS is where Mario hits a block from below
                 obj->y = B.t - objHeight;
                 obj->vy = 0;
+                other->OnHitFromBelow(obj);
             }
             
             // Re-update bounding box A for subsequent overlap checks in Y

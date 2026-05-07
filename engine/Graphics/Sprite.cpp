@@ -58,7 +58,7 @@ void CSprite::Draw(float x, float y, int nx)
 	s.matWorld = (this->matScaling * matTranslation);
 
 	D3DXMATRIX matOrtho;
-	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)g->GetBackBufferWidth(), 0, (float)g->GetBackBufferHeight(), 0.1f, 10.0f);
+	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)g->GetViewportWidth(), 0, (float)g->GetViewportHeight(), 0.1f, 10.0f);
 	g->GetSpriteHandler()->SetProjectionTransform(&matOrtho);
 
 	if (nx < 0)

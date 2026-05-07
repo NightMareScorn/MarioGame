@@ -13,6 +13,11 @@ class CGame
 	int backBufferWidth = 0;
 	int backBufferHeight = 0;
 
+	// Viewport = visible world area. Smaller values = more zoom.
+	// NES resolution: 256x240. Window: 640x480 → ~2.5x zoom.
+	int viewportWidth = 256;
+	int viewportHeight = 240;
+
 	ID3D10Device* pD3DDevice = NULL;
 	IDXGISwapChain* pSwapChain = NULL;
 	ID3D10RenderTargetView* pRenderTargetView = NULL;
@@ -49,6 +54,10 @@ public:
 
 	int GetBackBufferWidth() { return backBufferWidth; }
 	int GetBackBufferHeight() { return backBufferHeight; }
+
+	// Viewport = the visible world area (for zoom)
+	int GetViewportWidth() { return viewportWidth; }
+	int GetViewportHeight() { return viewportHeight; }
 
 	static CGame* GetInstance();
 

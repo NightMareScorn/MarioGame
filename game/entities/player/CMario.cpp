@@ -21,11 +21,11 @@ void CMario::Update(float dt) {
 void CMario::HandleInput(const InputState& input, float dt) {
     if (input.right) {
         vx += MarioConfig::ACCEL_X * dt;
-        nx = 1;
+        if (vx >= 0) nx = 1;
     }
     else if (input.left) {
         vx -= MarioConfig::ACCEL_X * dt;
-        nx = -1;
+        if (vx <= 0) nx = -1;
     }
     else {
         if (vx > 0) {
