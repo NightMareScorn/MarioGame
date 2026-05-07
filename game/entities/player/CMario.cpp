@@ -1,3 +1,4 @@
+#include <cmath>
 #include "CMario.h"
 #include "MarioConfig.h"
 #include "../../../engine/input/CInputManager.h"
@@ -7,23 +8,14 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
 
-// Small Mario sprite: MARIO_IDLE = 2,0,13,15 → 12x16 pixels
-static const float MARIO_W = 12.0f;
-static const float MARIO_H = 16.0f;
+static const float MARIO_W = 12.0f; //14
+static const float MARIO_H = 15.0f; //28
 
 void CMario::Update(float dt) {
     const auto& input = CInputManager::GetInstance()->GetState();
-    
-    // Handle input before resetting ground state, so we know if we were on the ground last frame!
     HandleInput(input,dt);
-
-    // Update state based on current velocities and ground status BEFORE clearing it
-    UpdateState(input);
-
-    // Reset ground state before applying physics/collision for the current frame
-    SetOnGround(false);
-
     ApplyPhysics(dt);
+    onGround = false;
 }
 
 void CMario::HandleInput(const InputState& input, float dt) {
@@ -36,40 +28,45 @@ void CMario::HandleInput(const InputState& input, float dt) {
         if (vx <= 0) nx = -1;
     }
     else {
-        // Simple friction
         if (vx > 0) {
-            vx -= MarioConfig::ACCEL_X * dt;
+            vx -= MarioConfig::FRICTION * dt;
             if (vx < 0) vx = 0;
         }
         else if (vx < 0) {
-            vx += MarioConfig::ACCEL_X * dt;
+            vx += MarioConfig::FRICTION * dt;
             if (vx > 0) vx = 0;
         }
     }
 
-    if (input.jump && IsOnGround()) {
+    if (input.jump && onGround) {
         vy = MarioConfig::JUMP_FORCE;
-        SetOnGround(false);
     }
 }
 
-void CMario::UpdateState(const InputState& input) {
-    if (!IsOnGround()) {
-        state = EMarioState::JUMP;
-    }
-    else if (vx != 0) {
-        // Check for skidding: moving one way but pressing the other
-        if ((vx > 0 && input.left) || (vx < 0 && input.right)) {
-            state = EMarioState::SKID;
-        }
-        else {
-            state = EMarioState::WALK;
-        }
+void CMario::UpdateState() {
+    EMarioState oldState = state;
+    const auto& input = CInputManager::GetInstance()->GetState();
+
+    if (!onGround) {
+        if (vy > 0) state = EMarioState::JUMP;
+        else state = EMarioState::FALL;
     }
     else {
-        state = EMarioState::IDLE;
+        if (std::abs(vx) > 0.01f) {
+            if ((vx > 0 && input.left) || (vx < 0 && input.right)) state = EMarioState::SKID;
+            else state = EMarioState::WALK;
+        }
+        else {
+            vx = 0;
+            state = EMarioState::IDLE;
+        }
+    }
+
+    if (oldState != state) {
+        DebugOut(L"[FSM] State Changed: %d\n", (int)state);
     }
 }
+
 
 void CMario::ApplyPhysics(float dt) {
     vy += MarioConfig::GRAVITY * dt;
@@ -92,8 +89,10 @@ void CMario::Render() {
     switch (state) {
         case EMarioState::WALK: aniName = "ANI_MARIO_WALK"; break;
         case EMarioState::JUMP: aniName = "ANI_MARIO_JUMP"; break;
+        case EMarioState::FALL: aniName = "ANI_MARIO_JUMP"; break;
         case EMarioState::SKID: aniName = "ANI_MARIO_SKID"; break;
-        default: aniName = "ANI_MARIO_IDLE"; break;
+        case EMarioState::DIE:  aniName = "ANI_MARIO_DIE";  break;
+        default:                aniName = "ANI_MARIO_IDLE"; break;
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
