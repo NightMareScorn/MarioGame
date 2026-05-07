@@ -5,9 +5,12 @@
 #include "../entities/blocks/CLuckyBlock.h"
 #include "../entities/blocks/CDecorBlock.h"
 #include "../entities/blocks/CInvisibleBlock.h"
+#include "../entities/blocks/CPipe.h"
 #include "../entities/enemies/CGoomba.h"
 #include "../entities/enemies/CKoopa.h"
 #include "../entities/items/CMushroom.h"
+#include "../entities/items/CStar.h"
+#include "../entities/items/CFireFlower.h"
 #include "../entities/items/CCoin.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
@@ -116,7 +119,10 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 case 0: // Air
                     break;
 
-                case 1: // Ground
+                case 1: // Ground — uses distinct ground brick visual
+                    scene->blocks.push_back(new CBrick(x, y, "ANI_GROUND_BRICK_OW"));
+                    break;
+
                 case 5: // Brick (stair/structure)
                 case 7: // Brick (platform)
                     scene->blocks.push_back(new CBrick(x, y));
@@ -139,18 +145,30 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                     break;
                 }
 
-                case 3: // Bush
-                    // We don't have bush sprites yet, but mapping is correct per convention.
-                    DebugOut(L"[INFO] Bush (ID 3) mapped at col=%d, row=%d but no sprite exists yet.\n", j, i);
+                case 3: // Bush — decorative, no collision
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
                     break;
 
-                case 8: // Flag Pole
+                case 8: // Flag pole segment
+                {
                     scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
+                    // Only render top ornament + flag cloth on the TOPMOST flag tile
+                    // Check if the tile above is NOT a flag tile (or we're at row 0)
+                    bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
+                    if (isTopmost) {
+                        // Ball ornament: 8x8px, centered on the 2px-wide pole
+                        // Pole center = x + 1, so ball left = x + 1 - 4 = x - 3
+                        float poleTop = y + 16.0f;
+                        scene->decors.push_back(new CDecorBlock(x - 3.0f, poleTop, "ANI_FLAG_OW_TOP"));
+                        // Flag cloth: 16x16px, hangs to the left of the pole
+                        // Cloth right edge near pole, top near the ball
+                        scene->decors.push_back(new CDecorBlock(x - 14.0f, poleTop - 8.0f, "ANI_FLAG_OW"));
+                    }
                     break;
+                }
 
-                case 9: // Castle
-                    // We don't have Castle sprites yet, using placeholder or skipping.
-                    DebugOut(L"[INFO] Castle (ID 9) mapped at col=%d, row=%d but no sprite exists yet.\n", j, i);
+                case 9: // Castle — decorative, no collision
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
                     break;
 
                 default:
@@ -201,8 +219,16 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         spawnedObj = new CKoopa(x, y);
         scene->enemies.push_back(spawnedObj);
     }
-    else if (type == "mushroom" || type == "star" || type == "1-up") { // Treating star/1up as mushroom visually for now
+    else if (type == "mushroom" || type == "1-up") {
         spawnedObj = new CMushroom(x, y);
+        scene->items.push_back(spawnedObj);
+    }
+    else if (type == "star") {
+        spawnedObj = new CStar(x, y);
+        scene->items.push_back(spawnedObj);
+    }
+    else if (type == "flower") {
+        spawnedObj = new CFireFlower(x, y);
         scene->items.push_back(spawnedObj);
     }
     else if (type == "coin") {
@@ -214,7 +240,22 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         float topEdgeY = y + 16.0f;
         float groundY = 32.0f;
         float pipeHeight = topEdgeY - groundY;
-        scene->blocks.push_back(new CInvisibleBlock(x, groundY, 32.0f, pipeHeight)); 
+        if (pipeHeight > 0) {
+            scene->blocks.push_back(new CPipe(x, groundY, 32.0f, pipeHeight));
+        }
+    }
+    // Decorative background objects — no collision
+    else if (type == "hill_small") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED"));
+    }
+    else if (type == "hill_big") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED"));
+    }
+    else if (type == "tree_small") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED"));
+    }
+    else if (type == "tree_big") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED"));
     }
 
     if (spawnedObj && hidden_in_block) {
@@ -226,6 +267,8 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
                     lucky->SetHiddenItem(spawnedObj);
                     // Force item state to hidden
                     if (auto m = dynamic_cast<CMushroom*>(spawnedObj)) m->SetState(MUSHROOM_STATE_HIDDEN);
+                    if (auto s = dynamic_cast<CStar*>(spawnedObj)) s->SetState(STAR_STATE_HIDDEN);
+                    if (auto f = dynamic_cast<CFireFlower*>(spawnedObj)) f->SetState(FLOWER_STATE_HIDDEN);
                     if (auto c = dynamic_cast<CCoin*>(spawnedObj)) c->SetState(COIN_STATE_HIDDEN);
                     break;
                 }

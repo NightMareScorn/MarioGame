@@ -35,3 +35,12 @@ coin,256,144,hidden_in_block=true
 coin,368,144,hidden_in_block=true
 star,1616,144,hidden_in_block=true
 1-up,1024,144,hidden_in_block=true,invisible_block=true
+hill_big,0,192
+hill_small,256,192
+hill_big,768,192
+hill_small,1024,192
+hill_big,1536,192
+hill_small,1792,192
+hill_big,2304,192
+hill_small,2560,192
+hill_big,3072,192

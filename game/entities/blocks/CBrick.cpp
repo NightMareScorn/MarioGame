@@ -1,10 +1,8 @@
 #include "CBrick.h"
 #include "../../../engine/Graphics/Animations.h"
 
-#include "../../registry/CResourceRegistry.h"
-
 void CBrick::Render() {
-    CAnimations::GetInstance()->Render("ANI_BRICK_IDLE", x, y);
+    CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
 void CBrick::GetBoundingBox(float &l, float &t, float &r, float &b) {

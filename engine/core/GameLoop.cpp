@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "../../game/scenes/play/CPlayScene.h"
 
-#define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
+#define BACKGROUND_COLOR D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f) // NES SMB1 sky blue (#5C94FC)
 
 CPlayScene* scene = nullptr;
 

@@ -4,6 +4,7 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/utils/debug.h"
 #include "../../../engine/physics/CCollision.h"
+#include "../../../engine/core/Game.h"
 
 void CPlayScene::Load() {
     auto registry = CResourceRegistry::GetInstance();
@@ -59,8 +60,21 @@ void CPlayScene::Update(float dt) {
 }
 
 void CPlayScene::Render() {
-    // Render order: background decors → blocks → items → enemies → mario (front)
+    ID3DX10Sprite* spriteHandler = CGame::GetInstance()->GetSpriteHandler();
+    ID3D10Device* pD3DDevice = CGame::GetInstance()->GetDirect3DDevice();
+    FLOAT NewBlendFactor[4] = { 0,0,0,0 };
+
+    // LAYER 1: Background decorations (hills, clouds, bushes, flag, castle)
+    // Rendered first so they appear BEHIND everything else.
     for (auto d : decors) d->Render();
+
+    // Flush the decor layer to GPU before rendering foreground objects.
+    // D3DX10_SPRITE_SORT_TEXTURE reorders sprites by texture within a batch,
+    // which can cause later-drawn sprites to appear behind earlier ones.
+    // By flushing here, we guarantee decors are committed to the framebuffer first.
+    spriteHandler->Flush();
+
+    // LAYER 2: Foreground — blocks, items, enemies, mario (all in same batch)
     for (auto b : blocks) b->Render();
     for (auto i : items) i->Render();
     for (auto e : enemies) e->Render();
