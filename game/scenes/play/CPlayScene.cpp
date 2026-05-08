@@ -5,13 +5,18 @@
 #include "../../../engine/utils/debug.h"
 #include "../../../engine/physics/CCollision.h"
 #include "../../../engine/core/Game.h"
+#include "../../../engine/input/KeyboardManager.h"
+#include "../../entities/blocks/CPipe.h"
 
-void CPlayScene::Load() {
+void CPlayScene::Load(std::string mapPath) {
     auto registry = CResourceRegistry::GetInstance();
     registry->LoadResourcesForPlayScene();
 
+    currentMapPath = mapPath;
+    pendingMapPath = "";
+
     mario = nullptr; // Let MapLoader initialize mario
-    CMapLoader::GetInstance()->Load("content/levels/level_1_1.csv", this);
+    CMapLoader::GetInstance()->Load(mapPath, this);
 
     if (mario == nullptr) {
         DebugOut(L"[WARNING] Mario not found in map! Creating default.\n");
@@ -20,8 +25,8 @@ void CPlayScene::Load() {
         mario->y = 150.0f;
     }
 
-    DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d, Decors: %d\n",
-             (int)blocks.size(), (int)decors.size());
+    DebugOut(L"[INFO] CPlayScene::Load complete. Map: %hs, Blocks: %d, Decors: %d\n",
+             mapPath.c_str(), (int)blocks.size(), (int)decors.size());
 }
 
 void CPlayScene::Update(float dt) {
@@ -56,7 +61,41 @@ void CPlayScene::Update(float dt) {
     for (auto b : blocks) coObjects.push_back(b);
     CCollision::ResolveCollision(mario, dt, coObjects);
     mario->UpdateState(); 
+
+    // Check for pipe entry
+    auto kb = KeyboardManager::GetInstance();
+    if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN)) {
+        for (auto b : blocks) {
+            if (auto pipe = dynamic_cast<CPipe*>(b)) {
+                if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down") {
+                    float ml, mt, mr, mb;
+                    mario->GetBoundingBox(ml, mt, mr, mb);
+                    float pl, pt, pr, pb;
+                    pipe->GetBoundingBox(pl, pt, pr, pb);
+
+                    // Mario's bottom (mt) should be at Pipe's top (pb)
+                    if (mt >= pb - 2.0f && mt <= pb + 2.0f && ml < pr && mr > pl) {
+                        DebugOut(L"[INFO] Entering pipe to: %hs\n", pipe->GetDestMap().c_str());
+                        std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
+                        TransitionToMap(dest);
+                        break;
+                    } else if (ml < pr && mr > pl) {
+                         // Only log if Mario is actually at the pipe horizontally but Y is wrong
+                         // DebugOut(L"[DEBUG] Pipe overlap: MarioBot=%.2f, PipeTop=%.2f\n", mt, pb);
+                    }
+                }
+            }
+        }
+    }
+
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+
+    // Perform map transition if needed
+    if (!pendingMapPath.empty()) {
+        std::string nextMap = pendingMapPath;
+        Unload();
+        Load(nextMap);
+    }
 }
 
 void CPlayScene::Render() {

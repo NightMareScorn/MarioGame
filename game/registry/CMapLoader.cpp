@@ -70,7 +70,7 @@ void CMapLoader::Load(std::string path, CPlayScene* scene) {
 
         // Route to appropriate parser based on current section
         if (currentSection == "# SETTINGS") {
-            _ParseSettings(line);
+            _ParseSettings(line, scene);
         }
         else if (currentSection == "# TILEMAP") {
             tileMapLines.push_back(line);
@@ -88,11 +88,25 @@ void CMapLoader::Load(std::string path, CPlayScene* scene) {
     DebugOut(L"[INFO] Map loading complete.\n");
 }
 
-void CMapLoader::_ParseSettings(const std::string& line) {
+void CMapLoader::_ParseSettings(const std::string& line, CPlayScene* scene) {
     auto parts = _Split(line, ',');
-    if (parts.size() >= 2 && parts[0] == "cell_size") {
+    if (parts.size() < 2) return;
+
+    if (parts[0] == "cell_size") {
         cellSize = std::stoi(parts[1]);
         DebugOut(L"[INFO] Setting cellSize = %d\n", cellSize);
+    }
+    else if (parts[0] == "background_color") {
+        if (parts[1] == "black") {
+            scene->SetClearColor(D3DXCOLOR(0, 0, 0, 1.0f));
+        }
+        else if (parts[1] == "blue") {
+            scene->SetClearColor(D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f));
+        }
+    }
+    else if (parts[0] == "theme") {
+        // Future: handle themes (overworld, underground, etc.)
+        DebugOut(L"[INFO] Map theme: %hs\n", parts[1].c_str());
     }
 }
 
@@ -109,6 +123,7 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
     }
 
     int H = (int)matrix.size();
+    mapHeight = (float)(H * cellSize);
     for (int i = 0; i < H; i++) {
         for (int j = 0; j < (int)matrix[i].size(); j++) {
             int id = matrix[i][j];
@@ -116,64 +131,45 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
             float y = (float)((H - 1 - i) * cellSize); // Y-up: row 0 = top = highest Y
 
             switch (id) {
-                case 0: // Air
-                    break;
-
-                case 1: // Ground — uses distinct ground brick visual
-                    scene->blocks.push_back(new CBrick(x, y, "ANI_GROUND_BRICK_OW"));
-                    break;
-
-                case 5: // Brick (stair/structure)
-                case 7: // Brick (platform)
-                    scene->blocks.push_back(new CBrick(x, y));
-                    break;
-
-                case 4: // Lucky Block (animated ? block)
-                    scene->blocks.push_back(new CLuckyBlock(x, y));
-                    break;
-
-                case 2: // Cloud - render full 6-part composite cloud
-                {
-                    // Clouds are precisely cropped in the atlas and have different heights. 
-                    // Using mathematically matched pixel offsets to seamlessly stitch them with zero gaps!
-                    scene->decors.push_back(new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT"));
-                    scene->decors.push_back(new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID"));
-                    scene->decors.push_back(new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT"));
-                    scene->decors.push_back(new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT"));
-                    scene->decors.push_back(new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID"));
-                    scene->decors.push_back(new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT"));
-                    break;
+            case 0: // Air
+                break;
+            case 1: // Ground
+                scene->blocks.push_back(new CBrick(x, y, "ANI_GROUND_BRICK_OW"));
+                break;
+            case 5: // Brick (stair/structure)
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_STAIR"));
+                break;
+            case 7: // Brick (platform)
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_PLATFORM"));
+                break;
+            case 3: // Bush
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
+                break;
+            case 2: // Cloud
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED"));
+                break;
+            case 4: // Question block
+                scene->blocks.push_back(new CLuckyBlock(x, y));
+                break;
+            case 6: // Breakable brick
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_IDLE"));
+                break;
+            case 8: // Flag pole segment
+            {
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
+                bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
+                if (isTopmost) {
+                    scene->decors.push_back(new CDecorBlock(x - 3.0f, y + 8.0f, "ANI_FLAG_OW_TOP"));
+                    scene->decors.push_back(new CDecorBlock(x - 12.0f, y + 8.0f, "ANI_FLAG_OW"));
                 }
-
-                case 3: // Bush — decorative, no collision
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
-                    break;
-
-                case 8: // Flag pole segment
-                {
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
-                    // Only render top ornament + flag cloth on the TOPMOST flag tile
-                    // Check if the tile above is NOT a flag tile (or we're at row 0)
-                    bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
-                    if (isTopmost) {
-                        // Ball ornament: 8x8px, centered on the 2px-wide pole
-                        // Pole center = x + 1, so ball left = x + 1 - 4 = x - 3
-                        float poleTop = y + 16.0f;
-                        scene->decors.push_back(new CDecorBlock(x - 3.0f, poleTop, "ANI_FLAG_OW_TOP"));
-                        // Flag cloth: 16x16px, hangs to the left of the pole
-                        // Cloth right edge near pole, top near the ball
-                        scene->decors.push_back(new CDecorBlock(x - 14.0f, poleTop - 8.0f, "ANI_FLAG_OW"));
-                    }
-                    break;
-                }
-
-                case 9: // Castle — decorative, no collision
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
-                    break;
-
-                default:
-                    DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
-                    break;
+                break;
+            }
+            case 9: // Castle
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
+                break;
+            default:
+                DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
+                break;
             }
         }
     }
@@ -193,14 +189,28 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
 
     float x = std::stof(parts[1]);
     float y = std::stof(parts[2]);
-    // The objects in level_1_1.csv are exported using a Y-down coordinate system for a standard 240px NES screen height.
+    // The objects in level_1_1.csv are exported using a Y-down coordinate system.
     // Tiled exports the TOP-LEFT corner of the object. Since most of our entities (Mario, Goomba, Items) are 16x16,
     // we must subtract 16 to correctly find their BOTTOM-LEFT anchor in our Y-up world ecosystem.
-    y = 240.0f - y - 16.0f; 
-
+    y = mapHeight - y - 16.0f; 
     bool hidden_in_block = false;
+    bool invisible_block = false;
+    std::string dest_map = "";
+    std::string enter_direction = "";
+    float height = 0;
+    float patrol_left = 0;
+    float patrol_right = 0;
+    std::string enemy_type = "green_walking";
+
     for (size_t i = 3; i < parts.size(); ++i) {
         if (parts[i] == "hidden_in_block=true") hidden_in_block = true;
+        if (parts[i] == "invisible_block=true") invisible_block = true;
+        if (parts[i].find("dest_map=") == 0) dest_map = parts[i].substr(9);
+        if (parts[i].find("enter_direction=") == 0) enter_direction = parts[i].substr(16);
+        if (parts[i].find("height=") == 0) height = std::stof(parts[i].substr(7));
+        if (parts[i].find("patrol_left=") == 0) patrol_left = std::stof(parts[i].substr(12));
+        if (parts[i].find("patrol_right=") == 0) patrol_right = std::stof(parts[i].substr(13));
+        if (parts[i].find("type=") == 0) enemy_type = parts[i].substr(5);
     }
 
     CGameObject* spawnedObj = nullptr;
@@ -209,19 +219,20 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         if (scene->mario == nullptr) scene->mario = new CMario();
         scene->mario->x = x;
         scene->mario->y = y;
+        spawnedObj = scene->mario;
         DebugOut(L"[INFO] Object: Mario at (%.2f, %.2f)\n", x, y);
     }
     else if (type == "goomba") {
-        spawnedObj = new CGoomba(x, y);
+        spawnedObj = new CGoomba(x, y, patrol_left, patrol_right);
         scene->enemies.push_back(spawnedObj);
     }
     else if (type == "koopa") {
-        spawnedObj = new CKoopa(x, y);
+        spawnedObj = new CKoopa(x, y, enemy_type, patrol_left, patrol_right);
         scene->enemies.push_back(spawnedObj);
     }
     else if (type == "mushroom" || type == "1-up") {
-        spawnedObj = new CMushroom(x, y);
-        scene->items.push_back(spawnedObj);
+        spawnedObj = new CBrick(x, y, "ANI_BRICK_IDLE", invisible_block);
+        scene->items.push_back(spawnedObj); // Treat as item-carrying brick
     }
     else if (type == "star") {
         spawnedObj = new CStar(x, y);
@@ -238,11 +249,19 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
     else if (type == "pipe") {
         // Since Y was subtracted by 16 as a general rule, we must add 16 back to get the Top Edge!
         float topEdgeY = y + 16.0f;
-        float groundY = 32.0f;
-        float pipeHeight = topEdgeY - groundY;
-        if (pipeHeight > 0) {
-            scene->blocks.push_back(new CPipe(x, groundY, 32.0f, pipeHeight));
+        float pipeHeight = height;
+        float pipeBottomY = y;
+
+        if (pipeHeight <= 0) {
+            // Backward compatibility: calculate height relative to groundY=32 if not specified
+            float groundY = 32.0f;
+            pipeHeight = topEdgeY - groundY;
+            pipeBottomY = groundY;
         }
+
+        if (pipeHeight <= 0) pipeHeight = 32.0f; // Minimum fallback height
+
+        scene->blocks.push_back(new CPipe(x, pipeBottomY, 32.0f, pipeHeight, "ANI_PIPE_UPWARDS_ASSEMBLED", dest_map, enter_direction));
     }
     // Decorative background objects — no collision
     else if (type == "hill_small") {

@@ -51,7 +51,11 @@ void LoadAssets()
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
-    pD3DDevice->ClearRenderTargetView(pRenderTargetView, BACKGROUND_COLOR);
+    D3DXCOLOR clearColor = D3DXCOLOR(0, 0, 0, 1); // Default to black if no scene
+    if (scene != nullptr) {
+        clearColor = scene->GetClearColor();
+    }
+    pD3DDevice->ClearRenderTargetView(pRenderTargetView, clearColor);
 }
 
 void RenderGame(CGame* g)

@@ -1,26 +1,16 @@
 #include "CGoomba.h"
 #include "../../../engine/Graphics/Animations.h"
 
-CGoomba::CGoomba(float x, float y) : CGameObject() {
+CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameObject() {
     this->x = x;
     this->y = y;
-    this->start_x = x;
     this->vx = -GOOMBA_WALKING_SPEED;
     SetState(GOOMBA_STATE_WALKING);
 }
 
 void CGoomba::Update(float dt) {
     if (state == GOOMBA_STATE_DIE) return;
-
     vy -= GOOMBA_GRAVITY * dt;
-
-    // Movement handled by CCollision inside CPlayScene,
-    // but we can flip direction if we hit something horizontally
-    // Since CCollision zeroes out vx on horizontal collision:
-    if (vx == 0) {
-        vx = (nx > 0) ? GOOMBA_WALKING_SPEED : -GOOMBA_WALKING_SPEED;
-        nx = -nx; // flip facing
-    }
 }
 
 void CGoomba::Render() {
@@ -40,6 +30,5 @@ void CGoomba::SetState(int s) {
     if (state == GOOMBA_STATE_DIE) {
         vx = 0;
         vy = 0;
-        // Optionally set a timer to delete the body
     }
 }

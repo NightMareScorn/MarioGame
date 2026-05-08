@@ -55,3 +55,6 @@
 2040 ANI_FLOWER_OW 100 120 121 122 123
 # Ground brick (visually distinct from breakable brick)
 2041 ANI_GROUND_BRICK_OW 100 139
+# Stair and Platform bricks
+2042 ANI_BRICK_STAIR 100 100
+2043 ANI_BRICK_PLATFORM 100 100

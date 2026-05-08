@@ -1,8 +1,8 @@
 #include "CPipe.h"
 #include "../../../engine/Graphics/Animations.h"
 
-CPipe::CPipe(float x, float y, float width, float height, std::string aniName)
-    : CBlock(x, y), width(width), height(height), aniName(aniName) {}
+CPipe::CPipe(float x, float y, float width, float height, std::string aniName, std::string destMap, std::string enterDirection)
+    : CBlock(x, y), width(width), height(height), aniName(aniName), destMap(destMap), enterDirection(enterDirection) {}
 
 void CPipe::Render() {
     // Pipe is built from individual 32x16 tile pieces:

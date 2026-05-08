@@ -19,6 +19,7 @@ theme,surface
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 # OBJECTS
 type,x,y,extra
+mario,48,160
 pipe,96,176,is_solid=true
 pipe,304,192,is_solid=true
 pipe,320,176,is_solid=true

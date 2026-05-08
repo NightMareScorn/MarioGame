@@ -27,7 +27,7 @@ koopa,1712,192
 pipe,448,176,is_solid=true
 pipe,608,160,is_solid=true
 pipe,736,144,is_solid=true
-pipe,912,144,dest_map=1_1_underground,enter_direction=down
+pipe,912,144,dest_map=level_1_1_hidden,enter_direction=down
 pipe,2608,176,is_solid=true
 pipe,2864,176,is_solid=true
 mushroom,336,144,hidden_in_block=true
