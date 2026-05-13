@@ -17,6 +17,17 @@ if !errorlevel! neq 0 (
     exit /b 1
 )
 
+:: Build Next.js UI
+echo Building Next.js UI...
+cd ui
+call npm install
+call npm run build
+cd ..
+if not exist "ui\out" (
+    echo Error: UI build failed.
+    exit /b 1
+)
+
 echo.
 echo Build successful! 
 echo Solution file: build/MarioGame.sln

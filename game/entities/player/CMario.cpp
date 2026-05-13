@@ -40,6 +40,24 @@ void CMario::HandleInput(const InputState& input, float dt) {
 
     if (input.jump && onGround) {
         vy = MarioConfig::JUMP_FORCE;
+        isJumping = true;
+        jumpStartY = y;
+    }
+    
+    if (isJumping) {
+        if (input.jump) {
+            float jumpHeight = y - jumpStartY;
+            if (jumpHeight < MarioConfig::MAX_JUMP_HEIGHT) {
+                // Keep pushing up while holding
+                vy += MarioConfig::JUMP_HOLD_FORCE * dt; 
+            } else {
+                isJumping = false;
+            }
+        } else {
+            // JUMP CUT-OFF: Instant stop for short hops
+            if (vy > 0) vy = 0; 
+            isJumping = false;
+        }
     }
 }
 
@@ -69,9 +87,20 @@ void CMario::UpdateState() {
 
 
 void CMario::ApplyPhysics(float dt) {
-    vy += MarioConfig::GRAVITY * dt;
+    float currentGravity = MarioConfig::GRAVITY;
+
+    vy += currentGravity * dt;
     if (vx > MarioConfig::MAX_SPEED_X) vx = MarioConfig::MAX_SPEED_X;
     if (vx < -MarioConfig::MAX_SPEED_X) vx = -MarioConfig::MAX_SPEED_X;
+
+    // 1. Map boundaries
+    if (x < 0) x = 0;
+    if (mapWidth > 0 && x > mapWidth - MARIO_W) x = mapWidth - MARIO_W;
+
+    // 2. Camera boundary (cannot go left of camera)
+    float camX, camY;
+    CCamera::GetInstance()->GetCamPos(camX, camY);
+    if (x < camX) x = camX;
 }
 
 void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {

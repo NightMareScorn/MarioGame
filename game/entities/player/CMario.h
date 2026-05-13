@@ -12,10 +12,15 @@ public:
     void UpdateState();
     void SetOnGround(bool v) { onGround = v; }
     bool IsOnGround() const { return onGround; }
+    void SetMapWidth(float w) { mapWidth = w; }
 private:
     EMarioState state = EMarioState::IDLE;
     int nx = 1; // 1 for right, -1 for left
     bool onGround = false;
+    bool isJumping = false;
+    float jumpHoldTime = 0.0f;
+    float jumpStartY = 0.0f;
+    float mapWidth = 0.0f;
 
     void HandleInput(const InputState& input, float dt);
     void ApplyPhysics(float dt);

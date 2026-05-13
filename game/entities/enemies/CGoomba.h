@@ -11,6 +11,7 @@
 #define GOOMBA_GRAVITY 0.002f
 
 class CGoomba : public CGameObject {
+protected:
     float start_x;
     int state;
 public:

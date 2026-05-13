@@ -58,7 +58,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
             // Resolve Y axis
             if (obj->vy < 0) {
                 // Falling down, hit top side of 'other'
-                obj->y = B.b;
+                obj->y = B.b + 0.1f;
                 obj->vy = 0;
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else if (obj->vy > 0) {

@@ -12,6 +12,7 @@
 #define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
 
 CPlayScene* scene = nullptr;
+static std::string selectedLevel = "content/levels/level_1_1.csv";
 
 void HandleDebugInput() {
 #ifdef _DEBUG      
@@ -31,7 +32,7 @@ void HandleDebugInput() {
 void Update(float dt)
 {
     if (scene == nullptr) {
-        scene = new CPlayScene();
+        scene = new CPlayScene(selectedLevel);
         scene->Load();
     }
 
@@ -84,8 +85,9 @@ void Render()
     pSwapChain->Present(0, 0);
 }
 
-int Run()
+int Run(std::string level)
 {
+    selectedLevel = level;
 	MSG msg;
 	int done = 0;
 
@@ -93,7 +95,7 @@ int Run()
 
 	while (!done)
 	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT) done = 1;
 

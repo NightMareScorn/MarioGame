@@ -7,8 +7,15 @@
 #include "../entities/blocks/CInvisibleBlock.h"
 #include "../entities/enemies/CGoomba.h"
 #include "../entities/enemies/CKoopa.h"
+#include "../entities/enemies/CCheepCheep.h"
+#include "../entities/enemies/CBowser.h"
+#include "../entities/enemies/CFireBar.h"
+#include "../entities/enemies/CPodoboo.h"
 #include "../entities/items/CMushroom.h"
 #include "../entities/items/CCoin.h"
+#include "../entities/items/CFireFlower.h"
+#include "../entities/blocks/CPlatform.h"
+#include "../entities/blocks/CCastleBridge.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
 
@@ -105,6 +112,10 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
         matrix.push_back(row);
     }
 
+    if (!matrix.empty()) {
+        scene->mapWidth = (float)(matrix[0].size() * cellSize);
+    }
+
     int H = (int)matrix.size();
     for (int i = 0; i < H; i++) {
         for (int j = 0; j < (int)matrix[i].size(); j++) {
@@ -140,8 +151,7 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 }
 
                 case 3: // Bush
-                    // We don't have bush sprites yet, but mapping is correct per convention.
-                    DebugOut(L"[INFO] Bush (ID 3) mapped at col=%d, row=%d but no sprite exists yet.\n", j, i);
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
                     break;
 
                 case 8: // Flag Pole
@@ -149,9 +159,28 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                     break;
 
                 case 9: // Castle
-                    // We don't have Castle sprites yet, using placeholder or skipping.
-                    DebugOut(L"[INFO] Castle (ID 9) mapped at col=%d, row=%d but no sprite exists yet.\n", j, i);
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
                     break;
+
+                // --- NEW ASSEMBLED PREFABS ---
+                case 10: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED")); break;
+                case 11: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED")); break;
+                case 12: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED")); break;
+                case 13: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_BIG_ASSEMBLED")); break;
+                case 14: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED")); break;
+                case 15: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED")); break;
+                case 16: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED")); break;
+                case 17: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED")); break;
+                case 18: scene->decors.push_back(new CDecorBlock(x, y, "ANI_PIPE_UPWARDS_ASSEMBLED")); break;
+                case 19: scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED")); break;
+                case 20: scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED")); break;
+
+                // --- WORLD 2-3 SPECIAL ASSETS ---
+                case 21: scene->blocks.push_back(new CBrick(x, y, "ANI_BRIDGE_BLOCK")); break;
+                case 22: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_LEFT")); break;
+                case 23: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break;
+                case 24: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_RIGHT")); break;
+                case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break; // Pillar stem
 
                 default:
                     DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
@@ -209,8 +238,53 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         spawnedObj = new CCoin(x, y, hidden_in_block);
         scene->items.push_back(spawnedObj);
     }
+    else if (type == "cheep_cheep") {
+        float limit = 32.0f;
+        for (auto p : parts) if (p.find("limit=") == 0) limit = std::stof(p.substr(6)) * 16.0f;
+        auto cheep = new CCheepCheep(x, y);
+        cheep->SetLimit(limit);
+        spawnedObj = cheep;
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "firebar") {
+        spawnedObj = new CFireBar(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "bowser") {
+        spawnedObj = new CBowser(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "podoboo") {
+        spawnedObj = new CPodoboo(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "platform") {
+        float dir = 1.0f;
+        for (auto p : parts) if (p.find("dir=") == 0) dir = std::stof(p.substr(4));
+        spawnedObj = new CPlatform(x, y, dir);
+        scene->blocks.push_back((CBlock*)spawnedObj);
+    }
+    else if (type == "lucky_block") {
+        std::string item = "coin";
+        for (auto p : parts) if (p.find("hidden_item=") == 0) item = p.substr(12);
+        
+        CLuckyBlock* lucky = new CLuckyBlock(x, y);
+        if (item == "mushroom") lucky->SetHiddenItem(new CMushroom(x, y));
+        else if (item == "fireflower") lucky->SetHiddenItem(new CFireFlower(x, y));
+        else lucky->SetHiddenItem(new CCoin(x, y, true));
+        
+        scene->blocks.push_back((CBlock*)lucky);
+    }
+    else if (type == "castle_bridge") {
+        scene->blocks.push_back((CBlock*)new CCastleBridge(x, y));
+    }
+    else if (type == "cloud") {
+        std::string size = "small";
+        for (auto p : parts) if (p.find("size=") == 0) size = p.substr(5);
+        if (size == "large") scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED"));
+        else scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED"));
+    }
     else if (type == "pipe") {
-        // Since Y was subtracted by 16 as a general rule, we must add 16 back to get the Top Edge!
         float topEdgeY = y + 16.0f;
         float groundY = 32.0f;
         float pipeHeight = topEdgeY - groundY;

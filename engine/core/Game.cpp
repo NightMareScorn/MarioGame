@@ -106,6 +106,49 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 	SetPointSamplerState();
 
 	DebugOut(L"[INFO] InitDirectX has been successful\n");
+	ProcessResize(backBufferWidth, backBufferHeight);
+}
+
+void CGame::ProcessResize(int width, int height)
+{
+	if (width <= 0 || height <= 0) return;
+	backBufferWidth = width;
+	backBufferHeight = height;
+
+	// Calculate scale to fit 256x240 into current window while maintaining aspect ratio
+	float scaleX = (float)width / (float)viewportWidth;
+	float scaleY = (float)height / (float)viewportHeight;
+	renderScale = (scaleX < scaleY) ? scaleX : scaleY;
+
+	renderOffsetX = (width - (float)viewportWidth * renderScale) / 2.0f;
+	renderOffsetY = (height - (float)viewportHeight * renderScale) / 2.0f;
+
+	if (pSwapChain) {
+		// Release old view
+		if (pRenderTargetView) pRenderTargetView->Release();
+		pRenderTargetView = NULL;
+
+		// Resize buffers
+		pSwapChain->ResizeBuffers(1, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+
+		// Recreate render target view
+		ID3D10Texture2D* pBackBuffer;
+		pSwapChain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&pBackBuffer);
+		pD3DDevice->CreateRenderTargetView(pBackBuffer, NULL, &pRenderTargetView);
+		pBackBuffer->Release();
+
+		pD3DDevice->OMSetRenderTargets(1, &pRenderTargetView, NULL);
+
+		// Update viewport
+		D3D10_VIEWPORT viewPort;
+		viewPort.Width = width;
+		viewPort.Height = height;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+		viewPort.TopLeftX = 0;
+		viewPort.TopLeftY = 0;
+		pD3DDevice->RSSetViewports(1, &viewPort);
+	}
 }
 
 void CGame::SetPointSamplerState()
@@ -138,15 +181,24 @@ void CGame::Draw(float x, float y, LPTEXTURE tex, RECT* rect, float alpha, int s
 	int width = (sprite_width > 0) ? sprite_width : tex->getWidth();
 	int height = (sprite_height > 0) ? sprite_height : tex->getHeight();
 
+	float camX, camY;
+	CCamera::GetInstance()->GetCamPos(camX, camY);
+
+	// Transform world coordinates (x,y) to viewport coordinates
+	float screenX = x - camX;
+	float screenY = y - camY;
+
+	// Apply scale and offset for letterboxing
+	float finalX = renderOffsetX + screenX * renderScale;
+	float finalY = backBufferHeight - (renderOffsetY + screenY * renderScale);
+
 	D3DXMATRIX matScaling;
 	D3DXMATRIX matTranslation;
 
-	D3DXMatrixScaling(&matScaling, (float)width, (float)height, 1.0f);
-	D3DXMatrixTranslation(&matTranslation, x, backBufferHeight - y, 0.1f);
+	D3DXMatrixScaling(&matScaling, (float)width * renderScale, (float)height * renderScale, 1.0f);
+	D3DXMatrixTranslation(&matTranslation, finalX, finalY, 0.1f);
 
 	D3DXMATRIX matTransform = matScaling * matTranslation;
-
-	D3DXVECTOR2 spriteCentre = D3DXVECTOR2(width / 2.0f, height / 2.0f);
 
 	D3DX10_SPRITE sprite;
 	sprite.pTexture = pRsView;

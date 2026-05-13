@@ -10,7 +10,7 @@ void CPlayScene::Load() {
     registry->LoadResourcesForPlayScene();
 
     mario = nullptr; // Let MapLoader initialize mario
-    CMapLoader::GetInstance()->Load("content/levels/level_1_1.csv", this);
+    CMapLoader::GetInstance()->Load(levelPath, this);
 
     if (mario == nullptr) {
         DebugOut(L"[WARNING] Mario not found in map! Creating default.\n");
@@ -18,6 +18,9 @@ void CPlayScene::Load() {
         mario->x = 100.0f;
         mario->y = 150.0f;
     }
+
+    CCamera::GetInstance()->SetCamPos(0, 0);
+    CCamera::GetInstance()->SetMapWidth(0); // Will be set in process map or update
 
     DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d, Decors: %d\n",
              (int)blocks.size(), (int)decors.size());
@@ -32,13 +35,12 @@ void CPlayScene::Update(float dt) {
     std::vector<CGameObject*> coObjectsForMario;
     coObjectsForMario.reserve(blocks.size() + enemies.size() + items.size());
     for (auto b : blocks) coObjectsForMario.push_back(b);
-    // In a real game, enemies and items will have their own collision callbacks with Mario
     for (auto e : enemies) coObjectsForMario.push_back(e);
     for (auto i : items) coObjectsForMario.push_back(i);
 
     CCollision::ResolveCollision(mario, dt, coObjectsForMario);
 
-    // Resolve collision for enemies and block-colliding items too, against blocks only
+    // Resolve collision for enemies and items against blocks only
     std::vector<CGameObject*> coObjectsForOthers;
     coObjectsForOthers.reserve(blocks.size());
     for (auto b : blocks) coObjectsForOthers.push_back(b);
@@ -50,11 +52,14 @@ void CPlayScene::Update(float dt) {
         CCollision::ResolveCollision(i, dt, coObjectsForOthers);
     }
 
-    std::vector<CGameObject*> coObjects;
-    coObjects.reserve(blocks.size());
-    for (auto b : blocks) coObjects.push_back(b);
-    CCollision::ResolveCollision(mario, dt, coObjects);
     mario->UpdateState(); 
+    
+    // Boundary checks for Mario
+    if (mario->x < 0) mario->x = 0;
+    if (mapWidth > 0 && mario->x > mapWidth - 16) mario->x = mapWidth - 16;
+    mario->SetMapWidth(mapWidth);
+
+    CCamera::GetInstance()->SetMapWidth(mapWidth);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 }
 
