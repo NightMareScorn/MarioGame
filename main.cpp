@@ -6,6 +6,8 @@
 #include <windows.h>
 #include <wrl.h>
 #include "WebView2.h"
+#include "engine/utils/CScoreManager.h"
+#include <iomanip>
 
 using namespace Microsoft::WRL;
 
@@ -39,12 +41,31 @@ void InitializeWebView(HWND hWnd) {
                                         LPWSTR message;
                                         args->TryGetWebMessageAsString(&message);
                                         std::wstring wmsg(message);
-                                        selectedLevel = std::string(wmsg.begin(), wmsg.end());
+                                        std::string msgStr;
+                                        for (wchar_t c : wmsg) msgStr += (char)c;
                                         CoTaskMemFree(message);
 
-                                        // Start Game
-                                        isGameStarted = true;
-                                        webviewController->put_IsVisible(FALSE);
+                                        if (msgStr == "GET_SCORES") {
+                                            // Build JSON manually since we don't have a library
+                                            std::string json = "{";
+                                            auto manager = CScoreManager::GetInstance();
+                                            // Assuming level IDs are 1-1, 1-2, etc.
+                                            const char* ids[] = { "1-1", "1-2", "1-3", "1-4", "2-1", "2-2", "2-3", "2-4" };
+                                            for (int i = 0; i < 8; ++i) {
+                                                auto best = manager->GetBest(ids[i]);
+                                                json += "\"" + std::string(ids[i]) + "\":{\"score\":" + std::to_string(best.score) + ",\"time\":\"" + best.time + "\"}";
+                                                if (i < 7) json += ",";
+                                            }
+                                            json += "}";
+                                            
+                                            std::wstring wjson;
+                                            for (char c : json) wjson += (wchar_t)c;
+                                            webview->PostWebMessageAsJson(wjson.c_str());
+                                        } else {
+                                            selectedLevel = msgStr;
+                                            isGameStarted = true;
+                                            webviewController->put_IsVisible(FALSE);
+                                        }
                                         return S_OK;
                                     }).Get(), nullptr);
 
@@ -83,6 +104,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LPGAME game = CGame::GetInstance();
   game->Init(hWnd, hInstance);
 
+  CScoreManager::GetInstance()->Load();
+
   SetResizeCallback([](int w, int h) {
       if (webviewController) {
           RECT bounds = { 0, 0, w, h };
@@ -99,23 +122,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       InitializeWebView(hWnd);
   }
 
-  // Main Message Loop
-  MSG msg;
-  while (GetMessage(&msg, NULL, 0, 0)) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
+  // Application Loop
+  while (true) {
+      isGameStarted = false;
+      if (webviewController) webviewController->put_IsVisible(TRUE);
+      CGame::GetInstance()->SetExitLevel(false);
 
-      if (isGameStarted) break;
+      // Main Message Loop for Menu
+      MSG msg;
+      bool quit = false;
+      while (GetMessage(&msg, NULL, 0, 0)) {
+          TranslateMessage(&msg);
+          DispatchMessage(&msg);
+
+          if (isGameStarted) break;
+          if (msg.message == WM_QUIT) { quit = true; break; }
+      }
+
+      if (quit) break;
+
+      if (selectedLevel.empty()) selectedLevel = "content/levels/level_1_1.csv";
+      if (selectedLevel.find("content/levels/") == std::string::npos) {
+          selectedLevel = "content/levels/" + selectedLevel;
+      }
+
+      Run(selectedLevel);
   }
 
-  // After game starts, clean up WebView or just stop processing its messages
-  if (webviewController) webviewController->put_IsVisible(FALSE);
-
-  if (selectedLevel.empty()) selectedLevel = "content/levels/level_1_1.csv";
-  if (selectedLevel.find("content/levels/") == std::string::npos) {
-      selectedLevel = "content/levels/" + selectedLevel;
-  }
-
-  Run(selectedLevel);
   return 0;
 }

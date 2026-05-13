@@ -36,6 +36,8 @@ class CGame
 
 	ID3D10SamplerState* pPointSamplerState;
 
+	bool exitLevelRequested = false;
+
 public:
 	void Init(HWND hWnd, HINSTANCE hInstance);
 
@@ -77,6 +79,9 @@ public:
 
 	void GetCamPos(float& x, float& y) { CCamera::GetInstance()->GetCamPos(x, y); }
 	void SetCamPos(float x, float y) { CCamera::GetInstance()->SetCamPos(x, y); }
+
+	void SetExitLevel(bool exit) { exitLevelRequested = exit; }
+	bool IsExitLevelRequested() { return exitLevelRequested; }
 
 	~CGame();
 };

@@ -4,3 +4,5 @@
 3 content/tilesets/brick-blocks.png
 4 content/tilesets/object.png
 5 content/textures/enemies-ground-ow.png
+6 content/textures/enemy.png
+7 content/textures/mario.png

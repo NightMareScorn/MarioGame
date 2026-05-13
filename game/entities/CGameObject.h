@@ -12,6 +12,8 @@ public:
 
     CGameObject() : x(100), y(100), vx(0), vy(0), ax(0), ay(0), nx(1) {}
     CGameObject(float x, float y) : x(x), y(y), vx(0), vy(0), ax(0), ay(0), nx(1) {}
+    virtual bool IsSolid() { return true; }
+    virtual void OnCollision(CGameObject* other) {}
     virtual void OnHitFromBelow(CGameObject* hitter) {}
     virtual void Update(float dt) = 0;
     virtual void Render() = 0;

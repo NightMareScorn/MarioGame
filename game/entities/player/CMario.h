@@ -21,6 +21,10 @@ private:
     float jumpHoldTime = 0.0f;
     float jumpStartY = 0.0f;
     float mapWidth = 0.0f;
+    float dieTimer = 0.0f;
+    bool isDead = false;
+public:
+    bool IsDead() const { return isDead; }
 
     void HandleInput(const InputState& input, float dt);
     void ApplyPhysics(float dt);

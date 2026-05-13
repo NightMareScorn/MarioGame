@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include "../../game/entities/player/CMario.h"
+#include "../../game/entities/blocks/CBridge.h"
 
 bool CCollision::CheckAABB(const Box &a, const Box &b) {
     return !(a.r <= b.l || a.l >= b.r || a.b <= b.t || a.t >= b.b);
@@ -20,28 +21,35 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
 
     for (auto other : coObjects) {
         if (!other || other == obj) continue;
+        
+        // One-way platforms: no X collision at all
+        CBridge* bridge = dynamic_cast<CBridge*>(other);
+        if (bridge && bridge->isOneWay) continue;
+        
         float l2, t2, r2, b2;
         other->GetBoundingBox(l2, t2, r2, b2);
         Box B = ToBox(l2, t2, r2, b2);
 
         if (CheckAABB(A, B)) {
-            // Resolve X axis
+            if (!other->IsSolid()) {
+                other->OnCollision(obj);
+                continue;
+            }
+
             if (obj->vx > 0) {
-                // Moving right, hit left side of 'other'
                 obj->x = B.l - objWidth;
             } else if (obj->vx < 0) {
-                // Moving left, hit right side of 'other'
                 obj->x = B.r;
             }
             obj->vx = 0;
             
-            // Re-update bounding box A for subsequent overlap checks in X
             obj->GetBoundingBox(l1, t1, r1, b1);
             A = ToBox(l1, t1, r1, b1);
         }
     }
 
     // --- STEP 2: Y-Axis Movement and Resolution ---
+    float prevBottom = b1; // Bottom edge BEFORE Y movement
     obj->y += obj->vy * dt;
 
     obj->GetBoundingBox(l1, t1, r1, b1);
@@ -54,21 +62,34 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
         other->GetBoundingBox(l2, t2, r2, b2);
         Box B = ToBox(l2, t2, r2, b2);
 
+        // One-way platform: only block when falling onto it from above
+        CBridge* bridge = dynamic_cast<CBridge*>(other);
+        if (bridge && bridge->isOneWay) {
+            // Skip if moving up (jumping through)
+            if (obj->vy >= 0) continue;
+            // Skip if bottom was already below bridge top before moving
+            if (prevBottom < B.b) continue; // Was already overlapping or below
+        }
+
         if (CheckAABB(A, B)) {
-            // Resolve Y axis
+            if (!other->IsSolid()) {
+                other->OnCollision(obj);
+                continue;
+            }
+
             if (obj->vy < 0) {
-                // Falling down, hit top side of 'other'
+                // Falling down, land on top
                 obj->y = B.b + 0.1f;
                 obj->vy = 0;
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else if (obj->vy > 0) {
-                // Jumping up, hit bottom side of 'other' (Ceiling) // <--- THIS is where Mario hits a block from below
+                // Jumping up, hit ceiling (skip for one-way)
+                if (bridge && bridge->isOneWay) continue;
                 obj->y = B.t - objHeight;
                 obj->vy = 0;
                 other->OnHitFromBelow(obj);
             }
             
-            // Re-update bounding box A for subsequent overlap checks in Y
             obj->GetBoundingBox(l1, t1, r1, b1);
             A = ToBox(l1, t1, r1, b1);
         }

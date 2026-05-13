@@ -12,6 +12,23 @@ static const float MARIO_W = 12.0f; //14
 static const float MARIO_H = 15.0f; //28
 
 void CMario::Update(float dt) {
+    if (state == EMarioState::DIE) {
+        vy -= 0.0005f * dt;
+        y += vy * dt;
+        dieTimer += dt;
+        if (dieTimer > 1000) isDead = true;
+        return;
+    }
+
+    if (y < 0.0f && state != EMarioState::DIE) {
+        state = EMarioState::DIE;
+        vy = 0.12f; // Initial upward bounce
+        vx = 0;
+        ax = 0;
+        dieTimer = 0;
+        return;
+    }
+
     const auto& input = CInputManager::GetInstance()->GetState();
     HandleInput(input,dt);
     ApplyPhysics(dt);
@@ -37,27 +54,10 @@ void CMario::HandleInput(const InputState& input, float dt) {
             if (vx > 0) vx = 0;
         }
     }
-
     if (input.jump && onGround) {
-        vy = MarioConfig::JUMP_FORCE;
+        vy = MarioConfig::JUMP_FORCE; // 0.2f
         isJumping = true;
-        jumpStartY = y;
-    }
-    
-    if (isJumping) {
-        if (input.jump) {
-            float jumpHeight = y - jumpStartY;
-            if (jumpHeight < MarioConfig::MAX_JUMP_HEIGHT) {
-                // Keep pushing up while holding
-                vy += MarioConfig::JUMP_HOLD_FORCE * dt; 
-            } else {
-                isJumping = false;
-            }
-        } else {
-            // JUMP CUT-OFF: Instant stop for short hops
-            if (vy > 0) vy = 0; 
-            isJumping = false;
-        }
+        jumpHoldTime = 0.0f;
     }
 }
 
@@ -87,9 +87,23 @@ void CMario::UpdateState() {
 
 
 void CMario::ApplyPhysics(float dt) {
-    float currentGravity = MarioConfig::GRAVITY;
+    // 1. Gravity is ALWAYS applied
+    vy += MarioConfig::GRAVITY * dt;
+    
+    // 2. Add extra upward force if still holding jump
+    if (isJumping) {
+        if (CInputManager::GetInstance()->GetState().jump) {
+            jumpHoldTime += dt;
+            if (jumpHoldTime < 200.0f) { // Max hold time ~ 200ms
+                vy += MarioConfig::JUMP_HOLD_FORCE * dt;
+            } else {
+                isJumping = false; // Max height reached
+            }
+        } else {
+            isJumping = false; // Released early, just stop adding hold force!
+        }
+    }
 
-    vy += currentGravity * dt;
     if (vx > MarioConfig::MAX_SPEED_X) vx = MarioConfig::MAX_SPEED_X;
     if (vx < -MarioConfig::MAX_SPEED_X) vx = -MarioConfig::MAX_SPEED_X;
 
@@ -115,13 +129,18 @@ void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {
 
 void CMario::Render() {
     std::string aniName = "ANI_MARIO_IDLE";
-    switch (state) {
-        case EMarioState::WALK: aniName = "ANI_MARIO_WALK"; break;
-        case EMarioState::JUMP: aniName = "ANI_MARIO_JUMP"; break;
-        case EMarioState::FALL: aniName = "ANI_MARIO_JUMP"; break;
-        case EMarioState::SKID: aniName = "ANI_MARIO_SKID"; break;
-        case EMarioState::DIE:  aniName = "ANI_MARIO_DIE";  break;
-        default:                aniName = "ANI_MARIO_IDLE"; break;
+    if (state == EMarioState::DIE) {
+        if (vy > 0) aniName = "ANI_MARIO_JUMP";
+        else aniName = "ANI_MARIO_DIE";
+    }
+    else {
+        switch (state) {
+            case EMarioState::WALK: aniName = "ANI_MARIO_WALK"; break;
+            case EMarioState::JUMP: aniName = "ANI_MARIO_JUMP"; break;
+            case EMarioState::FALL: aniName = "ANI_MARIO_JUMP"; break;
+            case EMarioState::SKID: aniName = "ANI_MARIO_SKID"; break;
+            default:                aniName = "ANI_MARIO_IDLE"; break;
+        }
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);

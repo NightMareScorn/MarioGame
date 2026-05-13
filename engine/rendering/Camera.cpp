@@ -31,13 +31,12 @@ void CCamera::Update(float targetX, float targetY, DWORD dt)
 	// FORWARD ONLY SCROLL: New target cannot be behind current position
 	if (destX < cam_x) destX = cam_x;
 
-	// Better interpolation for smoother movement
-	float lerpFactor = 0.1f; // Faster follow
-	
-	if (fabsf(destX - cam_x) > 0.1f) {
-		cam_x += (destX - cam_x) * lerpFactor;
+	// Better follow for X, lerp for Y
+	if (destX > cam_x) {
+		cam_x = destX; // Strictly follow rightward movement
 	}
 	
+	float lerpFactor = 0.1f; 
 	if (fabsf(destY - cam_y) > 1.0f) {
 		cam_y += (destY - cam_y) * lerpFactor;
 	}

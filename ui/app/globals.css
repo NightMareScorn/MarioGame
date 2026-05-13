@@ -5,6 +5,11 @@
   --foreground: #ffffff;
 }
 
+* {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

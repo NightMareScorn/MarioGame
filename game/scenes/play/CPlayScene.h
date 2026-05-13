@@ -13,6 +13,7 @@ class CPlayScene : public CScene {
     std::vector<CGameObject*> decors;
     std::vector<CGameObject*> enemies;
     std::vector<CGameObject*> items;
+    std::vector<CGameObject*> foregrounds;
     float mapWidth = 0.0f;
 
 public:

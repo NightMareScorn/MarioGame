@@ -1,14 +1,19 @@
 #pragma once
 #include "../CGameObject.h"
 #include <string>
+#include <cmath>
 
 // Decorative block - renders an animation but has NO collision.
 // Used for background elements like clouds, flag pole, etc.
 class CDecorBlock : public CGameObject {
     std::string aniName;
+    bool isDrifting = false;  // For clouds: gentle horizontal drift
+    float driftTime = 0.0f;
+    float baseX = 0.0f;
 public:
     CDecorBlock(float x, float y, std::string aniName);
-    void Update(float dt) override {}
+    void SetDrifting(bool d) { isDrifting = d; baseX = x; }
+    void Update(float dt) override;
     void Render() override;
     void GetBoundingBox(float &l, float &t, float &r, float &b) override;
 };

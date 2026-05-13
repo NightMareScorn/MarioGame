@@ -109,6 +109,7 @@ int Run(std::string level)
 		{
 			Update(time.GetDeltaTime() * 1000.0f);
 			time.OnUpdate();
+			if (CGame::GetInstance()->IsExitLevelRequested()) done = 1;
 		}
 
 		Render();

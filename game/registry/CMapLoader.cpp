@@ -16,6 +16,7 @@
 #include "../entities/items/CFireFlower.h"
 #include "../entities/blocks/CPlatform.h"
 #include "../entities/blocks/CCastleBridge.h"
+#include "../entities/blocks/CBridge.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
 
@@ -141,12 +142,18 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 {
                     // Clouds are precisely cropped in the atlas and have different heights. 
                     // Using mathematically matched pixel offsets to seamlessly stitch them with zero gaps!
-                    scene->decors.push_back(new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT"));
-                    scene->decors.push_back(new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID"));
-                    scene->decors.push_back(new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT"));
-                    scene->decors.push_back(new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT"));
-                    scene->decors.push_back(new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID"));
-                    scene->decors.push_back(new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT"));
+                    CDecorBlock* parts[6];
+                    parts[0] = new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT");
+                    parts[1] = new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID");
+                    parts[2] = new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT");
+                    parts[3] = new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT");
+                    parts[4] = new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID");
+                    parts[5] = new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT");
+                    
+                    for (int i = 0; i < 6; i++) {
+                        parts[i]->SetDrifting(true);
+                        scene->decors.push_back(parts[i]);
+                    }
                     break;
                 }
 
@@ -176,11 +183,17 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 case 20: scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED")); break;
 
                 // --- WORLD 2-3 SPECIAL ASSETS ---
-                case 21: scene->blocks.push_back(new CBrick(x, y, "ANI_BRIDGE_BLOCK")); break;
+                case 21: {
+                    CBridge* bridge = new CBridge(x, y - 8.0f, "ANI_BRIDGE_BLOCK");
+                    scene->blocks.push_back(bridge);       // Collision (one-way)
+                    scene->foregrounds.push_back(bridge);  // Render over Mario
+                    break;
+                }
                 case 22: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_LEFT")); break;
                 case 23: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break;
                 case 24: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_RIGHT")); break;
-                case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break; // Pillar stem
+                case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_STEM")); break;
+                case 26: scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK")); break; // Standalone pillar
 
                 default:
                     DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
@@ -281,14 +294,30 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
     else if (type == "cloud") {
         std::string size = "small";
         for (auto p : parts) if (p.find("size=") == 0) size = p.substr(5);
-        if (size == "large") scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED"));
-        else scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED"));
+        CDecorBlock* cloud;
+        if (size == "large") cloud = new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED");
+        else cloud = new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED");
+        cloud->SetDrifting(true);
+        scene->decors.push_back(cloud);
     }
     else if (type == "pipe") {
         float topEdgeY = y + 16.0f;
         float groundY = 32.0f;
         float pipeHeight = topEdgeY - groundY;
         scene->blocks.push_back(new CInvisibleBlock(x, groundY, 32.0f, pipeHeight)); 
+    }
+    else if (type == "flagpole") {
+        // Use the full assembled flagpole sprite (10+ blocks high)
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_FULL_ASSEMBLED"));
+        
+        // The flag itself (initially near the top, ~150px up from base)
+        scene->decors.push_back(new CDecorBlock(x - 8.0f, y + 150.0f, "ANI_FLAG_OW"));
+    }
+    else if (type == "start_castle") {
+        scene->decors.push_back(new CDecorBlock(x, y + 16.0f, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
+    }
+    else if (type == "end_castle") {
+        scene->decors.push_back(new CDecorBlock(x, y + 16.0f, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
     }
 
     if (spawnedObj && hidden_in_block) {

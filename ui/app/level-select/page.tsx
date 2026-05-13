@@ -1,38 +1,61 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const LEVELS = [
-  { id: "1-1", title: "World 1-1", image: "/background/background_mountain.png", targetCSV: "level_1_1.csv", bestScore: "080000", time: "--:--" },
-  { id: "1-2", title: "World 1-2", image: "/background/background_tree.png", targetCSV: "level_1_1_hidden.csv", bestScore: "000000", time: "--:--" },
-  { id: "1-3", title: "World 1-3", image: "/background/background_cloud.png", targetCSV: "level_1_2_first_half.csv", bestScore: "000000", time: "--:--" },
-  { id: "1-4", title: "World 1-4", image: "/background/background_mountain.png", targetCSV: "level_1_2_hidden.csv", bestScore: "000000", time: "--:--" },
-  { id: "1-5", title: "World 1-5", image: "/background/background_tree.png", targetCSV: "level_1_2_hidden_2.csv", bestScore: "000000", time: "--:--" },
-  { id: "1-6", title: "World 1-6", image: "/background/background_cloud.png", targetCSV: "level_1_2_second_half.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-1", title: "World 2-1", image: "/background/background_mountain.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-2", title: "World 2-2", image: "/background/background_tree.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-3", title: "World 2-3", image: "/background/background_cloud.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-4", title: "World 2-4", image: "/background/background_mountain.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-5", title: "World 2-5", image: "/background/background_tree.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--" },
-  { id: "2-6", title: "World 2-6", image: "/background/background_cloud.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--" },
+  { id: "1-1", title: "World 1-1", image: "/background/SuperMarioBrosMap1-1.png", targetCSV: "level_1_1.csv", bestScore: "080000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
+  { id: "1-2", title: "World 1-2", image: "/background/SuperMarioBrosMap1-2.png", targetCSV: "level_1_1_hidden.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
+  { id: "1-3", title: "World 1-3", image: "/background/SuperMarioBrosMap1-3.png", targetCSV: "level_1_2_first_half.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
+  { id: "1-4", title: "World 1-4", image: "/background/SuperMarioBrosMap1-4.png", targetCSV: "level_1_2_hidden.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
+  { id: "2-1", title: "World 2-1", image: "/background/SuperMarioBrosMap2-1.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
+  { id: "2-2", title: "World 2-2", image: "/background/SuperMarioBrosMap2-2.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
+  { id: "2-3", title: "World 2-3", image: "/background/SuperMarioBrosMap2-3.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
+  { id: "2-4", title: "World 2-4", image: "/background/SuperMarioBrosMap2-4.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
 ];
 
 export default function LevelSelectScene() {
   const router = useRouter();
+  const [levels, setLevels] = useState(LEVELS);
   const [index, setIndex] = useState(0);
 
+  useEffect(() => {
+    if ((window as any).chrome?.webview) {
+        (window as any).chrome.webview.postMessage("GET_SCORES");
+        
+        const handleMessage = (event: any) => {
+            const scores = event.data;
+            if (scores) {
+                setLevels(prev => prev.map(lvl => {
+                    const data = scores[lvl.id];
+                    if (data) {
+                        return { 
+                            ...lvl, 
+                            bestScore: data.score.toString().padStart(6, '0'),
+                            time: data.time
+                        };
+                    }
+                    return lvl;
+                }));
+            }
+        };
+
+        (window as any).chrome.webview.addEventListener('message', handleMessage);
+        return () => (window as any).chrome.webview.removeEventListener('message', handleMessage);
+    }
+  }, []);
+
   const next = () => {
-    if (index < LEVELS.length - 1) setIndex(index + 1);
+    if (index < levels.length - 1) setIndex(index + 1);
   };
   const prev = () => {
     if (index > 0) setIndex(index - 1);
   };
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-[#E0E0E0]">
+    <main className="relative w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-[#E0E0E0] select-none">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '40px 40px' }} />
@@ -61,7 +84,7 @@ export default function LevelSelectScene() {
       {/* Carousel Container */}
       <div className="relative w-full h-[550px] flex items-center justify-center">
         <AnimatePresence initial={false}>
-          {LEVELS.map((level, i) => {
+          {levels.map((level, i) => {
             const isCenter = i === index;
             const isLeft = i === index - 1;
             const isRight = i === index + 1;
@@ -109,7 +132,7 @@ export default function LevelSelectScene() {
 
            <div className="w-16">
              <AnimatePresence>
-               {index < LEVELS.length - 1 && (
+               {index < levels.length - 1 && (
                  <motion.button
                    key="next-btn"
                    initial={{ opacity: 0, scale: 0.5 }}
@@ -134,7 +157,7 @@ export default function LevelSelectScene() {
       >
         <button
           onClick={() => {
-            const level = LEVELS[index];
+            const level = levels[index];
             console.log("Playing level:", level.title, "CSV:", level.targetCSV);
             
             // Communication bridge to C++ WebView2
@@ -164,16 +187,13 @@ function MapCard({ level, isSide = false }: { level: typeof LEVELS[0], isSide?: 
           {level.title}
         </div>
         <div className="relative aspect-video bg-[#5C94FC] border-b-8 border-black overflow-hidden">
-          <img src={level.image} className="w-full h-full object-cover" />
+          <img 
+             src={level.image} 
+             className="w-full h-full object-cover" 
+             style={level.imgStyle || { objectPosition: "left bottom" }}
+          />
           
-          {/* Decorative Assets */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
-             <div className="flex gap-6">
-               {Array.from({ length: 3 }).map((_, i) => (
-                 <div key={i} className="w-14 h-14 bg-yellow-400 border-4 border-black flex items-center justify-center text-3xl font-bold shadow-[4px_4px_0px_black]">?</div>
-               ))}
-             </div>
-          </div>
+          {/* Decorative Assets removed */}
         </div>
         
         {/* Info Bar */}

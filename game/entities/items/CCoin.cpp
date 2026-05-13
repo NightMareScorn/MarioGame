@@ -1,5 +1,6 @@
 #include "CCoin.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../player/CMario.h"
 
 CCoin::CCoin(float x, float y, bool hidden_in_block) : CGameObject() {
     this->x = x;
@@ -27,12 +28,20 @@ void CCoin::Update(float dt) {
             SetState(COIN_STATE_DONE); // Disappear after popping
         }
     }
+    else if (state == COIN_STATE_COLLECTED) {
+        y += vy * dt;
+        vy -= COIN_GRAVITY * dt;
+        // Effect duration: until it falls back to start_y or a bit of time
+        if (y < start_y) {
+            SetState(COIN_STATE_DONE);
+        }
+    }
 }
 
 void CCoin::Render() {
     if (state == COIN_STATE_HIDDEN || state == COIN_STATE_DONE) return;
 
-    std::string ani = in_block ? "ANI_POPPING_COIN" : "ANI_COLLECTABLE_COIN";
+    std::string ani = (in_block || state == COIN_STATE_COLLECTED) ? "ANI_POPPING_COIN" : "ANI_COLLECTABLE_COIN";
     CAnimations::GetInstance()->Render(ani, x, y);
 }
 
@@ -54,5 +63,17 @@ void CCoin::SetState(int s) {
     state = s;
     if (state == COIN_STATE_POPPING && in_block) {
         vy = COIN_POP_SPEED;
+    }
+    else if (state == COIN_STATE_COLLECTED) {
+        vy = COIN_POP_SPEED * 0.8f;
+        in_block = false; // Use popping animation but it's now a free effect
+    }
+}
+
+void CCoin::OnCollision(CGameObject* other) {
+    if (state == COIN_STATE_POPPING && !in_block) {
+        if (dynamic_cast<CMario*>(other)) {
+            SetState(COIN_STATE_COLLECTED);
+        }
     }
 }
