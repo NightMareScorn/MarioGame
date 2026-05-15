@@ -19,9 +19,9 @@ void CKoopa::Render() {
     CAnimations::GetInstance()->Render(ani, x, y, nx);
 }
 
-void CKoopa::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x;
-    t = y;
-    r = x + 16.0f;
-    b = y + 16.0f;
+void CKoopa::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x;
+    bottom = y;
+    right = x + 16.0f;
+    top = y + 16.0f;
 }

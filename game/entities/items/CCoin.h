@@ -16,6 +16,6 @@ public:
     CCoin(float x, float y, bool hidden_in_block = false);
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float& l, float& t, float& r, float& b) override;
+    void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
     void SetState(int s);
 };

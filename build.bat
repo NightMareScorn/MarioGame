@@ -22,4 +22,3 @@ echo Build successful!
 echo Solution file: build/MarioGame.sln
 echo Executable: build/Debug/MarioGame.exe
 echo.
-pause

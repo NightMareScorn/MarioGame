@@ -18,11 +18,15 @@ void CGoomba::Render() {
     CAnimations::GetInstance()->Render(ani, x, y);
 }
 
-void CGoomba::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x;
-    t = y;
-    r = x + GOOMBA_BBOX_WIDTH;
-    b = y + GOOMBA_BBOX_HEIGHT;
+void CGoomba::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x;
+    bottom = y;
+    right = x + GOOMBA_BBOX_WIDTH;
+
+    if (state == GOOMBA_STATE_DIE)
+        top = y + GOOMBA_BBOX_HEIGHT_DIE;
+    else
+        top = y + GOOMBA_BBOX_HEIGHT;
 }
 
 void CGoomba::SetState(int s) {

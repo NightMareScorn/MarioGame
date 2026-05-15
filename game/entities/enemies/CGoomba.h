@@ -10,6 +10,7 @@
 
 #define GOOMBA_BBOX_WIDTH 16
 #define GOOMBA_BBOX_HEIGHT 15
+#define GOOMBA_BBOX_HEIGHT_DIE 7
 
 class CGoomba : public CGameObject {
     int state;
@@ -17,6 +18,6 @@ public:
     CGoomba(float x, float y, float patrolLeft = 0, float patrolRight = 0);
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float &l, float &t, float &r, float &b) override;
+    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     void SetState(int s);
 };

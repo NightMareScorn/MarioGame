@@ -8,10 +8,10 @@ public:
     CInvisibleBlock(float x, float y, float w = 16.0f, float h = 16.0f) : CBlock(x, y), width(w), height(h) {}
     void Update(float dt) override {}
     void Render() override {} // Do nothing
-    void GetBoundingBox(float &l, float &t, float &r, float &b) override {
-        l = x;
-        t = y;
-        r = x + width;
-        b = y + height;
+    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override {
+        left = x;
+        bottom = y;
+        right = x + width;
+        top = y + height;
     }
 };

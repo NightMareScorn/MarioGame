@@ -18,15 +18,15 @@ void CFireFlower::Render() {
     CAnimations::GetInstance()->Render("ANI_FLOWER_OW", x, y);
 }
 
-void CFireFlower::GetBoundingBox(float& l, float& t, float& r, float& b) {
+void CFireFlower::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
     if (state == FLOWER_STATE_HIDDEN) {
-        l = t = r = b = 0;
+        left = bottom = right = top = 0;
         return;
     }
-    l = x;
-    t = y;
-    r = x + FLOWER_BBOX_WIDTH;
-    b = y + FLOWER_BBOX_HEIGHT;
+    left = x;
+    bottom = y;
+    right = x + FLOWER_BBOX_WIDTH;
+    top = y + FLOWER_BBOX_HEIGHT;
 }
 
 void CFireFlower::SetState(int s) {
