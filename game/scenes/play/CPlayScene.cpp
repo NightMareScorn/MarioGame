@@ -72,13 +72,13 @@ void CPlayScene::Update (float dt)
       if (auto pipe = dynamic_cast<CPipe*>(b))
         if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down")
         {
-          float ml, mt, mr, mb;
-          mario->GetBoundingBox(ml, mt, mr, mb);
-          float pl, pt, pr, pb;
-          pipe->GetBoundingBox(pl, pt, pr, pb);
+          float mLeft, mBottom, mRight, mTop;
+          mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
+          float pLeft, pBottom, pRight, pTop;
+          pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
 
           // Chân của Mario phải cách đỉnh ống nước trong khoảng 2 pixel
-          if (mt >= pb - 2.0f && mt <= pb + 2.0f && ml < pr && mr > pl)
+          if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f && mLeft < pRight && mRight > pLeft)
           {
             DebugOut(L"[INFO] Entering pipe to map: %hs\n", pipe->GetDestMap().c_str());
             std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";

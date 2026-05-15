@@ -15,7 +15,7 @@ public:
     CPipe(float x, float y, float width, float height, std::string aniName = "ANI_PIPE_UPWARDS_ASSEMBLED", std::string destMap = "", std::string enterDirection = "");
     void Update(float dt) override {}
     void Render() override;
-    void GetBoundingBox(float &l, float &t, float &r, float &b) override;
+    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
 
     std::string GetDestMap() { return destMap; }
     std::string GetEnterDirection() { return enterDirection; }

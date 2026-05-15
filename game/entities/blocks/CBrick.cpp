@@ -8,13 +8,14 @@ void CBrick::Render() {
     CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
-void CBrick::GetBoundingBox(float &l, float &t, float &r, float &b) {
+void CBrick::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
     const float BLOCK_W = 16.0f;
     const float BLOCK_H = 16.0f;
-    l = x;
-    t = y;
-    r = x + BLOCK_W;
-    b = y + BLOCK_H;
+
+    left = x;
+    bottom = y;
+    right = x + BLOCK_W;
+    top = y + BLOCK_H;
 }
 
 void CBrick::OnHitFromBelow(CGameObject* hitter) {

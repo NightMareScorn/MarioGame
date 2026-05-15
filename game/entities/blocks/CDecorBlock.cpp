@@ -10,7 +10,6 @@ void CDecorBlock::Render() {
     CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
-void CDecorBlock::GetBoundingBox(float &l, float &t, float &r, float &b) {
-    // No collision for decorative blocks
-    l = t = r = b = 0;
+void CDecorBlock::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
+    left = bottom = right = top = 0;
 }
