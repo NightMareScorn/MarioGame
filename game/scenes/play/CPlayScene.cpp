@@ -1,15 +1,14 @@
 #include "CPlayScene.h"
-#include "../../../engine/rendering/Camera.h"
-#include "../../../engine/utils/debug.h"
-#include "../../registry/CMapLoader.h"
-#include "../../registry/CResourceRegistry.h"
-#include "../../../engine/physics/CCollision.h"
 #include "../../../engine/core/Game.h"
 #include "../../../engine/input/KeyboardManager.h"
+#include "../../../engine/physics/CCollision.h"
+#include "../../../engine/rendering/Camera.h"
+#include "../../../engine/utils/debug.h"
 #include "../../entities/blocks/CPipe.h"
+#include "../../registry/CMapLoader.h"
+#include "../../registry/CResourceRegistry.h"
 
-void CPlayScene::Load (const std::string& mapPath)
-{
+void CPlayScene::Load(const std::string &mapPath) {
   auto registry = CResourceRegistry::GetInstance();
   registry->LoadResourcesForPlayScene();
 
@@ -26,42 +25,51 @@ void CPlayScene::Load (const std::string& mapPath)
     mario->y = 150.0f;
   }
 
-  DebugOut(L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
-           mapPath.c_str(), (int)blocks.size(), (int)decors.size());
+  DebugOut(
+      L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
+      mapPath.c_str(), (int)blocks.size(), (int)decors.size());
 }
 
-void CPlayScene::Update (float dt)
-{
+void CPlayScene::Update(float dt) {
   mario->Update(dt);
-  for (auto b : blocks) b->Update(dt);
-  for (auto e : enemies) e->Update(dt);
-  for (auto i : items) i->Update(dt);
-
-  std::vector<CGameObject*> coObjectsForMario;
-  coObjectsForMario.reserve(blocks.size() + enemies.size() + items.size());
-
-  // Lọc các block ở trong khoảng 256 pixels quanh Mario để tối ưu collision checks
   for (auto b : blocks)
-    if (abs(b->x - mario->x) < 256.0f && abs(b->y - mario->y) < 256.0f)
-      coObjectsForMario.push_back(b);
-
-  // Tương tự với enemy và item
+    b->Update(dt);
   for (auto e : enemies)
-    if (abs(e->x - mario->x) < 256.0f && abs(e->y - mario->y) < 256.0f)
-      coObjectsForMario.push_back(e);
+    e->Update(dt);
   for (auto i : items)
-    if (abs(i->x - mario->x) < 256.0f && abs(i->y - mario->y) < 256.0f)
-      coObjectsForMario.push_back(i);
+    i->Update(dt);
+
+  std::vector<CGameObject *> coObjectsForMario;
+
+  // Lọc các blocks, enemies và items ở trong khoảng 256 pixels quanh Mario để
+  // tối ưu collision checks
+  auto nearbyBlocks = GetObjectsInRange(mario->x, mario->y, blocks);
+  auto nearbyEnemies = GetObjectsInRange(mario->x, mario->y, enemies);
+  auto nearbyItems = GetObjectsInRange(mario->x, mario->y, items);
+
+  coObjectsForMario.reserve(nearbyBlocks.size() + nearbyEnemies.size() +
+                            nearbyItems.size());
+
+  coObjectsForMario.insert(coObjectsForMario.end(), nearbyBlocks.begin(),
+                           nearbyBlocks.end());
+  coObjectsForMario.insert(coObjectsForMario.end(), nearbyEnemies.begin(),
+                           nearbyEnemies.end());
+  coObjectsForMario.insert(coObjectsForMario.end(), nearbyItems.begin(),
+                           nearbyItems.end());
 
   CCollision::ResolveCollision(mario, dt, coObjectsForMario);
 
-  // Xử lý collision cho enemy và item với block
-  std::vector<CGameObject*> coObjectsForOthers;
-  coObjectsForOthers.reserve(blocks.size()); //
-  for (auto b : blocks) coObjectsForOthers.push_back(b);
+  // Xử lý collision cho từng enemy với block xung quanh nó
+  for (auto e : enemies) {
+    auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
+    CCollision::ResolveCollision(e, dt, blocksAroundEnemy);
+  }
 
-  for (auto e : enemies) CCollision::ResolveCollision(e, dt, coObjectsForOthers);
-  for (auto i : items) CCollision::ResolveCollision(i, dt, coObjectsForOthers);
+  // Xử lý collision cho từng item với block xung quanh nó
+  for (auto i : items) {
+    auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
+    CCollision::ResolveCollision(i, dt, blocksAroundItem);
+  }
 
   mario->UpdateState();
 
@@ -69,31 +77,31 @@ void CPlayScene::Update (float dt)
   auto kb = KeyboardManager::GetInstance();
   if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN))
     for (auto b : blocks)
-      if (auto pipe = dynamic_cast<CPipe*>(b))
-        if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down")
-        {
+      if (auto pipe = dynamic_cast<CPipe *>(b))
+        if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down") {
           float mLeft, mBottom, mRight, mTop;
           mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
           float pLeft, pBottom, pRight, pTop;
           pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
 
           // Chân của Mario phải cách đỉnh ống nước trong khoảng 2 pixel
-          if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f && mLeft < pRight && mRight > pLeft)
-          {
-            DebugOut(L"[INFO] Entering pipe to map: %hs\n", pipe->GetDestMap().c_str());
+          if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
+              mLeft < pRight && mRight > pLeft) {
+            DebugOut(L"[INFO] Entering pipe to map: %hs\n",
+                     pipe->GetDestMap().c_str());
             std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
             TransitionToMap(dest);
             break;
           }
         }
 
-  // Logic đi vào ống nước (từ bên trái) => cần cập nhật hoặc gộp với logic trên
+  // TODO: Logic đi vào ống nước (từ bên trái) => Cần cập nhật hoặc gộp với
+  // logic trên
 
   CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 
   // Chuyển map
-  if (!pendingMapPath.empty())
-  {
+  if (!pendingMapPath.empty()) {
     std::string nextMap = pendingMapPath;
     Unload();
     Load(nextMap);
@@ -102,22 +110,14 @@ void CPlayScene::Update (float dt)
 
 void CPlayScene::Render() {
   ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
-  ID3D10Device *pD3DDevice = CGame::GetInstance()->GetDirect3DDevice();
-  FLOAT NewBlendFactor[4] = {0, 0, 0, 0};
 
-  // LAYER 1: Background decorations (hills, clouds, bushes, flag, castle)
-  // Rendered first so they appear BEHIND everything else.
+  // Layer 1: Background (hills, clouds, bushes, flag, castle)
   for (auto d : decors)
     d->Render();
-
-  // Flush the decor layer to GPU before rendering foreground objects.
-  // D3DX10_SPRITE_SORT_TEXTURE reorders sprites by texture within a batch,
-  // which can cause later-drawn sprites to appear behind earlier ones.
-  // By flushing here, we guarantee decors are committed to the framebuffer
-  // first.
+  // Đẩy lên GPU batch chứa riêng decors
   spriteHandler->Flush();
 
-  // LAYER 2: Foreground — blocks, items, enemies, mario (all in same batch)
+  // Layer 2: Foreground (blocks, items, enemies, mario)
   for (auto b : blocks)
     b->Render();
   for (auto i : items)
