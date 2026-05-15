@@ -7,11 +7,11 @@ CLuckyBlock::CLuckyBlock(float x, float y) : CBlock(x, y), state(IDLE), hiddenIt
 void CLuckyBlock::Update(float dt) {}
 
 void CLuckyBlock::Render() {
-    // If empty, we can just static render one frame or stop animating, 
-    // but for now, we'll keep it simple: Render same or empty sprite if provided
-    // Because we don't have an empty sprite yet, we'll just render the normal box.
-    // In the future, we could add ANI_EMPTY_BOX
-    CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_IDLE", x, y);
+    if (state == EMPTY) {
+        CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_AFTER_HIT", x, y);
+    } else {
+        CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_IDLE", x, y);
+    }
 }
 
 void CLuckyBlock::GetBoundingBox(float &l, float &t, float &r, float &b) {

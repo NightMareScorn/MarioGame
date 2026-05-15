@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "../../game/scenes/play/CPlayScene.h"
 
-#define BACKGROUND_COLOR D3DXCOLOR(200.0f/255, 200.0f/255, 255.0f/255, 1.0f)
+#define BACKGROUND_COLOR D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f) // NES SMB1 sky blue (#5C94FC)
 
 CPlayScene* scene = nullptr;
 
@@ -51,7 +51,11 @@ void LoadAssets()
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
-    pD3DDevice->ClearRenderTargetView(pRenderTargetView, BACKGROUND_COLOR);
+    D3DXCOLOR clearColor = D3DXCOLOR(0, 0, 0, 1); // Default to black if no scene
+    if (scene != nullptr) {
+        clearColor = scene->GetClearColor();
+    }
+    pD3DDevice->ClearRenderTargetView(pRenderTargetView, clearColor);
 }
 
 void RenderGame(CGame* g)

@@ -20,4 +20,4 @@ theme,surface
 # OBJECTS
 type,x,y,extra
 mario,48,160
-pipe,192,144,dest_map=hidden,enter_direction=down
+pipe,192,144,dest_map=level_1_2_hidden,enter_direction=down

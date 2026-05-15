@@ -1,10 +1,11 @@
 #include "CBrick.h"
 #include "../../../engine/Graphics/Animations.h"
 
-#include "../../registry/CResourceRegistry.h"
+CBrick::CBrick(float x, float y, std::string aniName, bool isInvisible) : CBlock(x, y), aniName(aniName), isInvisible(isInvisible) {}
 
 void CBrick::Render() {
-    CAnimations::GetInstance()->Render("ANI_BRICK_IDLE", x, y);
+    if (isInvisible) return;
+    CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
 void CBrick::GetBoundingBox(float &l, float &t, float &r, float &b) {
@@ -14,4 +15,11 @@ void CBrick::GetBoundingBox(float &l, float &t, float &r, float &b) {
     t = y;
     r = x + BLOCK_W;
     b = y + BLOCK_H;
+}
+
+void CBrick::OnHitFromBelow(CGameObject* hitter) {
+    if (isInvisible) {
+        isInvisible = false;
+        // Optionally trigger item spawn here if hidden_in_block was true
+    }
 }
