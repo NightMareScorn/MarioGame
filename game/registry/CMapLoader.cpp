@@ -17,6 +17,7 @@
 #include "../entities/blocks/CPlatform.h"
 #include "../entities/blocks/CCastleBridge.h"
 #include "../entities/blocks/CBridge.h"
+#include "../entities/blocks/CLava.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
 
@@ -75,7 +76,7 @@ void CMapLoader::Load(std::string path, CPlayScene* scene) {
 
         // Route to appropriate parser based on current section
         if (currentSection == "# SETTINGS") {
-            _ParseSettings(line);
+            _ParseSettings(line, scene);
         }
         else if (currentSection == "# TILEMAP") {
             tileMapLines.push_back(line);
@@ -93,11 +94,18 @@ void CMapLoader::Load(std::string path, CPlayScene* scene) {
     DebugOut(L"[INFO] Map loading complete.\n");
 }
 
-void CMapLoader::_ParseSettings(const std::string& line) {
+void CMapLoader::_ParseSettings(const std::string& line, CPlayScene* scene) {
     auto parts = _Split(line, ',');
     if (parts.size() >= 2 && parts[0] == "cell_size") {
         cellSize = std::stoi(parts[1]);
         DebugOut(L"[INFO] Setting cellSize = %d\n", cellSize);
+    }
+    else if (parts.size() >= 4 && parts[0] == "background_color") {
+        int r = std::stoi(parts[1]);
+        int g = std::stoi(parts[2]);
+        int b = std::stoi(parts[3]);
+        scene->SetBackgroundColor(r, g, b);
+        DebugOut(L"[INFO] Setting backgroundColor = (%d, %d, %d)\n", r, g, b);
     }
 }
 
@@ -195,7 +203,38 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_STEM")); break;
                 case 26: scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK")); break; // Standalone pillar
 
-                default:
+                // --- WORLD 2-4 SPECIAL ASSETS ---
+                case 30: scene->blocks.push_back(new CBrick(x, y, "ANI_CASTLE_BRICK_WHITE")); break;
+                case 31: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_TOP")); break;
+                case 32: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_BOTTOM")); break;
+                case 33: scene->blocks.push_back(new CBrick(x, y, "ANI_WHITE_FURNACE_BRICK")); break;
+                case 34: {
+                    CBridge* bridge = new CBridge(x, y, "ANI_WHITE_RED_STEEL_BRIDGE");
+                    scene->blocks.push_back(bridge);
+                    scene->foregrounds.push_back(bridge);
+                    break;
+                }
+                case 35: scene->decors.push_back(new CDecorBlock(x, y, "ANI_AXE")); break;
+                case 36: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CHAIN")); break;
+                case 37: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+                case 38: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+                case 138: // Used Lucky Block
+                {
+                    scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                    break;
+                }
+
+                case 139: // Fire Circle (Used Lucky Block + 5 Fire Orbs)
+                {
+                    scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                    // The FireBar update logic will handle rotation
+                    for (int k = 0; k < 5; k++) {
+                        CFireBar* orb = new CFireBar(x + 4, y + 4); 
+                        orb->SetOffset((float)(k * 9)); // 9px apart for 8px orbs
+                        scene->enemies.push_back(orb);
+                    }
+                    break;
+                }
                     DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
                     break;
             }
@@ -271,11 +310,24 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         spawnedObj = new CPodoboo(x, y);
         scene->enemies.push_back(spawnedObj);
     }
-    else if (type == "platform") {
+    else if (type == "platform" || type == "moving_platform") {
         float dir = 1.0f;
-        for (auto p : parts) if (p.find("dir=") == 0) dir = std::stof(p.substr(4));
-        spawnedObj = new CPlatform(x, y, dir);
+        float speed = 0.05f;
+        std::string direction = "vertical";
+        for (auto p : parts) {
+            if (p.find("dir=") == 0) dir = std::stof(p.substr(4));
+            if (p.find("direction=") == 0) direction = p.substr(10);
+            if (p.find("speed=") == 0) speed = std::stof(p.substr(6));
+        }
+        CPlatform* plat = new CPlatform(x, y, dir);
+        plat->SetSpeed(speed);
+        plat->SetIsVertical(direction == "vertical");
+        spawnedObj = plat;
         scene->blocks.push_back((CBlock*)spawnedObj);
+    }
+    else if (type == "npc_toad") {
+        spawnedObj = new CDecorBlock(x, y, "ANI_NPC_TOAD");
+        scene->decors.push_back((CDecorBlock*)spawnedObj);
     }
     else if (type == "lucky_block") {
         std::string item = "coin";

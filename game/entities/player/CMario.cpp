@@ -7,25 +7,23 @@
 #include "../../../engine/rendering/Textures.h"
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../../engine/audio/CAudioManager.h"
 
 static const float MARIO_W = 12.0f; //14
 static const float MARIO_H = 15.0f; //28
 
 void CMario::Update(float dt) {
     if (state == EMarioState::DIE) {
-        vy -= 0.0005f * dt;
+        vy -= 0.0005f * dt; // Simple gravity for dying Mario
         y += vy * dt;
         dieTimer += dt;
-        if (dieTimer > 1000) isDead = true;
+        if (dieTimer > 3000) isDead = true; // 3 seconds before respawn
         return;
     }
 
-    if (y < 0.0f && state != EMarioState::DIE) {
-        state = EMarioState::DIE;
-        vy = 0.12f; // Initial upward bounce
-        vx = 0;
-        ax = 0;
-        dieTimer = 0;
+
+    if (y < -32.0f && state != EMarioState::DIE) {
+        StartDeath();
         return;
     }
 
@@ -34,6 +32,7 @@ void CMario::Update(float dt) {
     ApplyPhysics(dt);
     onGround = false;
 }
+
 
 void CMario::HandleInput(const InputState& input, float dt) {
     if (input.right) {
@@ -58,10 +57,12 @@ void CMario::HandleInput(const InputState& input, float dt) {
         vy = MarioConfig::JUMP_FORCE; // 0.2f
         isJumping = true;
         jumpHoldTime = 0.0f;
+        CAudioManager::GetInstance()->Play("jump");
     }
 }
 
 void CMario::UpdateState() {
+    if (state == EMarioState::DIE) return;
     EMarioState oldState = state;
     const auto& input = CInputManager::GetInstance()->GetState();
 
@@ -126,6 +127,15 @@ void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {
 
 
 #include "../../registry/CResourceRegistry.h"
+
+void CMario::StartDeath() {
+    if (state == EMarioState::DIE) return;
+    state = EMarioState::DIE;
+    vy = 0.18f; // Stronger bounce up
+    vx = 0;
+    dieTimer = 0;
+    CAudioManager::GetInstance()->Play("die");
+}
 
 void CMario::Render() {
     std::string aniName = "ANI_MARIO_IDLE";

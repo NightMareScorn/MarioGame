@@ -30,19 +30,44 @@ void CPlayScene::Load() {
 }
 
 void CPlayScene::Update(float dt) {
-    mario->Update(dt);
     for (auto b : blocks) b->Update(dt);
     for (auto e : enemies) e->Update(dt);
     for (auto i : items) i->Update(dt);
     for (auto d : decors) d->Update(dt);
+
+    // Sync Mario with moving platforms
+    for (auto b : blocks) {
+        if (b->type == "platform") {
+            float ml, mt, mr, mb;
+            mario->GetBoundingBox(ml, mt, mr, mb);
+            float pl, pt, pr, pb;
+            b->GetBoundingBox(pl, pt, pr, pb);
+
+            // Stickiness: if Mario is on top OR just above the platform while it moves down
+            if (mr > pl && ml < pr && mb >= pb && mb <= pb + 4.0f && mario->vy <= 0) {
+                mario->x += b->vx * dt;
+                mario->y += b->vy * dt;
+                
+                // If the platform is moving down, snap Mario to it to keep him on ground
+                if (b->vy < 0) {
+                    mario->y = pb + 0.1f;
+                    mario->SetOnGround(true);
+                }
+            }
+        }
+    }
+
+    mario->Update(dt);
 
     std::vector<CGameObject*> coObjectsForMario;
     coObjectsForMario.reserve(blocks.size() + enemies.size() + items.size());
     for (auto b : blocks) coObjectsForMario.push_back(b);
     for (auto e : enemies) coObjectsForMario.push_back(e);
     for (auto i : items) coObjectsForMario.push_back(i);
-
-    CCollision::ResolveCollision(mario, dt, coObjectsForMario);
+    
+    if (mario->GetState() != EMarioState::DIE) {
+        CCollision::ResolveCollision(mario, dt, coObjectsForMario);
+    }
 
     // Resolve collision for enemies and items against blocks only
     std::vector<CGameObject*> coObjectsForOthers;

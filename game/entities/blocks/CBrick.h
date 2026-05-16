@@ -8,5 +8,6 @@ public:
     CBrick(float x, float y, std::string aniName = "ANI_BRICK_IDLE") : CBlock(x, y), aniName(aniName) {}
     void Update(float dt) override {}
     void Render() override;
+    virtual void OnHitFromBelow(CGameObject* hitter) override;
     void GetBoundingBox(float &l, float &t, float &r, float &b) override;
 };

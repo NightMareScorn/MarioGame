@@ -25,6 +25,8 @@ private:
     bool isDead = false;
 public:
     bool IsDead() const { return isDead; }
+    EMarioState GetState() const { return state; }
+    void StartDeath();
 
     void HandleInput(const InputState& input, float dt);
     void ApplyPhysics(float dt);

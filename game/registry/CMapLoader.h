@@ -17,7 +17,7 @@ public:
     void Load(std::string path, CPlayScene* scene);
 
 private:
-    void _ParseSettings(const std::string& line);
+    void _ParseSettings(const std::string& line, CPlayScene* scene);
     void _ProcessTileMap(const std::vector<std::string>& lines, CPlayScene* scene);
     void _ParseObjectLine(const std::string& line, CPlayScene* scene);
 

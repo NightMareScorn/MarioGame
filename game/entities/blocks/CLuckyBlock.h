@@ -9,7 +9,7 @@ class CLuckyBlock : public CBlock {
     CGameObject* hiddenItem;
 public:
     enum State { IDLE, EMPTY };
-    CLuckyBlock(float x, float y);
+    CLuckyBlock(float x, float y, bool isEmpty = false);
     void SetHiddenItem(CGameObject* item) { hiddenItem = item; }
     void Update(float dt) override;
     void Render() override;

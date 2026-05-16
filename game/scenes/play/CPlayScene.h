@@ -15,6 +15,7 @@ class CPlayScene : public CScene {
     std::vector<CGameObject*> items;
     std::vector<CGameObject*> foregrounds;
     float mapWidth = 0.0f;
+    int bgR = 200, bgG = 200, bgB = 255; // Default Mario blue
 
 public:
     CPlayScene(std::string levelPath = "content/levels/level_1_1.csv") : levelPath(levelPath) {}
@@ -22,4 +23,7 @@ public:
     void Update(float dt) override;
     void Render() override;
     void Unload() override;
+
+    void SetBackgroundColor(int r, int g, int b) { bgR = r; bgG = g; bgB = b; }
+    void GetBackgroundColor(int& r, int& g, int& b) { r = bgR; g = bgG; b = bgB; }
 };

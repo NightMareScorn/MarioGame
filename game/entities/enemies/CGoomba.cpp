@@ -35,11 +35,13 @@ void CGoomba::GetBoundingBox(float& l, float& t, float& r, float& b) {
     b = y + GOOMBA_BBOX_HEIGHT;
 }
 
+#include "../../../engine/audio/CAudioManager.h"
+
 void CGoomba::SetState(int s) {
     state = s;
     if (state == GOOMBA_STATE_DIE) {
         vx = 0;
         vy = 0;
-        // Optionally set a timer to delete the body
+        CAudioManager::GetInstance()->Play("stomp");
     }
 }

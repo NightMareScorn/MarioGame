@@ -52,7 +52,13 @@ void LoadAssets()
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
-    pD3DDevice->ClearRenderTargetView(pRenderTargetView, BACKGROUND_COLOR);
+    D3DXCOLOR bgColor = BACKGROUND_COLOR; // Default
+    if (scene != nullptr) {
+        int r, g, b;
+        scene->GetBackgroundColor(r, g, b);
+        bgColor = D3DXCOLOR(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+    }
+    pD3DDevice->ClearRenderTargetView(pRenderTargetView, bgColor);
 }
 
 void RenderGame(CGame* g)
