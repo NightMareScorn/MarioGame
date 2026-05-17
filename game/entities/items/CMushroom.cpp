@@ -1,5 +1,7 @@
 #include "CMushroom.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
+#include "../../scenes/play/CPlayScene.h"
 
 CMushroom::CMushroom(float x, float y) : CGameObject() {
     this->x = x;
@@ -37,4 +39,22 @@ void CMushroom::GetBoundingBox(float& left, float& bottom, float& right, float& 
 
 void CMushroom::SetState(int s) {
     state = s;
+}
+
+void CMushroom::OnCollisionX(CGameObject* other, float nx) {
+    if (state == MUSHROOM_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+         SetState(MUSHROOM_STATE_HIDDEN); // Mark as consumed
+         if (scene) scene->AddScore(1000);
+         // Todo: make Mario become big mario
+    }
+}
+
+void CMushroom::OnCollisionY(CGameObject* other, float ny) {
+    if (state == MUSHROOM_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+         SetState(MUSHROOM_STATE_HIDDEN); // Mark as consumed
+         if (scene) scene->AddScore(1000);
+         // Todo: make Mario become big mario
+    }
 }

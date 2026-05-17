@@ -35,10 +35,13 @@ bool CGoomba::IsBlocking(CGameObject* other) {
     return true; // Optionally don't block running shell
 }
 
+#include "../../scenes/play/CPlayScene.h"
+
 void CGoomba::OnCollisionY(CGameObject* other, float ny) {
     if (ny > 0) { // Hit from top
         if (dynamic_cast<CMario*>(other)) {
             SetState(GOOMBA_STATE_DIE);
+            if (scene) scene->AddScore(100);
             other->vy = 0.2f; // bounce mario
         }
     }

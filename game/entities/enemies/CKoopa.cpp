@@ -47,12 +47,16 @@ void CKoopa::GetBoundingBox(float& left, float& bottom, float& right, float& top
     }
 }
 
+#include "../../scenes/play/CPlayScene.h"
+
 void CKoopa::OnCollisionX(CGameObject* other, float nx) {
     if (state == KOOPA_STATE_SHELL_RUNNING) {
         if (auto goomba = dynamic_cast<CGoomba*>(other)) {
             goomba->SetState(GOOMBA_STATE_DIE);
+            if (scene) scene->AddScore(100);
         } else if (auto koopa = dynamic_cast<CKoopa*>(other)) {
             koopa->SetState(KOOPA_STATE_SHELL); // or whatever
+            if (scene) scene->AddScore(100);
         } else if (auto mario = dynamic_cast<CMario*>(other)) {
             // mario takes hit if it's running? Actually Mario handles his own hits.
         }
@@ -69,6 +73,7 @@ void CKoopa::OnCollisionY(CGameObject* other, float ny) {
         if (auto mario = dynamic_cast<CMario*>(other)) {
             if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
                 SetState(KOOPA_STATE_SHELL);
+                if (scene) scene->AddScore(100);
                 mario->vy = 0.2f; // Mario bounces up
             } else if (state == KOOPA_STATE_SHELL) {
                 this->nx = (mario->x < this->x) ? 1 : -1;

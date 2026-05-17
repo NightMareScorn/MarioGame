@@ -28,12 +28,13 @@ class CGame
 	HINSTANCE hInstance;
 
 	ID3D10SamplerState* pPointSamplerState;
+        ID3DX10Font* pFont = NULL;
 
 public:
-	void Init(HWND hWnd, HINSTANCE hInstance);
+        void Init(HWND hWnd, HINSTANCE hInstance);
 
-	void Draw(float x, float y, LPTEXTURE tex, RECT* rect = NULL, float alpha = 1.0f, int sprite_width = 0, int sprite_height = 0);
-
+        void Draw(float x, float y, LPTEXTURE tex, RECT* rect = NULL, float alpha = 1.0f, int sprite_width = 0, int sprite_height = 0);
+        void DrawTextRaw(LPCWSTR text, RECT rect, D3DXCOLOR color);
 	void Draw(float x, float y, LPTEXTURE tex, int l, int t, int r, int b, float alpha = 1.0f, int sprite_width = 0, int sprite_height = 0)
 	{
 		RECT rect;

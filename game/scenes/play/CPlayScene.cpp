@@ -32,6 +32,11 @@ void CPlayScene::Load(const std::string &mapPath) {
 }
 
 void CPlayScene::Update(float dt) {
+  if (timeLeft > 0) {
+    timeLeft -= (dt / 1000.0f);
+    if (timeLeft < 0) timeLeft = 0;
+  }
+
   mario->Update(dt);
   for (auto b : blocks)
     b->Update(dt);

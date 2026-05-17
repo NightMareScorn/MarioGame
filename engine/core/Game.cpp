@@ -103,9 +103,23 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 
 	D3DX10CreateSprite(pD3DDevice, 0, &spriteObject);
 
-	SetPointSamplerState();
+    D3DX10_FONT_DESCW fd;
+    ZeroMemory(&fd, sizeof(fd));
+    fd.Height = 16;
+    fd.Width = 0;
+    fd.Weight = FW_BOLD;
+    fd.MipLevels = 1;
+    fd.Italic = false;
+    fd.CharSet = DEFAULT_CHARSET;
+    fd.OutputPrecision = OUT_DEFAULT_PRECIS;
+    fd.Quality = ANTIALIASED_QUALITY;
+    fd.PitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+    wcscpy_s(fd.FaceName, L"Arial");
+    D3DX10CreateFontIndirectW(pD3DDevice, &fd, &pFont);
 
-	DebugOut(L"[INFO] InitDirectX has been successful\n");
+    SetPointSamplerState();
+
+    DebugOut(L"[INFO] InitDirectX has been successful\n");
 }
 
 void CGame::SetPointSamplerState()
@@ -127,7 +141,11 @@ void CGame::SetPointSamplerState()
 
 	pD3DDevice->CreateSamplerState(&desc, &pPointSamplerState);
 }
-
+void CGame::DrawTextRaw(LPCWSTR text, RECT rect, D3DXCOLOR color)
+{
+    if (pFont == NULL) return;
+    pFont->DrawTextW(NULL, text, -1, &rect, DT_LEFT | DT_TOP | DT_NOCLIP, color);
+}
 void CGame::Draw(float x, float y, LPTEXTURE tex, RECT* rect, float alpha, int sprite_width, int sprite_height)
 {
 	if (tex == NULL) return;
@@ -211,8 +229,7 @@ CGame* CGame::GetInstance()
 }
 
 CGame::~CGame()
-{
-	if (pPointSamplerState != NULL) pPointSamplerState->Release();
+{    if (pFont != NULL) pFont->Release();	if (pPointSamplerState != NULL) pPointSamplerState->Release();
 	if (spriteObject != NULL) spriteObject->Release();
 	if (pBlendStateAlpha != NULL) pBlendStateAlpha->Release();
 	if (pRenderTargetView != NULL) pRenderTargetView->Release();
