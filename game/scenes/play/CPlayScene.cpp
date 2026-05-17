@@ -1,4 +1,5 @@
 #include "CPlayScene.h"
+#include <algorithm>
 #include "../../../engine/core/Game.h"
 #include "../../../engine/input/KeyboardManager.h"
 #include "../../../engine/physics/CCollision.h"
@@ -61,8 +62,50 @@ void CPlayScene::Update(float dt) {
 
   // Xử lý collision cho từng enemy với block xung quanh nó
   for (auto e : enemies) {
+    float old_vx = e->vx;
+
     auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
-    CCollision::ResolveCollision(e, dt, blocksAroundEnemy);
+    auto enemiesAroundEnemy = GetObjectsInRange(e->x, e->y, enemies);
+
+    auto it = std::find(enemiesAroundEnemy.begin(), enemiesAroundEnemy.end(), e);
+    if (it != enemiesAroundEnemy.end()) enemiesAroundEnemy.erase(it);
+
+    std::vector<CGameObject*> coObjectsForEnemy = blocksAroundEnemy;
+    coObjectsForEnemy.insert(coObjectsForEnemy.end(), enemiesAroundEnemy.begin(), enemiesAroundEnemy.end());
+
+    CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
+
+    if (e->vx == 0 && old_vx != 0) {
+      e->vx = -old_vx;
+      e->nx = (e->vx > 0) ? 1 : -1;
+    }
+
+    if (e->vy == 0 && e->vx != 0) {
+      float L, B, R, T;
+      e->GetBoundingBox(L, B, R, T);
+
+      CCollision::Box sensor;
+      if (e->vx < 0) {
+        sensor = CCollision::ToBox(L, B - 4.0f, L + 2.0f, B - 0.5f);
+      } else {
+        sensor = CCollision::ToBox(R - 2.0f, B - 4.0f, R, B - 0.5f);
+      }
+
+      bool hasFloor = false;
+      for (auto b : blocksAroundEnemy) {
+        float bl, bb, br, bt;
+        b->GetBoundingBox(bl, bb, br, bt);
+        if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt))) {
+          hasFloor = true;
+          break;
+        }
+      }
+
+      if (!hasFloor) {
+        e->vx = -e->vx;
+        e->nx = (e->vx > 0) ? 1 : -1;
+      }
+    }
   }
 
   // Xử lý collision cho từng item với block xung quanh nó
