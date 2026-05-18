@@ -25,11 +25,14 @@ enum class EMarioState {
     JUMP, 
     FALL, 
     SKID, 
-    DIE
+    DIE,
+    GOAL_SLIDE,
+    GOAL_WALK
 };
 
 enum class EMarioPower {
     SMALL,
     BIG,
-    FIRE
+    SMALL_FIRE,
+    BIG_FIRE
 };

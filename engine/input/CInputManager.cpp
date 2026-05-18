@@ -12,5 +12,5 @@ void CInputManager::Update() {
     state.left = kb->IsKeyDown('A') || kb->IsKeyDown(VK_LEFT);
     state.right = kb->IsKeyDown('D') || kb->IsKeyDown(VK_RIGHT);
     state.jump = kb->IsKeyPressed(VK_SPACE) || kb->IsKeyPressed('K') || kb->IsKeyPressed('X') || kb->IsKeyPressed(VK_UP);
-    state.attack = kb->IsKeyPressed('J') || kb->IsKeyPressed('Z');
+    state.attack = kb->IsKeyPressed('Z') || kb->IsKeyPressed('J');
 }

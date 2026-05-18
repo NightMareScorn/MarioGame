@@ -17,6 +17,7 @@ class CPlayScene : public CScene {
 
   std::string currentMapPath;
   std::string pendingMapPath;
+  float goalTimer = -1.0f;
 
 public:
   void Load() override {

@@ -7,11 +7,8 @@
 #include "../rendering/Camera.h"
 #include "../utils/debug.h"
 #include <stdio.h>
+#include "../../game/scenes/CSceneManager.h"
 #include "../../game/scenes/play/CPlayScene.h"
-
-#define BACKGROUND_COLOR D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f) // NES SMB1 sky blue (#5C94FC)
-
-CPlayScene* scene = nullptr;
 
 void HandleDebugInput() {
 #ifdef _DEBUG      
@@ -30,15 +27,15 @@ void HandleDebugInput() {
 
 void Update(float dt)
 {
-    if (scene == nullptr) {
-        scene = new CPlayScene();
-        scene->Load();
+    auto sceneManager = CSceneManager::GetInstance();
+    if (sceneManager->GetCurrentScene() == nullptr) {
+        sceneManager->SetScene(new CPlayScene());
     }
 
     CInputManager::GetInstance()->Update();
     HandleDebugInput();
 
-    scene->Update(dt);
+    sceneManager->Update(dt);
 
     // Update keyboard state at the very end
     KeyboardManager::GetInstance()->Update();
@@ -52,17 +49,15 @@ void LoadAssets()
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
     D3DXCOLOR clearColor = D3DXCOLOR(0, 0, 0, 1); // Default to black if no scene
-    if (scene != nullptr) {
-        clearColor = scene->GetClearColor();
+    if (CSceneManager::GetInstance()->GetCurrentScene() != nullptr) {
+        clearColor = ((CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene())->GetClearColor();
     }
     pD3DDevice->ClearRenderTargetView(pRenderTargetView, clearColor);
 }
 
 void RenderGame(CGame* g)
 {
-    if (scene != nullptr) {
-        scene->Render();
-    }
+    CSceneManager::GetInstance()->Render();
 }
 
 void Render()

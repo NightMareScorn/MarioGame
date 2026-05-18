@@ -36,8 +36,7 @@ void CFireFlower::SetState(int s) {
 
 void CFireFlower::OnCollected(CMario* mario) {
     if (state != FLOWER_STATE_HIDDEN) {
-        if (mario->GetPower() == EMarioPower::SMALL) mario->GrowToBig();
-        else mario->SetPower(EMarioPower::FIRE);
+        mario->PowerUpFlower();
         this->SetIsDead(true);
     }
 }

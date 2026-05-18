@@ -4,6 +4,7 @@
 #include "../entities/blocks/CBrick.h"
 #include "../entities/blocks/CLuckyBlock.h"
 #include "../entities/blocks/CDecorBlock.h"
+#include "../entities/blocks/CFlagpole.h"
 #include "../entities/blocks/CInvisibleBlock.h"
 #include "../entities/blocks/CPipe.h"
 #include "../entities/enemies/CGoomba.h"
@@ -156,7 +157,7 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 break;
             case 8: // Flag pole segment
             {
-                scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
+                scene->decors.push_back(new CFlagpole(x, y, "ANI_FLAG_OW_POLE"));
                 bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
                 if (isTopmost) {
                     scene->decors.push_back(new CDecorBlock(x - 3.0f, y + 8.0f, "ANI_FLAG_OW_TOP"));

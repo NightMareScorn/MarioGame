@@ -42,7 +42,7 @@ void CMushroom::SetState(int s) {
 
 void CMushroom::OnCollected(CMario* mario) {
     if (state != MUSHROOM_STATE_HIDDEN) {
-        mario->GrowToBig();
+        mario->PowerUpMushroom();
         this->SetIsDead(true);
     }
 }

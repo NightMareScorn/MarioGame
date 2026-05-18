@@ -21,18 +21,26 @@ bool CMario::hasCheckpoint = false;
 
 void CMario::Update(float dt) {
     if (state == EMarioState::DIE) {
-        vy += MarioConfig::GRAVITY * dt;
-        y += vy * dt;
-        dieTimer -= dt;
-        return;
+        vy += MarioConfig::GRAVITY * dt; y += vy * dt;
+        dieTimer -= dt; return;
     }
 
     if (untouchableTimer > 0) untouchableTimer -= dt;
     if (starTimer > 0) starTimer -= dt;
 
-    const auto& input = CInputManager::GetInstance()->GetState();
-    HandleInput(input, dt);
-    ApplyPhysics(dt);
+    if (state == EMarioState::GOAL_SLIDE) {
+        vx = 0;
+        vy = -0.05f; // Trượt xuống rất chậm
+        y += vy * dt;
+        if (onGround) state = EMarioState::GOAL_WALK;
+    } else if (state == EMarioState::GOAL_WALK) {
+        vx = 0.06f; x += vx * dt;
+        ApplyPhysics(dt); // Rơi xuống đất nếu hết đường
+    } else {
+        const auto& input = CInputManager::GetInstance()->GetState();
+        HandleInput(input, dt);
+        ApplyPhysics(dt);
+    }
     onGround = false;
 }
 
@@ -60,13 +68,15 @@ void CMario::HandleInput(const InputState& input, float dt) {
         vy = MarioConfig::JUMP_FORCE;
     }
 
-    if (input.attack && power == EMarioPower::FIRE) {
+    if (input.attack && (power == EMarioPower::SMALL_FIRE || power == EMarioPower::BIG_FIRE)) {
         TryShootFireball();
     }
 }
 
 void CMario::UpdateState() {
-    if (state == EMarioState::DIE) return;
+    if (state == EMarioState::DIE || 
+        state == EMarioState::GOAL_SLIDE || 
+        state == EMarioState::GOAL_WALK) return;
 
     EMarioState oldState = state;
     const auto& input = CInputManager::GetInstance()->GetState();
@@ -85,6 +95,26 @@ void CMario::UpdateState() {
             state = EMarioState::IDLE;
         }
     }
+}
+
+void CMario::PowerUpFlower() {
+    if (this->power == EMarioPower::SMALL) {
+        this->power = EMarioPower::SMALL_FIRE; // Nhỏ + Hoa -> Nhỏ Lửa
+    } else if (this->power == EMarioPower::BIG) {
+        this->power = EMarioPower::BIG_FIRE;   // Lớn + Hoa -> Lớn Lửa
+    }
+    this->untouchableTimer = 500.0f;
+    DebugOut(L"[POWERUP] Mario obtained FIRE power!\n");
+}
+
+void CMario::PowerUpMushroom() {
+    if (this->power == EMarioPower::SMALL) {
+        GrowToBig(); // Nhỏ + Nấm -> Lớn
+    } else if (this->power == EMarioPower::SMALL_FIRE) {
+        this->y -= 16.0f; 
+        this->power = EMarioPower::BIG_FIRE; // Nhỏ Lửa + Nấm -> Lớn Lửa
+    }
+    this->untouchableTimer = 500.0f;
 }
 
 bool CMario::IsInvincible() const {
@@ -119,10 +149,10 @@ void CMario::ApplyPhysics(float dt) {
 }
 
 void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
-    left = x;
-    bottom = y;
-    right = x + MARIO_W;
-    top = (power == EMarioPower::SMALL) ? y + MARIO_H : y + 31.0f;
+    left = x; bottom = y; right = x + 12.0f;
+    // Bounding Box cao 31 cho các dạng BIG, cao 15 cho các dạng SMALL
+    bool isBigType = (power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE);
+    top = isBigType ? y + 31.0f : y + 15.0f;
 }
 
 void CMario::GrowToBig() {
@@ -154,7 +184,8 @@ void CMario::Render() {
     }
     std::string prefix = "ANI_MARIO_";
     if (power == EMarioPower::BIG) prefix = "ANI_BIG_MARIO_";
-    else if (power == EMarioPower::FIRE) prefix = "ANI_FIRE_MARIO_";
+    else if (power == EMarioPower::SMALL_FIRE) prefix = "ANI_SMALL_FIRE_MARIO_";
+    else if (power == EMarioPower::BIG_FIRE) prefix = "ANI_BIG_FIRE_MARIO_";
 
     std::string aniName = prefix + "IDLE";
     if (state == EMarioState::DIE) {
@@ -169,4 +200,13 @@ void CMario::Render() {
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
+}
+
+void CMario::HitGoal() {
+    if (state == EMarioState::GOAL_SLIDE || state == EMarioState::GOAL_WALK) return;
+    state = EMarioState::GOAL_SLIDE;
+    this->SetInputLocked(true);
+    vx = 0.0f;
+    vy = -0.05f; 
+    nx = 1;
 }
