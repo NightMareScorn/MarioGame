@@ -1,5 +1,6 @@
 #include "CFireFlower.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CFireFlower::CFireFlower(float x, float y) : CGameObject() {
     this->x = x;
@@ -31,4 +32,12 @@ void CFireFlower::GetBoundingBox(float& left, float& bottom, float& right, float
 
 void CFireFlower::SetState(int s) {
     state = s;
+}
+
+void CFireFlower::OnCollected(CMario* mario) {
+    if (state != FLOWER_STATE_HIDDEN) {
+        if (mario->GetPower() == EMarioPower::SMALL) mario->GrowToBig();
+        else mario->SetPower(EMarioPower::FIRE);
+        this->SetIsDead(true);
+    }
 }

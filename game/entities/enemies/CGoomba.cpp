@@ -9,7 +9,13 @@ CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameO
 }
 
 void CGoomba::Update(float dt) {
-    if (state == GOOMBA_STATE_DIE) return;
+    if (state == GOOMBA_STATE_DIE) {
+        dieTimer -= dt;
+        if (dieTimer <= 0) {
+            isDead = true;
+        }
+        return;
+    }
     vy -= GOOMBA_GRAVITY * dt;
 }
 
@@ -34,5 +40,6 @@ void CGoomba::SetState(int s) {
     if (state == GOOMBA_STATE_DIE) {
         vx = 0;
         vy = 0;
+        dieTimer = 500.0f;
     }
 }

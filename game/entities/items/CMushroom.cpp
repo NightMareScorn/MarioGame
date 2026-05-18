@@ -1,5 +1,6 @@
 #include "CMushroom.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CMushroom::CMushroom(float x, float y) : CGameObject() {
     this->x = x;
@@ -14,8 +15,8 @@ void CMushroom::Update(float dt) {
     vy -= MUSHROOM_GRAVITY * dt;
 
     if (vx == 0) { // Bumped into wall horizontally
-        vx = (nx > 0) ? MUSHROOM_SPEED : -MUSHROOM_SPEED;
         nx = -nx;
+        vx = (nx > 0) ? MUSHROOM_SPEED : -MUSHROOM_SPEED;
     }
 }
 
@@ -37,4 +38,11 @@ void CMushroom::GetBoundingBox(float& left, float& bottom, float& right, float& 
 
 void CMushroom::SetState(int s) {
     state = s;
+}
+
+void CMushroom::OnCollected(CMario* mario) {
+    if (state != MUSHROOM_STATE_HIDDEN) {
+        mario->GrowToBig();
+        this->SetIsDead(true);
+    }
 }

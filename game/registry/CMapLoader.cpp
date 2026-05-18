@@ -217,8 +217,13 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
 
     if (type == "mario") {
         if (scene->mario == nullptr) scene->mario = new CMario();
-        scene->mario->x = x;
-        scene->mario->y = y;
+        if (CMario::hasCheckpoint) {
+            scene->mario->x = CMario::checkpointX;
+            scene->mario->y = CMario::checkpointY;
+        } else {
+            scene->mario->x = x;
+            scene->mario->y = y;
+        }
         spawnedObj = scene->mario;
         DebugOut(L"[INFO] Object: Mario at (%.2f, %.2f)\n", x, y);
     }
@@ -231,8 +236,8 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         scene->enemies.push_back(spawnedObj);
     }
     else if (type == "mushroom" || type == "1-up") {
-        spawnedObj = new CBrick(x, y, "ANI_BRICK_IDLE", invisible_block);
-        scene->items.push_back(spawnedObj); // Treat as item-carrying brick
+        spawnedObj = new CMushroom(x, y);
+        scene->items.push_back(spawnedObj);
     }
     else if (type == "star") {
         spawnedObj = new CStar(x, y);

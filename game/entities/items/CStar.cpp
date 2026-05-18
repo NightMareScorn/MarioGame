@@ -1,5 +1,6 @@
 #include "CStar.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CStar::CStar(float x, float y) : CGameObject() {
   this->x = x;
@@ -44,3 +45,10 @@ void CStar::GetBoundingBox(float &left, float &bottom, float &right, float &top)
 }
 
 void CStar::SetState(int s) { state = s; }
+
+void CStar::OnCollected(CMario* mario) {
+    if (state != STAR_STATE_HIDDEN) {
+        mario->BecomeInvincible(10.0f);
+        this->SetIsDead(true);
+    }
+}

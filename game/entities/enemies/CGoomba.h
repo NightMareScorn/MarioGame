@@ -14,10 +14,12 @@
 
 class CGoomba : public CGameObject {
     int state;
+    float dieTimer = 0.0f;
 public:
     CGoomba(float x, float y, float patrolLeft = 0, float patrolRight = 0);
     void Update(float dt) override;
     void Render() override;
     void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     void SetState(int s);
-};
+    bool IsEnemy() const override { return state != GOOMBA_STATE_DIE; }
+    void OnStomped() override { SetState(GOOMBA_STATE_DIE); }};

@@ -27,7 +27,10 @@ public:
   void Render() override;
   void Unload() override;
 
+  void AddItem(CGameObject* item) { items.push_back(item); }
+
   void TransitionToMap(const std::string &mapPath) { pendingMapPath = mapPath; }
+  std::string GetCurrentMapPath() const { return currentMapPath; }
   void SetClearColor(D3DXCOLOR color) { clearColor = color; }
 
   // Lọc các đối tượng trong khoảng 256 pixels quanh (x, y)

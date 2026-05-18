@@ -9,7 +9,8 @@ CInputManager* CInputManager::GetInstance() {
 
 void CInputManager::Update() {
     auto kb = KeyboardManager::GetInstance();
-    state.left = kb->IsKeyDown('A');
-    state.right = kb->IsKeyDown('D');
-    state.jump = kb->IsKeyPressed(VK_SPACE);
+    state.left = kb->IsKeyDown('A') || kb->IsKeyDown(VK_LEFT);
+    state.right = kb->IsKeyDown('D') || kb->IsKeyDown(VK_RIGHT);
+    state.jump = kb->IsKeyPressed(VK_SPACE) || kb->IsKeyPressed('K') || kb->IsKeyPressed('X') || kb->IsKeyPressed(VK_UP);
+    state.attack = kb->IsKeyPressed('J') || kb->IsKeyPressed('Z');
 }

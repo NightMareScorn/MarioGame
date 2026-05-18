@@ -1,5 +1,6 @@
 #include "CCoin.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CCoin::CCoin(float x, float y, bool hidden_in_block) : CGameObject() {
     this->x = x;
@@ -54,5 +55,13 @@ void CCoin::SetState(int s) {
     state = s;
     if (state == COIN_STATE_POPPING && in_block) {
         vy = COIN_POP_SPEED;
+    }
+}
+
+void CCoin::OnCollected(CMario* mario) {
+    if (state != COIN_STATE_HIDDEN && state != COIN_STATE_DONE && !in_block) {
+        // Collect coin
+        this->SetIsDead(true);
+        this->SetState(COIN_STATE_DONE);
     }
 }

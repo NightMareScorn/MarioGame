@@ -20,4 +20,6 @@ public:
     void Render() override;
     void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
     void SetState(int s);
+    bool IsItem() const override { return true; }
+    void OnCollected(class CMario* mario) override;
 };

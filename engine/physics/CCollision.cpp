@@ -1,6 +1,7 @@
 #include "CCollision.h"
 #include <algorithm>
 #include <cmath>
+#include "../../game/entities/blocks/CBlock.h"
 #include "../../game/entities/player/CMario.h"
 
 bool CCollision::CheckAABB(const Box &a, const Box &b) {
@@ -8,69 +9,66 @@ bool CCollision::CheckAABB(const Box &a, const Box &b) {
 }
 
 void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<CGameObject*>& coObjects) {
-    if (!obj) return;
-
-    // --- STEP 1: X-Axis Movement and Resolution ---
+    // --- TRỤC X ---
     obj->x += obj->vx * dt;
-
-    float left1, bottom1, right1, top1;
-    obj->GetBoundingBox(left1, bottom1, right1, top1);
-    Box A = ToBox(left1, bottom1, right1, top1);
-    float objWidth = right1 - left1;
+    float l1, b1, r1, t1;
+    obj->GetBoundingBox(l1, b1, r1, t1);
 
     for (auto other : coObjects) {
-        if (!other || other == obj) continue;
-        float left2, bottom2, right2, top2;
-        other->GetBoundingBox(left2, bottom2, right2, top2);
-        Box B = ToBox(left2, bottom2, right2, top2);
+        if (!other || other == obj || other->IsDead()) continue;
+        float l2, b2, r2, t2;
+        other->GetBoundingBox(l2, b2, r2, t2);
 
-        if (CheckAABB(A, B)) {
-            // Resolve X axis
-            if (obj->vx > 0) {
-                // Moving right, hit left side of 'other'
-                obj->x = B.left - objWidth;
-            } else if (obj->vx < 0) {
-                // Moving left, hit right side of 'other'
-                obj->x = B.right;
+        if (CheckAABB({l1, b1, r1, t1}, {l2, b2, r2, t2})) {
+            CMario* mario = dynamic_cast<CMario*>(obj);
+            if (mario && other->IsItem()) {
+                other->OnCollected(mario);
             }
-            obj->vx = 0;
-            
-            // Re-update bounding box A for subsequent overlap checks in X
-            obj->GetBoundingBox(left1, bottom1, right1, top1);
-            A = ToBox(left1, bottom1, right1, top1);
+            if (dynamic_cast<CBlock*>(other)) {
+                if (obj->vx > 0) obj->x = l2 - (r1 - l1);
+                else if (obj->vx < 0) obj->x = r2;
+                
+                if (obj->IsEnemy()) { // Quái chạm tường -> Đảo chiều
+                    obj->vx = -obj->vx;
+                    obj->nx = -obj->nx;
+                } else obj->vx = 0;
+            }
+            obj->GetBoundingBox(l1, b1, r1, t1);
         }
     }
 
-    // --- STEP 2: Y-Axis Movement and Resolution ---
+    // --- TRỤC Y ---
     obj->y += obj->vy * dt;
-
-    obj->GetBoundingBox(left1, bottom1, right1, top1);
-    A = ToBox(left1, bottom1, right1, top1);
-    float objHeight = top1 - bottom1;
+    obj->GetBoundingBox(l1, b1, r1, t1);
 
     for (auto other : coObjects) {
-        if (!other || other == obj) continue;
-        float left2, bottom2, right2, top2;
-        other->GetBoundingBox(left2, bottom2, right2, top2);
-        Box B = ToBox(left2, bottom2, right2, top2);
+        if (!other || other == obj || other->IsDead()) continue;
+        float l2, b2, r2, t2;
+        other->GetBoundingBox(l2, b2, r2, t2);
 
-        if (CheckAABB(A, B)) {
-            // Resolve Y axis
-            if (obj->vy < 0) {
-                // Falling down, hit top side of 'other'
-                obj->y = B.top;
-                obj->vy = 0;
-                if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
-            } else if (obj->vy > 0) {
-                // Jumping up, hit bottom side of 'other' (Ceiling) // <--- THIS is where Mario hits a block from below
-                obj->y = B.bottom - objHeight;
-                obj->vy = 0;
-                other->OnHitFromBelow(obj);
+        if (CheckAABB({l1, b1, r1, t1}, {l2, b2, r2, t2})) {
+            CMario* mario = dynamic_cast<CMario*>(obj);
+
+            if (mario && other->IsItem()) {
+                other->OnCollected(mario);
             }
-            
-            // Re-update bounding box A for subsequent overlap checks in Y
-            obj->GetBoundingBox(left1, bottom1, right1, top1);
-            A = ToBox(left1, bottom1, right1, top1);
+            else if (mario && other->IsEnemy()) {
+                // STOMP
+                if (mario->vy < 0 && b1 > b2) {
+                    other->OnStomped();
+                    mario->StompBounce();
+                } else if (!mario->IsInvincible()) mario->Hurt();
+            }
+            else if (dynamic_cast<CBlock*>(other)) {
+                if (obj->vy < 0) {
+                    obj->y = t2; obj->vy = 0;
+                    if (mario) mario->SetOnGround(true);
+                } else if (obj->vy > 0) {
+                    obj->y = b2 - (t1 - b1); obj->vy = 0;
+                    other->OnHitFromBelow(obj);
+                }
+            }
+            obj->GetBoundingBox(l1, b1, r1, t1);
         }
     }
 }
