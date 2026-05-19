@@ -28,17 +28,26 @@ void CMario::Update(float dt) {
     if (untouchableTimer > 0) untouchableTimer -= dt;
     if (starTimer > 0) starTimer -= dt;
 
+    // --- XỬ LÝ LOGIC THẮNG MÀN ---
     if (state == EMarioState::GOAL_SLIDE) {
         vx = 0;
-        vy = -0.05f; // Trượt xuống rất chậm
+        vy = -0.05f; // Trượt xuống
         y += vy * dt;
-        if (onGround) state = EMarioState::GOAL_WALK;
-    } else if (state == EMarioState::GOAL_WALK) {
-        vx = 0.06f; x += vx * dt;
-        ApplyPhysics(dt); // Rơi xuống đất nếu hết đường
-    } else {
-        const auto& input = CInputManager::GetInstance()->GetState();
-        HandleInput(input, dt);
+        return; // Thoát để không bị ResolveCollision can thiệp sai
+    } 
+    else if (state == EMarioState::GOAL_WALK) {
+        vx = 0.06f; 
+        nx = 1;
+        x += vx * dt; // Di chuyển tự động
+        vy += MarioConfig::GRAVITY * dt;
+        y += vy * dt;
+        if (y < 32.0f) y = 32.0f; // Bám sàn
+        return;
+    } 
+    else {
+        if (!IsInputLocked()) {
+            HandleInput(CInputManager::GetInstance()->GetState(), dt);
+        }
         ApplyPhysics(dt);
     }
     onGround = false;
@@ -99,24 +108,23 @@ void CMario::UpdateState() {
 
 void CMario::PowerUpFlower() {
     if (this->power == EMarioPower::SMALL) {
-        this->power = EMarioPower::SMALL_FIRE; // Nhỏ + Hoa -> Nhỏ Lửa
+        this->power = EMarioPower::SMALL_FIRE;
     } else if (this->power == EMarioPower::BIG) {
-        this->power = EMarioPower::BIG_FIRE;   // Lớn + Hoa -> Lớn Lửa
+        this->power = EMarioPower::BIG_FIRE;
     }
     this->untouchableTimer = 500.0f;
-    DebugOut(L"[POWERUP] Mario obtained FIRE power!\n");
 }
 
 void CMario::PowerUpMushroom() {
     if (this->power == EMarioPower::SMALL) {
-        GrowToBig(); // Nhỏ + Nấm -> Lớn
+        GrowToBig();
     } else if (this->power == EMarioPower::SMALL_FIRE) {
         this->y -= 16.0f; 
-        this->power = EMarioPower::BIG_FIRE; // Nhỏ Lửa + Nấm -> Lớn Lửa
+        this->power = EMarioPower::BIG_FIRE;
     }
-    this->untouchableTimer = 500.0f;
 }
 
+// FIX LỖI LINKER: Thêm const vào cuối hàm cho khớp file .h
 bool CMario::IsInvincible() const {
     return untouchableTimer > 0 || starTimer > 0;
 }
@@ -128,12 +136,10 @@ void CMario::Die() {
     vx = 0;
     vy = MarioConfig::JUMP_FORCE;
     dieTimer = 2000.0f; 
-    DebugOut(L"[MARIO] Died. Remaining lives: %d\n", lives);
 }
 
 void CMario::Hurt() {
     if (IsInvincible() || state == EMarioState::DIE) return;
-
     if (power != EMarioPower::SMALL) {
         power = EMarioPower::SMALL;
         untouchableTimer = 2000.0f;
@@ -149,10 +155,9 @@ void CMario::ApplyPhysics(float dt) {
 }
 
 void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
-    left = x; bottom = y; right = x + 12.0f;
-    // Bounding Box cao 31 cho các dạng BIG, cao 15 cho các dạng SMALL
-    bool isBigType = (power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE);
-    top = isBigType ? y + 31.0f : y + 15.0f;
+    left = x; bottom = y; right = x + MARIO_W;
+    bool isTall = (power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE);
+    top = isTall ? y + 31.0f : y + 15.0f;
 }
 
 void CMario::GrowToBig() {
@@ -161,16 +166,12 @@ void CMario::GrowToBig() {
     this->power = EMarioPower::BIG;
 }
 
-void CMario::StompBounce() {
-    this->vy = 0.22f;
-}
+void CMario::StompBounce() { this->vy = 0.22f; }
 
 void CMario::TryShootFireball() {
-    // Giới hạn tốc độ bắn
     static DWORD lastShot = 0;
     if (GetTickCount() - lastShot < 300) return;
     lastShot = GetTickCount();
-
     CPlayScene* scene = dynamic_cast<CPlayScene*>(CSceneManager::GetInstance()->GetCurrentScene());
     if (scene) {
         CFireball* fb = new CFireball(x + (nx > 0 ? 10 : -5), y + 10.0f, nx);
@@ -179,24 +180,31 @@ void CMario::TryShootFireball() {
 }
 
 void CMario::Render() {
-    if (untouchableTimer > 0 || starTimer > 0) {
+    // Hiệu ứng nhấp nháy khi bị thương (untouchable)
+    if (untouchableTimer > 0 && starTimer <= 0) {
         if ((int(GetTickCount64()) / 50) % 2 == 0) return; 
     }
-    std::string prefix = "ANI_MARIO_";
-    if (power == EMarioPower::BIG) prefix = "ANI_BIG_MARIO_";
-    else if (power == EMarioPower::SMALL_FIRE) prefix = "ANI_SMALL_FIRE_MARIO_";
-    else if (power == EMarioPower::BIG_FIRE) prefix = "ANI_BIG_FIRE_MARIO_";
 
-    std::string aniName = prefix + "IDLE";
-    if (state == EMarioState::DIE) {
-        aniName = "ANI_MARIO_DIE";
-    } else {
-        if (!onGround) {
-            aniName = prefix + "JUMP";
-        } else {
-            if (abs(vx) > 0.01f) aniName = prefix + "WALK";
-            else aniName = prefix + "IDLE";
-        }
+    std::string aniName = "";
+
+    // 2. LOGIC RENDER STAR MODE (Đổi màu liên tục)
+    if (starTimer > 0) {
+        // Cứ mỗi 100ms lại đổi sang 1 trong 4 màu Star (dựa theo animations.txt bạn gửi)
+        int colorFrame = (int(GetTickCount64() / 100) % 4) + 1; // Trả về 1, 2, 3, 4
+        aniName = "ANI_STAR" + std::to_string(colorFrame) + "_OW";
+    } 
+    else {
+        // Render bình thường dựa trên Power
+        std::string prefix = "ANI_MARIO_";
+        if (power == EMarioPower::BIG) prefix = "ANI_BIG_MARIO_";
+        else if (power == EMarioPower::SMALL_FIRE) prefix = "ANI_SMALL_FIRE_MARIO_";
+        else if (power == EMarioPower::BIG_FIRE) prefix = "ANI_BIG_FIRE_MARIO_";
+
+        aniName = prefix + "IDLE";
+        if (state == EMarioState::DIE) aniName = "ANI_MARIO_DIE";
+        else if (!onGround) aniName = prefix + "JUMP";
+        else if (state == EMarioState::SKID) aniName = prefix + "SKID";
+        else if (abs(vx) > 0.01f) aniName = prefix + "WALK";
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
@@ -206,7 +214,22 @@ void CMario::HitGoal() {
     if (state == EMarioState::GOAL_SLIDE || state == EMarioState::GOAL_WALK) return;
     state = EMarioState::GOAL_SLIDE;
     this->SetInputLocked(true);
-    vx = 0.0f;
-    vy = -0.05f; 
-    nx = 1;
+    vx = 0.0f; vy = -0.05f; nx = 1;
+}
+
+void CMario::SetState(int s) {
+    EMarioState newState = static_cast<EMarioState>(s);
+    if (this->state == newState) return;
+    this->state = newState;
+
+    if (this->state == EMarioState::GOAL_WALK) {
+        this->vx = 0.06f; // Tốc độ đi bộ vào lâu đài
+        this->nx = 1;
+    }
+}
+
+void CMario::BecomeInvincible(float timeInSeconds) {
+    // Chuyển giây sang miligiây (10s = 10000ms)
+    this->starTimer = timeInSeconds * 1000.0f; 
+    DebugOut(L"[POWERUP] Mario is now INVINCIBLE for 10s!\n");
 }

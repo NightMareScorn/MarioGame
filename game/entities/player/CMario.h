@@ -24,11 +24,13 @@ public:
     void SetPower(EMarioPower p) { power = p; }
     void StompBounce();
     bool IsInvincible() const;
-    void BecomeInvincible(float time) { starTimer = time; }
+    void BecomeInvincible(float time);
     void Hurt();
     void TryShootFireball();
     void Die();
     void HitGoal(); // Hàm khi chạm cột cờ
+    void SetState(int s);
+    bool IsStarMode() const { return starTimer > 0; }
 
     // THÊM 2 HÀM NÀY ĐỂ FIX LỖI "NO MEMBER"
     void SetInputLocked(bool v) { inputLocked = v; }

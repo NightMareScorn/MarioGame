@@ -157,11 +157,16 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 break;
             case 8: // Flag pole segment
             {
-                scene->decors.push_back(new CFlagpole(x, y, "ANI_FLAG_OW_POLE"));
-                bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
-                if (isTopmost) {
-                    scene->decors.push_back(new CDecorBlock(x - 3.0f, y + 8.0f, "ANI_FLAG_OW_TOP"));
-                    scene->decors.push_back(new CDecorBlock(x - 12.0f, y + 8.0f, "ANI_FLAG_OW"));
+                // Kiểm tra: Nếu ô phía DƯỚI ô này KHÔNG PHẢI là số 8 (nghĩa là đây là ô chân cột)
+                // thì mới tạo đối tượng CFlagpole có logic.
+                bool isBottom = (i == H - 1) || (matrix[i + 1][j] != 8);
+
+                if (isBottom) {
+                    // Tạo 1 đối tượng duy nhất quản lý toàn bộ cột cờ tại vị trí chân
+                    scene->decors.push_back(new CFlagpole(x, y, "ANI_FLAG_OW_POLE"));
+                } else {
+                    // Các ô số 8 ở trên chỉ là hình ảnh trang trí, không có logic
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
                 }
                 break;
             }

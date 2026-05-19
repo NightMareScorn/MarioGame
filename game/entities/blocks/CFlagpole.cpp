@@ -20,15 +20,13 @@ void CFlagpole::Update(float dt) {
 }
 
 void CFlagpole::Render() {
-    // 1. Vẽ thân cột (Dùng tên aniName truyền từ map, thường là ANI_FLAG_OW_POLE)
-    // Vẽ chồng 10 đoạn 16px để tạo thành cột cao
-        CAnimations::GetInstance()->Render(aniName, x, y + 16.0f);
-    
-    // 2. Vẽ đỉnh cột (Viên bi)
+    // 1. Thân cột (Vẽ 10 đoạn 16px đi lên từ vị trí chân x, y)
+    for (int i = 0; i < 10; i++) {
+        CAnimations::GetInstance()->Render(aniName, x, y + (i * 16.0f));
+    }
+    // 2. Đỉnh cột (Viên bi)
     CAnimations::GetInstance()->Render("ANI_FLAG_OW_TOP", x - 3.0f, y + 155.0f);
-
-    // 3. Vẽ lá cờ (Lá cờ di chuyển dựa trên biến flagY)
-    // Lưu ý: "ANI_FLAG_OW" là tên animation lá cờ trong file của bạn
+    // 3. Lá cờ (Di chuyển theo biến flagY)
     CAnimations::GetInstance()->Render("ANI_FLAG_OW", x - 12.0f, flagY);
 }
 
