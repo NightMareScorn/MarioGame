@@ -142,7 +142,7 @@ void CPlayScene::Update(float dt) {
     } else {
         if (mario->GetDieTimer() <= 0) {
             if (CMario::lives > 0) this->TransitionToMap(currentMapPath);
-            else { CMario::lives = 3; CMario::hasCheckpoint = false; this->TransitionToMap("content/levels/level_1_1.csv"); }
+            else { CMario::lives = 3; CMario::hasCheckpoint = false; this->TransitionToMap("content/levels/level_1_2_first_half.csv"); }
             return;
         }
     }

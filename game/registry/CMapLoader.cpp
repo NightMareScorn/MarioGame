@@ -173,6 +173,21 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
             case 9: // Castle
                 scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
                 break;
+            case 10: // Castle Brick
+                scene->blocks.push_back(new CBrick(x, y, "ANI_CASTLE_BRICK_OW"));
+                break;
+            case 11: // Lava top
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_CASTLE_BRICK_OW"));
+                break;
+            case 12: // Lava body
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_CASTLE_BRICK_OW"));
+                break;
+            case 13: // Bridge
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRIDGE"));
+                break;
+            case 14: // Chain
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_CASTLE_BRICK_OW"));
+                break;
             default:
                 DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
                 break;
