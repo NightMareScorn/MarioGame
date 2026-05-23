@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;$(ProjectDir)engine\utils;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;$(ProjectDir)engine\utils;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -121,7 +121,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;$(ProjectDir)engine\utils;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;$(ProjectDir)engine\utils;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
