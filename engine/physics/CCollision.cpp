@@ -82,7 +82,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
 
             if (obj->vy < 0) {
                 // Falling down, hit top side of 'other'
-                obj->y = B.top + 0.1f;
+                obj->y = B.top;
                 obj->vy = 0;
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else if (obj->vy > 0) {
