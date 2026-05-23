@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)engine\rendering;$(ProjectDir)engine\core;$(ProjectDir)engine\Graphics;.\packages\Microsoft.Web.WebView2.1.0.2151.40\build\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -151,40 +151,110 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="engine\input\KeyboardManager.cpp" />
-    <ClCompile Include="game\entities\player\Mario.cpp" />
-    <ClCompile Include="main.cpp" />
+    <!-- Engine: core -->
+    <ClCompile Include="engine\audio\CAudioManager.cpp" />
+    <ClCompile Include="engine\core\CTimer.cpp" />
     <ClCompile Include="engine\core\Game.cpp" />
-    <ClCompile Include="engine\core\Window.cpp" />
     <ClCompile Include="engine\core\GameLoop.cpp" />
+    <ClCompile Include="engine\core\Window.cpp" />
+    <!-- Engine: graphics -->
     <ClCompile Include="engine\Graphics\Animation.cpp" />
     <ClCompile Include="engine\Graphics\Animations.cpp" />
     <ClCompile Include="engine\Graphics\Sprite.cpp" />
     <ClCompile Include="engine\Graphics\Sprites.cpp" />
-    <ClCompile Include="engine\Graphics\Textures.cpp" />
+    <!-- Engine: input -->
+    <ClCompile Include="engine\input\CInputManager.cpp" />
+    <ClCompile Include="engine\input\KeyboardManager.cpp" />
+    <!-- Engine: physics -->
+    <ClCompile Include="engine\physics\CCollision.cpp" />
+    <!-- Engine: rendering -->
+    <ClCompile Include="engine\rendering\Camera.cpp" />
+    <ClCompile Include="engine\rendering\Textures.cpp" />
+    <!-- Engine: utils -->
+    <ClCompile Include="engine\utils\CScoreManager.cpp" />
     <ClCompile Include="engine\utils\debug.cpp" />
-    <ClCompile Include="game\entities\Entity.cpp" />
-    <ClCompile Include="game\scenes\Scene.cpp" />
-    <ClCompile Include="game\scenes\SceneManager.cpp" />
+    <!-- Game: entities -->
+    <ClCompile Include="game\entities\CExtraEntities.cpp" />
+    <ClCompile Include="game\entities\blocks\CBlock.cpp" />
+    <ClCompile Include="game\entities\blocks\CBrick.cpp" />
+    <ClCompile Include="game\entities\blocks\CBridge.cpp" />
+    <ClCompile Include="game\entities\blocks\CDecorBlock.cpp" />
+    <ClCompile Include="game\entities\blocks\CLuckyBlock.cpp" />
+    <ClCompile Include="game\entities\blocks\CPipe.cpp" />
+    <ClCompile Include="game\entities\enemies\CCheepCheep.cpp" />
+    <ClCompile Include="game\entities\enemies\CGoomba.cpp" />
+    <ClCompile Include="game\entities\enemies\CKoopa.cpp" />
+    <ClCompile Include="game\entities\items\CCoin.cpp" />
+    <ClCompile Include="game\entities\items\CFireFlower.cpp" />
+    <ClCompile Include="game\entities\items\CMushroom.cpp" />
+    <ClCompile Include="game\entities\items\CStar.cpp" />
+    <ClCompile Include="game\entities\player\CMario.cpp" />
+    <!-- Game: registry -->
+    <ClCompile Include="game\registry\CMapLoader.cpp" />
+    <ClCompile Include="game\registry\CResourceRegistry.cpp" />
+    <!-- Game: scenes -->
+    <ClCompile Include="game\scenes\CSceneManager.cpp" />
+    <ClCompile Include="game\scenes\play\CPlayScene.cpp" />
+    <!-- Main -->
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Engine: core -->
+    <ClInclude Include="engine\audio\CAudioManager.h" />
+    <ClInclude Include="engine\core\CTimer.h" />
     <ClInclude Include="engine\core\Game.h" />
-    <ClInclude Include="engine\core\GameObject.h" />
-    <ClInclude Include="engine\core\Window.h" />
     <ClInclude Include="engine\core\GameLoop.h" />
+    <ClInclude Include="engine\core\Window.h" />
+    <!-- Engine: graphics -->
     <ClInclude Include="engine\Graphics\Animation.h" />
     <ClInclude Include="engine\Graphics\AnimationFrame.h" />
     <ClInclude Include="engine\Graphics\Animations.h" />
     <ClInclude Include="engine\Graphics\Sprite.h" />
     <ClInclude Include="engine\Graphics\Sprites.h" />
-    <ClInclude Include="engine\Graphics\Texture.h" />
-    <ClInclude Include="engine\Graphics\Textures.h" />
+    <!-- Engine: input -->
+    <ClInclude Include="engine\input\CInputManager.h" />
+    <ClInclude Include="engine\input\InputState.h" />
     <ClInclude Include="engine\input\KeyboardManager.h" />
+    <!-- Engine: physics -->
+    <ClInclude Include="engine\physics\CCollision.h" />
+    <!-- Engine: rendering -->
+    <ClInclude Include="engine\rendering\Camera.h" />
+    <ClInclude Include="engine\rendering\Texture.h" />
+    <ClInclude Include="engine\rendering\Textures.h" />
+    <!-- Engine: utils -->
+    <ClInclude Include="engine\utils\CScoreManager.h" />
     <ClInclude Include="engine\utils\debug.h" />
-    <ClInclude Include="game\entities\Entity.h" />
-    <ClInclude Include="game\entities\player\Mario.h" />
-    <ClInclude Include="game\scenes\Scene.h" />
-    <ClInclude Include="game\scenes\SceneManager.h" />
+    <!-- Game: entities -->
+    <ClInclude Include="game\entities\CGameObject.h" />
+    <ClInclude Include="game\entities\blocks\CBlock.h" />
+    <ClInclude Include="game\entities\blocks\CBrick.h" />
+    <ClInclude Include="game\entities\blocks\CBridge.h" />
+    <ClInclude Include="game\entities\blocks\CCastleBridge.h" />
+    <ClInclude Include="game\entities\blocks\CDecorBlock.h" />
+    <ClInclude Include="game\entities\blocks\CInvisibleBlock.h" />
+    <ClInclude Include="game\entities\blocks\CLava.h" />
+    <ClInclude Include="game\entities\blocks\CLuckyBlock.h" />
+    <ClInclude Include="game\entities\blocks\CPipe.h" />
+    <ClInclude Include="game\entities\blocks\CPlatform.h" />
+    <ClInclude Include="game\entities\enemies\CBowser.h" />
+    <ClInclude Include="game\entities\enemies\CCheepCheep.h" />
+    <ClInclude Include="game\entities\enemies\CFireBar.h" />
+    <ClInclude Include="game\entities\enemies\CGoomba.h" />
+    <ClInclude Include="game\entities\enemies\CKoopa.h" />
+    <ClInclude Include="game\entities\enemies\CPodoboo.h" />
+    <ClInclude Include="game\entities\items\CCoin.h" />
+    <ClInclude Include="game\entities\items\CFireFlower.h" />
+    <ClInclude Include="game\entities\items\CMushroom.h" />
+    <ClInclude Include="game\entities\items\CStar.h" />
+    <ClInclude Include="game\entities\player\CMario.h" />
+    <ClInclude Include="game\entities\player\MarioConfig.h" />
+    <!-- Game: registry -->
+    <ClInclude Include="game\registry\CMapLoader.h" />
+    <ClInclude Include="game\registry\CResourceRegistry.h" />
+    <!-- Game: scenes -->
+    <ClInclude Include="game\scenes\CScene.h" />
+    <ClInclude Include="game\scenes\CSceneManager.h" />
+    <ClInclude Include="game\scenes\play\CPlayScene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
