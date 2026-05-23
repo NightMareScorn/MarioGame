@@ -16,7 +16,6 @@
 #include "../entities/items/CStar.h"
 #include "../entities/items/CFireFlower.h"
 #include "../entities/items/CCoin.h"
-#include "../entities/items/CFireFlower.h"
 #include "../entities/blocks/CPlatform.h"
 #include "../entities/blocks/CCastleBridge.h"
 #include "../entities/blocks/CBridge.h"

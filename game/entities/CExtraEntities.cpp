@@ -1,4 +1,3 @@
-#include "items/CFireFlower.h"
 #include "enemies/CBowser.h"
 #include "enemies/CFireBar.h"
 #include "enemies/CPodoboo.h"
@@ -10,10 +9,6 @@
 #include <cmath>
 
 // --- Render Implementations ---
-void CFireFlower::Render() {
-    CResourceRegistry::GetInstance()->RenderAnimation("ANI_FLOWER_OW", x, y);
-}
-
 void CBowser::Render() {
     CResourceRegistry::GetInstance()->RenderAnimation("ANI_BOWSER_WALK", x, y, nx);
 }
@@ -36,18 +31,12 @@ void CCastleBridge::Render() {
     CResourceRegistry::GetInstance()->RenderAnimation("ANI_BRIDGE_BLOCK", x, y);
 }
 
-// --- Update & BBox Implementations ---
-void CFireFlower::Update(float dt) {}
-void CFireFlower::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 16; b = y + 16;
-}
-
 void CBowser::Update(float dt) {
     // Simple back and forth movement or stay idle
     // For now, keep it simple
 }
-void CBowser::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 32; b = y + 32;
+void CBowser::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x; bottom = y; right = x + 32; top = y + 32;
 }
 
 void CFireBar::Update(float dt) {
@@ -55,8 +44,8 @@ void CFireBar::Update(float dt) {
     x = centerX + offset * cos(angle);
     y = centerY + offset * sin(angle);
 }
-void CFireBar::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 8; b = y + 8;
+void CFireBar::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x; bottom = y; right = x + 8; top = y + 8;
 }
 void CFireBar::OnCollision(CGameObject* other) {
     if (auto mario = dynamic_cast<CMario*>(other)) {
@@ -81,8 +70,8 @@ void CPodoboo::Update(float dt) {
         }
     }
 }
-void CPodoboo::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 12; b = y + 14;
+void CPodoboo::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x; bottom = y; right = x + 12; top = y + 14;
 }
 void CPodoboo::OnCollision(CGameObject* other) {
     if (auto mario = dynamic_cast<CMario*>(other)) {
@@ -112,11 +101,11 @@ void CPlatform::Update(float dt) {
         }
     }
 }
-void CPlatform::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 24; b = y + 8;
+void CPlatform::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x; bottom = y; right = x + 24; top = y + 8;
 }
 
 void CCastleBridge::Update(float dt) {}
-void CCastleBridge::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x; t = y; r = x + 16; b = y + 16;
+void CCastleBridge::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x; bottom = y; right = x + 16; top = y + 16;
 }
