@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-
-class CPlayScene : public CScene {
+class CPlayScene : public CScene
+{
   friend class CMapLoader;
   CMario *mario;
   std::vector<CBlock *> blocks;
@@ -19,8 +19,9 @@ class CPlayScene : public CScene {
   std::string pendingMapPath;
 
 public:
-  void Load() override {
-    Load("content/levels/level_1_1.csv");  // TODO: Remove hardcoded path
+  void Load() override
+  {
+    Load("content/levels/level_1_1.csv"); // TODO: Remove hardcoded path
   }
   void Load(const std::string &mapPath);
   void Update(float dt) override;
@@ -33,7 +34,8 @@ public:
   // Lọc các đối tượng trong khoảng 256 pixels quanh (x, y)
   template <typename T>
   std::vector<CGameObject *>
-  GetObjectsInRange(float x, float y, const std::vector<T *> &sourceList) {
+  GetObjectsInRange(float x, float y, const std::vector<T *> &sourceList)
+  {
     std::vector<CGameObject *> result;
     for (auto obj : sourceList)
       if (std::abs(obj->x - x) < 256.0f && std::abs(obj->y - y) < 256.0f)

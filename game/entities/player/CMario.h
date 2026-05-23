@@ -12,9 +12,12 @@ public:
   void UpdateState();
   void SetOnGround(bool v) { onGround = v; }
   bool IsOnGround() const { return onGround; }
+  bool IsBig() const { return form == EMarioForm::BIG; }
+  void SetForm(EMarioForm f) { form = f; }
 
 private:
   EMarioState state = EMarioState::IDLE;
+  EMarioForm form = EMarioForm::SMALL;
   int nx = 1; // 1 for right, -1 for left
   bool onGround = false;
 
