@@ -24,15 +24,15 @@ void CMushroom::Render() {
     CAnimations::GetInstance()->Render("ANI_MUSHROOM1_OW", x, y);
 }
 
-void CMushroom::GetBoundingBox(float& l, float& t, float& r, float& b) {
+void CMushroom::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
     if (state == MUSHROOM_STATE_HIDDEN) {
-        l = t = r = b = 0;
+        left = bottom = right = top = 0;
         return;
     }
-    l = x;
-    t = y;
-    r = x + MUSHROOM_BBOX_WIDTH;
-    b = y + MUSHROOM_BBOX_HEIGHT;
+    left = x;
+    bottom = y;
+    right = x + MUSHROOM_BBOX_WIDTH;
+    top = y + MUSHROOM_BBOX_HEIGHT;
 }
 
 void CMushroom::SetState(int s) {

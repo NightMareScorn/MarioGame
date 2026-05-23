@@ -149,7 +149,7 @@ classDiagram
             #CAnimation* currentAnimation
             +Update(DWORD dt, vector* coObjects)*
             +Render()*
-            +GetBoundingBox(float l, float t, float r, float b)*
+            +GetBoundingBox(float left, float bottom, float right, float top)*
             +Delete()
         }
         class CMario {

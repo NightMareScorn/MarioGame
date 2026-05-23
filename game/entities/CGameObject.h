@@ -17,5 +17,5 @@ public:
     virtual void OnHitFromBelow(CGameObject* hitter) {}
     virtual void Update(float dt) = 0;
     virtual void Render() = 0;
-    virtual void GetBoundingBox(float &l, float &t, float &r, float &b) = 0;
+    virtual void GetBoundingBox(float &left, float &bottom, float &right, float &top) = 0;
 };

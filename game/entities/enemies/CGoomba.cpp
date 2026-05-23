@@ -1,26 +1,17 @@
 #include "CGoomba.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../../engine/audio/CAudioManager.h"
 
-CGoomba::CGoomba(float x, float y) : CGameObject() {
+CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameObject() {
     this->x = x;
     this->y = y;
-    this->start_x = x;
     this->vx = -GOOMBA_WALKING_SPEED;
     SetState(GOOMBA_STATE_WALKING);
 }
 
 void CGoomba::Update(float dt) {
     if (state == GOOMBA_STATE_DIE) return;
-
     vy -= GOOMBA_GRAVITY * dt;
-
-    // Movement handled by CCollision inside CPlayScene,
-    // but we can flip direction if we hit something horizontally
-    // Since CCollision zeroes out vx on horizontal collision:
-    if (vx == 0) {
-        vx = (nx > 0) ? GOOMBA_WALKING_SPEED : -GOOMBA_WALKING_SPEED;
-        nx = -nx; // flip facing
-    }
 }
 
 void CGoomba::Render() {
@@ -28,14 +19,16 @@ void CGoomba::Render() {
     CAnimations::GetInstance()->Render(ani, x, y);
 }
 
-void CGoomba::GetBoundingBox(float& l, float& t, float& r, float& b) {
-    l = x;
-    t = y;
-    r = x + GOOMBA_BBOX_WIDTH;
-    b = y + GOOMBA_BBOX_HEIGHT;
-}
+void CGoomba::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
+    left = x;
+    bottom = y;
+    right = x + GOOMBA_BBOX_WIDTH;
 
-#include "../../../engine/audio/CAudioManager.h"
+    if (state == GOOMBA_STATE_DIE)
+        top = y + GOOMBA_BBOX_HEIGHT_DIE;
+    else
+        top = y + GOOMBA_BBOX_HEIGHT;
+}
 
 void CGoomba::SetState(int s) {
     state = s;

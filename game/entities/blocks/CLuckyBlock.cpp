@@ -1,40 +1,113 @@
 #include "CLuckyBlock.h"
 #include "../../../engine/Graphics/Animations.h"
 #include "../../../engine/audio/CAudioManager.h"
-#include "../../entities/player/CMario.h"
+#include "../items/CCoin.h"
+#include "../items/CMushroom.h"
+#include "../items/CStar.h"
+#include "../items/CFireFlower.h"
 
-CLuckyBlock::CLuckyBlock(float x, float y, bool isEmpty) : CBlock(x, y), hiddenItem(nullptr) {
-    state = isEmpty ? EMPTY : IDLE;
+static const float LUCKY_BOUNCE_HEIGHT = 5.0f;
+static const float LUCKY_BOUNCE_SPEED = 0.1f;
+
+CLuckyBlock::CLuckyBlock(float x, float y, bool isEmpty)
+    : CBlock(x, y), state(isEmpty ? ELuckyBlockState::EMPTY : ELuckyBlockState::IDLE),
+      hiddenItem(nullptr), bounceStartY(y)
+{
 }
 
-void CLuckyBlock::Update(float dt) {}
+// -----------------------------------------------------------------------
+// Spawn / activate the item hidden inside the block.
+// Called once when the bounce up animation finishes.
+// -----------------------------------------------------------------------
+void CLuckyBlock::_SpawnHiddenItem()
+{
+    if (hiddenItem == nullptr)
+        return;
 
-void CLuckyBlock::Render() {
-    std::string ani = (state == EMPTY) ? "ANI_LUCKY_BOX_EMPTY" : "ANI_LUCKY_BOX_OW_IDLE";
-    CAnimations::GetInstance()->Render(ani, x, y);
+    if (auto coin = dynamic_cast<CCoin*>(hiddenItem))
+    {
+        CAudioManager::GetInstance()->Play("coin");
+        coin->SetState(COIN_STATE_POPPING);
+    }
+    else if (auto mushroom = dynamic_cast<CMushroom*>(hiddenItem))
+    {
+        // Position the mushroom just above the block so it slides out
+        mushroom->y = y + 16.0f;
+        mushroom->SetState(MUSHROOM_STATE_MOVING);
+    }
+    else if (auto star = dynamic_cast<CStar*>(hiddenItem))
+    {
+        star->y = y + 16.0f;
+        star->SetState(STAR_STATE_MOVING);
+    }
+    else if (auto flower = dynamic_cast<CFireFlower*>(hiddenItem))
+    {
+        flower->y = y + 16.0f;
+        flower->SetState(FLOWER_STATE_VISIBLE);
+    }
 }
 
-void CLuckyBlock::GetBoundingBox(float &l, float &t, float &r, float &b) {
-    const float BLOCK_W = 16.0f;
-    const float BLOCK_H = 16.0f;
-    l = x;
-    t = y;
-    r = x + BLOCK_W;
-    b = y + BLOCK_H;
-}
+void CLuckyBlock::Update(float dt)
+{
+    if (state == ELuckyBlockState::BOUNCING_UP)
+    {
+        if (y < bounceStartY + LUCKY_BOUNCE_HEIGHT)
+        {
+            y += LUCKY_BOUNCE_SPEED * dt;
+        }
+        else
+        {
+            y = bounceStartY + LUCKY_BOUNCE_HEIGHT;
+            state = ELuckyBlockState::BOUNCING_DOWN;
 
-void CLuckyBlock::OnHitFromBelow(CGameObject* hitter) {
-    if (state == IDLE) {
-        state = EMPTY;
-        CAudioManager::GetInstance()->Play("bump");
-        if (hiddenItem != nullptr) {
-            if (auto coin = dynamic_cast<CCoin*>(hiddenItem)) {
-                CAudioManager::GetInstance()->Play("coin");
-                coin->SetState(COIN_STATE_POPPING);
-            } else if (auto mushroom = dynamic_cast<CMushroom*>(hiddenItem)) {
-                mushroom->y += 16.0f; // Start above the block
-                mushroom->SetState(MUSHROOM_STATE_MOVING);
-            }
+            // Spawn the hidden item now that the block has settled
+            _SpawnHiddenItem();
         }
     }
+    else if (state == ELuckyBlockState::BOUNCING_DOWN)
+    {
+        if (y > bounceStartY)
+        {
+            y -= LUCKY_BOUNCE_SPEED * dt;
+        }
+        else
+        {
+            y = bounceStartY;
+            state = ELuckyBlockState::EMPTY;
+        }
+    }
+}
+
+void CLuckyBlock::Render()
+{
+    if (state == ELuckyBlockState::EMPTY)
+    {
+        CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_AFTER_HIT", x, y);
+    }
+    else
+    {
+        // IDLE, BOUNCING_UP, BOUNCING_DOWN — show the animated blinking sprite
+        CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_IDLE", x, y);
+    }
+}
+
+void CLuckyBlock::GetBoundingBox(float& left, float& bottom, float& right, float& top)
+{
+    const float BLOCK_W = 16.0f;
+    const float BLOCK_H = 16.0f;
+    left = x;
+    bottom = y;
+    right = x + BLOCK_W;
+    top = y + BLOCK_H;
+}
+
+void CLuckyBlock::OnHitFromBelow(CGameObject* hitter)
+{
+    // Only react while in IDLE state; subsequent hits are ignored
+    if (state != ELuckyBlockState::IDLE)
+        return;
+
+    CAudioManager::GetInstance()->Play("bump");
+    bounceStartY = y;
+    state = ELuckyBlockState::BOUNCING_UP;
 }

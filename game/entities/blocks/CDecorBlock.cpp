@@ -18,7 +18,7 @@ void CDecorBlock::Update(float dt) {
     }
 }
 
-void CDecorBlock::GetBoundingBox(float &l, float &t, float &r, float &b) {
+void CDecorBlock::GetBoundingBox(float& l, float& t, float& r, float& b) {
     // No collision for decorative blocks
     l = t = r = b = 0;
 }

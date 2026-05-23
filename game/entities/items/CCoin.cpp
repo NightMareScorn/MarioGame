@@ -45,18 +45,18 @@ void CCoin::Render() {
     CAnimations::GetInstance()->Render(ani, x, y);
 }
 
-void CCoin::GetBoundingBox(float& l, float& t, float& r, float& b) {
+void CCoin::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
     // Coins don't have physically solid collisions, they just get collected
     if (state == COIN_STATE_HIDDEN || state == COIN_STATE_DONE || in_block) {
-        l = t = r = b = 0;
+        left = bottom = right = top = 0;
         return;
     }
     
     // Size for collectable coin trigger box
-    l = x;
-    t = y;
-    r = x + 16.0f;
-    b = y + 16.0f;
+    left = x;
+    bottom = y;
+    right = x + 16.0f;
+    top = y + 16.0f;
 }
 
 void CCoin::SetState(int s) {

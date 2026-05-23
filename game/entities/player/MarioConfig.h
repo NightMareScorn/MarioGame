@@ -24,3 +24,8 @@ enum class EMarioState {
     SKID, 
     DIE
 };
+
+enum class EMarioForm {
+    SMALL,
+    BIG
+};

@@ -118,11 +118,11 @@ void CMario::ApplyPhysics(float dt) {
     if (x < camX) x = camX;
 }
 
-void CMario::GetBoundingBox(float &l, float &t, float &r, float &b) {
-    l = x;
-    t = y;
-    r = x + MARIO_W;
-    b = y + MARIO_H;
+void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
+    left = x;
+    bottom = y;
+    right = x + MARIO_W;
+    top = y + MARIO_H;
 }
 
 

@@ -92,8 +92,8 @@ void InitializeWebView(HWND hWnd) {
             }).Get());
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
   AllocConsole();
   FILE *fDummy;
   freopen_s(&fDummy, "CONOUT$", "w", stdout);

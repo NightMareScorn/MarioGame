@@ -10,6 +10,7 @@ class CPlayScene; // Forward declaration
 class CMapLoader {
     static CMapLoader* __instance;
     int cellSize = 16;
+    float mapHeight = 240.0f; // Default NES height, updated dynamically during tilemap parsing
 
 public:
     static CMapLoader* GetInstance();

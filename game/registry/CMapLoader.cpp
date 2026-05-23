@@ -5,6 +5,7 @@
 #include "../entities/blocks/CLuckyBlock.h"
 #include "../entities/blocks/CDecorBlock.h"
 #include "../entities/blocks/CInvisibleBlock.h"
+#include "../entities/blocks/CPipe.h"
 #include "../entities/enemies/CGoomba.h"
 #include "../entities/enemies/CKoopa.h"
 #include "../entities/enemies/CCheepCheep.h"
@@ -12,6 +13,8 @@
 #include "../entities/enemies/CFireBar.h"
 #include "../entities/enemies/CPodoboo.h"
 #include "../entities/items/CMushroom.h"
+#include "../entities/items/CStar.h"
+#include "../entities/items/CFireFlower.h"
 #include "../entities/items/CCoin.h"
 #include "../entities/items/CFireFlower.h"
 #include "../entities/blocks/CPlatform.h"
@@ -96,16 +99,34 @@ void CMapLoader::Load(std::string path, CPlayScene* scene) {
 
 void CMapLoader::_ParseSettings(const std::string& line, CPlayScene* scene) {
     auto parts = _Split(line, ',');
-    if (parts.size() >= 2 && parts[0] == "cell_size") {
+    if (parts.size() < 2) return;
+
+    if (parts[0] == "cell_size") {
         cellSize = std::stoi(parts[1]);
         DebugOut(L"[INFO] Setting cellSize = %d\n", cellSize);
     }
-    else if (parts.size() >= 4 && parts[0] == "background_color") {
-        int r = std::stoi(parts[1]);
-        int g = std::stoi(parts[2]);
-        int b = std::stoi(parts[3]);
-        scene->SetBackgroundColor(r, g, b);
-        DebugOut(L"[INFO] Setting backgroundColor = (%d, %d, %d)\n", r, g, b);
+    else if (parts[0] == "background_color") {
+        // Support both named colors ("black", "blue") and RGB triplets (r,g,b)
+        if (parts.size() >= 4) {
+            // Numeric RGB format: background_color,r,g,b
+            int r = std::stoi(parts[1]);
+            int g = std::stoi(parts[2]);
+            int b = std::stoi(parts[3]);
+            scene->SetBackgroundColor(r, g, b);
+            DebugOut(L"[INFO] Setting backgroundColor = (%d, %d, %d)\n", r, g, b);
+        } else {
+            // Named color format: background_color,name
+            if (parts[1] == "black") {
+                scene->SetClearColor(D3DXCOLOR(0, 0, 0, 1.0f));
+            }
+            else if (parts[1] == "blue") {
+                scene->SetClearColor(D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f));
+            }
+        }
+    }
+    else if (parts[0] == "theme") {
+        // Future: handle themes (overworld, underground, etc.)
+        DebugOut(L"[INFO] Map theme: %hs\n", parts[1].c_str());
     }
 }
 
@@ -126,6 +147,7 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
     }
 
     int H = (int)matrix.size();
+    mapHeight = (float)(H * cellSize);
     for (int i = 0; i < H; i++) {
         for (int j = 0; j < (int)matrix[i].size(); j++) {
             int id = matrix[i][j];
@@ -133,110 +155,130 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
             float y = (float)((H - 1 - i) * cellSize); // Y-up: row 0 = top = highest Y
 
             switch (id) {
-                case 0: // Air
-                    break;
+            case 0: // Air
+                break;
 
-                case 1: // Ground
-                case 5: // Brick (stair/structure)
-                case 7: // Brick (platform)
-                    scene->blocks.push_back(new CBrick(x, y));
-                    break;
+            case 1: // Ground
+                scene->blocks.push_back(new CBrick(x, y, "ANI_GROUND_BRICK_OW"));
+                break;
 
-                case 4: // Lucky Block (animated ? block)
-                    scene->blocks.push_back(new CLuckyBlock(x, y));
-                    break;
+            case 5: // Brick (stair/structure)
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_STAIR"));
+                break;
 
-                case 2: // Cloud - render full 6-part composite cloud
-                {
-                    // Clouds are precisely cropped in the atlas and have different heights. 
-                    // Using mathematically matched pixel offsets to seamlessly stitch them with zero gaps!
-                    CDecorBlock* parts[6];
-                    parts[0] = new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT");
-                    parts[1] = new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID");
-                    parts[2] = new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT");
-                    parts[3] = new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT");
-                    parts[4] = new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID");
-                    parts[5] = new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT");
-                    
-                    for (int i = 0; i < 6; i++) {
-                        parts[i]->SetDrifting(true);
-                        scene->decors.push_back(parts[i]);
-                    }
-                    break;
+            case 6: // Breakable brick
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_IDLE"));
+                break;
+
+            case 7: // Brick (platform)
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_PLATFORM"));
+                break;
+
+            case 4: // Lucky Block (animated ? block)
+                scene->blocks.push_back(new CLuckyBlock(x, y));
+                break;
+
+            case 2: // Cloud - render composite cloud (assembled sprite)
+            {
+                // Clouds are precisely cropped in the atlas and have different heights.
+                // Using mathematically matched pixel offsets to seamlessly stitch them with zero gaps!
+                CDecorBlock* cloudParts[6];
+                cloudParts[0] = new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT");
+                cloudParts[1] = new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID");
+                cloudParts[2] = new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT");
+                cloudParts[3] = new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT");
+                cloudParts[4] = new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID");
+                cloudParts[5] = new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT");
+
+                for (int k = 0; k < 6; k++) {
+                    cloudParts[k]->SetDrifting(true);
+                    scene->decors.push_back(cloudParts[k]);
                 }
+                break;
+            }
 
-                case 3: // Bush
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
-                    break;
+            case 3: // Bush
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
+                break;
 
-                case 8: // Flag Pole
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
-                    break;
-
-                case 9: // Castle
-                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
-                    break;
-
-                // --- NEW ASSEMBLED PREFABS ---
-                case 10: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED")); break;
-                case 11: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED")); break;
-                case 12: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED")); break;
-                case 13: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_BIG_ASSEMBLED")); break;
-                case 14: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED")); break;
-                case 15: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED")); break;
-                case 16: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED")); break;
-                case 17: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED")); break;
-                case 18: scene->decors.push_back(new CDecorBlock(x, y, "ANI_PIPE_UPWARDS_ASSEMBLED")); break;
-                case 19: scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED")); break;
-                case 20: scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED")); break;
-
-                // --- WORLD 2-3 SPECIAL ASSETS ---
-                case 21: {
-                    CBridge* bridge = new CBridge(x, y - 8.0f, "ANI_BRIDGE_BLOCK");
-                    scene->blocks.push_back(bridge);       // Collision (one-way)
-                    scene->foregrounds.push_back(bridge);  // Render over Mario
-                    break;
+            case 8: // Flag Pole segment
+            {
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
+                bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
+                if (isTopmost) {
+                    scene->decors.push_back(new CDecorBlock(x - 3.0f, y + 8.0f, "ANI_FLAG_OW_TOP"));
+                    scene->decors.push_back(new CDecorBlock(x - 12.0f, y + 8.0f, "ANI_FLAG_OW"));
                 }
-                case 22: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_LEFT")); break;
-                case 23: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break;
-                case 24: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_RIGHT")); break;
-                case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_STEM")); break;
-                case 26: scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK")); break; // Standalone pillar
+                break;
+            }
 
-                // --- WORLD 2-4 SPECIAL ASSETS ---
-                case 30: scene->blocks.push_back(new CBrick(x, y, "ANI_CASTLE_BRICK_WHITE")); break;
-                case 31: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_TOP")); break;
-                case 32: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_BOTTOM")); break;
-                case 33: scene->blocks.push_back(new CBrick(x, y, "ANI_WHITE_FURNACE_BRICK")); break;
-                case 34: {
-                    CBridge* bridge = new CBridge(x, y, "ANI_WHITE_RED_STEEL_BRIDGE");
-                    scene->blocks.push_back(bridge);
-                    scene->foregrounds.push_back(bridge);
-                    break;
-                }
-                case 35: scene->decors.push_back(new CDecorBlock(x, y, "ANI_AXE")); break;
-                case 36: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CHAIN")); break;
-                case 37: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
-                case 38: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
-                case 138: // Used Lucky Block
-                {
-                    scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
-                    break;
-                }
+            case 9: // Castle
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
+                break;
 
-                case 139: // Fire Circle (Used Lucky Block + 5 Fire Orbs)
-                {
-                    scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
-                    // The FireBar update logic will handle rotation
-                    for (int k = 0; k < 5; k++) {
-                        CFireBar* orb = new CFireBar(x + 4, y + 4); 
-                        orb->SetOffset((float)(k * 9)); // 9px apart for 8px orbs
-                        scene->enemies.push_back(orb);
-                    }
-                    break;
+            // --- ASSEMBLED PREFABS ---
+            case 10: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED")); break;
+            case 11: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED")); break;
+            case 12: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED")); break;
+            case 13: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_BIG_ASSEMBLED")); break;
+            case 14: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED")); break;
+            case 15: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED")); break;
+            case 16: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED")); break;
+            case 17: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED")); break;
+            case 18: scene->decors.push_back(new CDecorBlock(x, y, "ANI_PIPE_UPWARDS_ASSEMBLED")); break;
+            case 19: scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED")); break;
+            case 20: scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED")); break;
+
+            // --- WORLD 2-3 SPECIAL ASSETS ---
+            case 21: {
+                CBridge* bridge = new CBridge(x, y - 8.0f, "ANI_BRIDGE_BLOCK");
+                scene->blocks.push_back(bridge);       // Collision (one-way)
+                scene->foregrounds.push_back(bridge);  // Render over Mario
+                break;
+            }
+            case 22: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_LEFT")); break;
+            case 23: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break;
+            case 24: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_RIGHT")); break;
+            case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_STEM")); break;
+            case 26: scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK")); break;
+
+            // --- WORLD 2-4 SPECIAL ASSETS ---
+            case 30: scene->blocks.push_back(new CBrick(x, y, "ANI_CASTLE_BRICK_WHITE")); break;
+            case 31: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_TOP")); break;
+            case 32: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_BOTTOM")); break;
+            case 33: scene->blocks.push_back(new CBrick(x, y, "ANI_WHITE_FURNACE_BRICK")); break;
+            case 34: {
+                CBridge* bridge = new CBridge(x, y, "ANI_WHITE_RED_STEEL_BRIDGE");
+                scene->blocks.push_back(bridge);
+                scene->foregrounds.push_back(bridge);
+                break;
+            }
+            case 35: scene->decors.push_back(new CDecorBlock(x, y, "ANI_AXE")); break;
+            case 36: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CHAIN")); break;
+            case 37: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+            case 38: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+
+            case 138: // Used Lucky Block
+            {
+                scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                break;
+            }
+
+            case 139: // Fire Circle (Used Lucky Block + 5 Fire Orbs)
+            {
+                scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                // The FireBar update logic will handle rotation
+                for (int k = 0; k < 5; k++) {
+                    CFireBar* orb = new CFireBar(x + 4, y + 4);
+                    orb->SetOffset((float)(k * 9)); // 9px apart for 8px orbs
+                    scene->enemies.push_back(orb);
                 }
-                    DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
-                    break;
+                break;
+            }
+
+            default:
+                DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
+                break;
             }
         }
     }
@@ -256,14 +298,28 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
 
     float x = std::stof(parts[1]);
     float y = std::stof(parts[2]);
-    // The objects in level_1_1.csv are exported using a Y-down coordinate system for a standard 240px NES screen height.
+    // The objects in level_1_1.csv are exported using a Y-down coordinate system.
     // Tiled exports the TOP-LEFT corner of the object. Since most of our entities (Mario, Goomba, Items) are 16x16,
     // we must subtract 16 to correctly find their BOTTOM-LEFT anchor in our Y-up world ecosystem.
-    y = 240.0f - y - 16.0f; 
-
+    y = mapHeight - y - 16.0f; 
     bool hidden_in_block = false;
+    bool invisible_block = false;
+    std::string dest_map = "";
+    std::string enter_direction = "";
+    float height = 0;
+    float patrol_left = 0;
+    float patrol_right = 0;
+    std::string enemy_type = "green_walking";
+
     for (size_t i = 3; i < parts.size(); ++i) {
         if (parts[i] == "hidden_in_block=true") hidden_in_block = true;
+        if (parts[i] == "invisible_block=true") invisible_block = true;
+        if (parts[i].find("dest_map=") == 0) dest_map = parts[i].substr(9);
+        if (parts[i].find("enter_direction=") == 0) enter_direction = parts[i].substr(16);
+        if (parts[i].find("height=") == 0) height = std::stof(parts[i].substr(7));
+        if (parts[i].find("patrol_left=") == 0) patrol_left = std::stof(parts[i].substr(12));
+        if (parts[i].find("patrol_right=") == 0) patrol_right = std::stof(parts[i].substr(13));
+        if (parts[i].find("type=") == 0) enemy_type = parts[i].substr(5);
     }
 
     CGameObject* spawnedObj = nullptr;
@@ -272,18 +328,27 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         if (scene->mario == nullptr) scene->mario = new CMario();
         scene->mario->x = x;
         scene->mario->y = y;
+        spawnedObj = scene->mario;
         DebugOut(L"[INFO] Object: Mario at (%.2f, %.2f)\n", x, y);
     }
     else if (type == "goomba") {
-        spawnedObj = new CGoomba(x, y);
+        spawnedObj = new CGoomba(x, y, patrol_left, patrol_right);
         scene->enemies.push_back(spawnedObj);
     }
     else if (type == "koopa") {
-        spawnedObj = new CKoopa(x, y);
+        spawnedObj = new CKoopa(x, y, enemy_type, patrol_left, patrol_right);
         scene->enemies.push_back(spawnedObj);
     }
-    else if (type == "mushroom" || type == "star" || type == "1-up") { // Treating star/1up as mushroom visually for now
-        spawnedObj = new CMushroom(x, y);
+    else if (type == "mushroom" || type == "1-up") {
+        spawnedObj = new CBrick(x, y, "ANI_BRICK_IDLE", invisible_block);
+        scene->items.push_back(spawnedObj); // Treat as item-carrying brick
+    }
+    else if (type == "star") {
+        spawnedObj = new CStar(x, y);
+        scene->items.push_back(spawnedObj);
+    }
+    else if (type == "flower") {
+        spawnedObj = new CFireFlower(x, y);
         scene->items.push_back(spawnedObj);
     }
     else if (type == "coin") {
@@ -354,9 +419,32 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
     }
     else if (type == "pipe") {
         float topEdgeY = y + 16.0f;
-        float groundY = 32.0f;
-        float pipeHeight = topEdgeY - groundY;
-        scene->blocks.push_back(new CInvisibleBlock(x, groundY, 32.0f, pipeHeight)); 
+        float pipeHeight = height;
+        float pipeBottomY = y;
+
+        if (pipeHeight <= 0) {
+            // Backward compatibility: calculate height relative to groundY=32 if not specified
+            float groundY = 32.0f;
+            pipeHeight = topEdgeY - groundY;
+            pipeBottomY = groundY;
+        }
+
+        if (pipeHeight <= 0) pipeHeight = 32.0f; // Minimum fallback height
+
+        scene->blocks.push_back(new CPipe(x, pipeBottomY, 32.0f, pipeHeight, "ANI_PIPE_UPWARDS_ASSEMBLED", dest_map, enter_direction));
+    }
+    // Decorative background objects — no collision
+    else if (type == "hill_small") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED"));
+    }
+    else if (type == "hill_big") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED"));
+    }
+    else if (type == "tree_small") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED"));
+    }
+    else if (type == "tree_big") {
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED"));
     }
     else if (type == "flagpole") {
         // Use the full assembled flagpole sprite (10+ blocks high)
@@ -381,6 +469,8 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
                     lucky->SetHiddenItem(spawnedObj);
                     // Force item state to hidden
                     if (auto m = dynamic_cast<CMushroom*>(spawnedObj)) m->SetState(MUSHROOM_STATE_HIDDEN);
+                    if (auto s = dynamic_cast<CStar*>(spawnedObj)) s->SetState(STAR_STATE_HIDDEN);
+                    if (auto f = dynamic_cast<CFireFlower*>(spawnedObj)) f->SetState(FLOWER_STATE_HIDDEN);
                     if (auto c = dynamic_cast<CCoin*>(spawnedObj)) c->SetState(COIN_STATE_HIDDEN);
                     break;
                 }
