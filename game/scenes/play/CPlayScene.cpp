@@ -8,7 +8,8 @@
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
 
-void CPlayScene::Load(const std::string &mapPath) {
+void CPlayScene::Load(const std::string &mapPath)
+{
   auto registry = CResourceRegistry::GetInstance();
   registry->LoadResourcesForPlayScene();
 
@@ -18,7 +19,8 @@ void CPlayScene::Load(const std::string &mapPath) {
   mario = nullptr; // MapLoader sẽ khởi tạo Mario
   CMapLoader::GetInstance()->Load(mapPath, this);
 
-  if (mario == nullptr) {
+  if (mario == nullptr)
+  {
     DebugOut(L"[WARNING] Mario not found, starting manual initialization.\n");
     mario = new CMario();
     mario->x = 100.0f;
@@ -30,7 +32,8 @@ void CPlayScene::Load(const std::string &mapPath) {
       mapPath.c_str(), (int)blocks.size(), (int)decors.size());
 }
 
-void CPlayScene::Update(float dt) {
+void CPlayScene::Update(float dt)
+{
   mario->Update(dt);
   for (auto b : blocks)
     b->Update(dt);
@@ -60,13 +63,15 @@ void CPlayScene::Update(float dt) {
   CCollision::ResolveCollision(mario, dt, coObjectsForMario);
 
   // Xử lý collision cho từng enemy với block xung quanh nó
-  for (auto e : enemies) {
+  for (auto e : enemies)
+  {
     auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
     CCollision::ResolveCollision(e, dt, blocksAroundEnemy);
   }
 
   // Xử lý collision cho từng item với block xung quanh nó
-  for (auto i : items) {
+  for (auto i : items)
+  {
     auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
     CCollision::ResolveCollision(i, dt, blocksAroundItem);
   }
@@ -78,7 +83,8 @@ void CPlayScene::Update(float dt) {
   if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN))
     for (auto b : blocks)
       if (auto pipe = dynamic_cast<CPipe *>(b))
-        if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down") {
+        if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down")
+        {
           float mLeft, mBottom, mRight, mTop;
           mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
           float pLeft, pBottom, pRight, pTop;
@@ -86,7 +92,8 @@ void CPlayScene::Update(float dt) {
 
           // Chân của Mario phải cách đỉnh ống nước trong khoảng 2 pixel
           if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
-              mLeft < pRight && mRight > pLeft) {
+              mLeft < pRight && mRight > pLeft)
+          {
             DebugOut(L"[INFO] Entering pipe to map: %hs\n",
                      pipe->GetDestMap().c_str());
             std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
@@ -101,14 +108,16 @@ void CPlayScene::Update(float dt) {
   CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 
   // Chuyển map
-  if (!pendingMapPath.empty()) {
+  if (!pendingMapPath.empty())
+  {
     std::string nextMap = pendingMapPath;
     Unload();
     Load(nextMap);
   }
 }
 
-void CPlayScene::Render() {
+void CPlayScene::Render()
+{
   ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
 
   // Layer 1: Background (hills, clouds, bushes, flag, castle)
@@ -127,7 +136,8 @@ void CPlayScene::Render() {
   mario->Render();
 }
 
-void CPlayScene::Unload() {
+void CPlayScene::Unload()
+{
   delete mario;
   mario = nullptr;
 

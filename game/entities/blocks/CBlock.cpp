@@ -1,6 +1,7 @@
 #include "CBlock.h"
 
-CBlock::CBlock(float x, float y) {
+CBlock::CBlock(float x, float y)
+{
     this->x = x;
     this->y = y;
 }

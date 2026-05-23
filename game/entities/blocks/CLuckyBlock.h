@@ -1,18 +1,32 @@
 #pragma once
 #include "CBlock.h"
-#include "../../entities/player/CMario.h"
-#include "../../entities/items/CCoin.h"
-#include "../../entities/items/CMushroom.h"
+#include <string>
 
-class CLuckyBlock : public CBlock {
-    int state;
+enum class ELuckyBlockState
+{
+    IDLE,
+    BOUNCING_UP,
+    BOUNCING_DOWN,
+    EMPTY
+};
+
+class CGameObject;
+
+class CLuckyBlock : public CBlock
+{
+    ELuckyBlockState state;
     CGameObject* hiddenItem;
+    float bounceStartY;
+
+    void _SpawnHiddenItem();
+
 public:
-    enum State { IDLE, EMPTY };
     CLuckyBlock(float x, float y);
     void SetHiddenItem(CGameObject* item) { hiddenItem = item; }
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
+    void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
     void OnHitFromBelow(CGameObject* hitter) override;
+
+    ELuckyBlockState GetState() const { return state; }
 };
