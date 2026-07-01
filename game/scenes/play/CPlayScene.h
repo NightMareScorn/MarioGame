@@ -21,6 +21,11 @@ class CPlayScene : public CScene {
     std::string currentMapPath;
     std::string pendingMapPath;
 
+    // HUD stats
+    int score = 0;
+    int coins = 0;
+    float timeLeft = 400.0f;
+
 public:
     CPlayScene(std::string levelPath = "content/levels/level_1_1.csv") : levelPath(levelPath) {}
     void Load() override;
@@ -40,6 +45,12 @@ public:
         return D3DXCOLOR(bgR / 255.0f, bgG / 255.0f, bgB / 255.0f, 1.0f);
     }
 
+    int GetScore() const { return score; }
+    void AddScore(int s) { score += s; }
+    int GetCoins() const { return coins; }
+    void AddCoin() { coins++; }
+    int GetTime() const { return (int)std::ceil(timeLeft); }
+
     void TransitionToMap(const std::string& mapPath) { pendingMapPath = mapPath; }
 
     // Lọc các đối tượng trong khoảng 256 pixels quanh (x, y)
@@ -54,3 +65,5 @@ public:
         return result;
     }
 };
+
+extern CPlayScene* scene;

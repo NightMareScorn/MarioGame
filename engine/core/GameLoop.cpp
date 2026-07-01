@@ -87,6 +87,21 @@ void Render()
     RenderGame(g);
 
     spriteHandler->End();
+
+    // Render HUD
+    if (scene != nullptr) {
+        RECT rect;
+        rect.left = 10;
+        rect.top = 10;
+        rect.right = g->GetBackBufferWidth();
+        rect.bottom = g->GetBackBufferHeight();
+
+        wchar_t buffer[256];
+        swprintf_s(buffer, L"MARIO\n%06d\n\nCOINS\n%02d\n\nWORLD\n1-1\n\nTIME\n%03d", 
+                    scene->GetScore(), scene->GetCoins(), scene->GetTime());
+        g->DrawTextRaw(buffer, rect, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+
     pSwapChain->Present(0, 0);
 }
 

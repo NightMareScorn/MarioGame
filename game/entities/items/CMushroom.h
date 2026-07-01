@@ -18,4 +18,8 @@ public:
     void Render() override;
     void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
     void SetState(int s);
+
+    bool IsBlocking(CGameObject* other) override { return (dynamic_cast<CMushroom*>(other) == nullptr); }
+    void OnCollisionX(CGameObject* other, float nx) override;
+    void OnCollisionY(CGameObject* other, float ny) override;
 };

@@ -12,9 +12,13 @@ public:
 
     CGameObject() : x(100), y(100), vx(0), vy(0), ax(0), ay(0), nx(1) {}
     CGameObject(float x, float y) : x(x), y(y), vx(0), vy(0), ax(0), ay(0), nx(1) {}
+    virtual ~CGameObject() {}
     virtual bool IsSolid() { return true; }
+    virtual bool IsBlocking(CGameObject* other) { return true; }
     virtual void OnCollision(CGameObject* other) {}
     virtual void OnHitFromBelow(CGameObject* hitter) {}
+    virtual void OnCollisionX(CGameObject* other, float nx) {}
+    virtual void OnCollisionY(CGameObject* other, float ny) {}
     virtual void Update(float dt) = 0;
     virtual void Render() = 0;
     virtual void GetBoundingBox(float &left, float &bottom, float &right, float &top) = 0;

@@ -43,6 +43,13 @@ void CPlayScene::Load(const std::string& mapPath)
 
 void CPlayScene::Update(float dt)
 {
+    // 1. HUD logic update (timeLeft)
+    if (timeLeft > 0) {
+        timeLeft -= (dt / 1000.0f);
+        if (timeLeft < 0) timeLeft = 0;
+    }
+
+    // Update các entities
     for (auto b : blocks) b->Update(dt);
     for (auto e : enemies) e->Update(dt);
     for (auto i : items) i->Update(dt);
@@ -88,11 +95,55 @@ void CPlayScene::Update(float dt)
         CCollision::ResolveCollision(mario, dt, coObjectsForMario);
     }
 
-    // Xử lý collision cho từng enemy với block xung quanh nó
+    // Xử lý collision cho từng enemy với block xung quanh nó và các enemy khác
     for (auto e : enemies)
     {
+        float old_vx = e->vx;
+
         auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
-        CCollision::ResolveCollision(e, dt, blocksAroundEnemy);
+        auto enemiesAroundEnemy = GetObjectsInRange(e->x, e->y, enemies);
+
+        auto it = std::find(enemiesAroundEnemy.begin(), enemiesAroundEnemy.end(), e);
+        if (it != enemiesAroundEnemy.end()) enemiesAroundEnemy.erase(it);
+
+        std::vector<CGameObject*> coObjectsForEnemy = blocksAroundEnemy;
+        coObjectsForEnemy.insert(coObjectsForEnemy.end(), enemiesAroundEnemy.begin(), enemiesAroundEnemy.end());
+
+        CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
+
+        // Quay đầu nếu bị chạm vật cản trục X (e->vx == 0)
+        if (e->vx == 0 && old_vx != 0) {
+            e->vx = -old_vx;
+            e->nx = (e->vx > 0) ? 1 : -1;
+        }
+
+        // Logic tuần tra: tránh rơi xuống vực thẳm
+        if (e->vy == 0 && e->vx != 0) {
+            float L, B, R, T;
+            e->GetBoundingBox(L, B, R, T);
+
+            CCollision::Box sensor;
+            if (e->vx < 0) {
+                sensor = CCollision::ToBox(L, B - 4.0f, L + 2.0f, B - 0.5f);
+            } else {
+                sensor = CCollision::ToBox(R - 2.0f, B - 4.0f, R, B - 0.5f);
+            }
+
+            bool hasFloor = false;
+            for (auto b : blocksAroundEnemy) {
+                float bl, bb, br, bt;
+                b->GetBoundingBox(bl, bb, br, bt);
+                if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt))) {
+                    hasFloor = true;
+                    break;
+                }
+            }
+
+            if (!hasFloor) {
+                e->vx = -e->vx;
+                e->nx = (e->vx > 0) ? 1 : -1;
+            }
+        }
     }
 
     // Xử lý collision cho từng item với block xung quanh nó

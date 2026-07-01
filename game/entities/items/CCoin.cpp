@@ -1,6 +1,7 @@
 #include "CCoin.h"
 #include "../../../engine/Graphics/Animations.h"
-#include "../player/CMario.h"
+#include "../../entities/player/CMario.h"
+#include "../../scenes/play/CPlayScene.h"
 
 CCoin::CCoin(float x, float y, bool hidden_in_block) : CGameObject() {
     this->x = x;
@@ -26,6 +27,10 @@ void CCoin::Update(float dt) {
             y = start_y;
             vy = 0;
             SetState(COIN_STATE_DONE); // Disappear after popping
+            if (scene) {
+                scene->AddCoin();
+                scene->AddScore(200);
+            }
         }
     }
     else if (state == COIN_STATE_COLLECTED) {
@@ -75,5 +80,27 @@ void CCoin::OnCollision(CGameObject* other) {
         if (dynamic_cast<CMario*>(other)) {
             SetState(COIN_STATE_COLLECTED);
         }
+    }
+}
+
+void CCoin::OnCollisionX(CGameObject* other, float nx) {
+    if (state == COIN_STATE_DONE || state == COIN_STATE_HIDDEN || in_block) return;
+    if (dynamic_cast<CMario*>(other)) {
+        SetState(COIN_STATE_DONE);
+        if (scene) {
+            scene->AddCoin();
+            scene->AddScore(200);
+        }
+    }
+}
+
+void CCoin::OnCollisionY(CGameObject* other, float ny) {
+    if (state == COIN_STATE_DONE || state == COIN_STATE_HIDDEN || in_block) return;
+    if (dynamic_cast<CMario*>(other)) {
+         SetState(COIN_STATE_DONE);
+         if (scene) {
+             scene->AddCoin();
+             scene->AddScore(200);
+         }
     }
 }
