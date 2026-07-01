@@ -1,0 +1,51 @@
+đầu tiên ta có 7 block gạch ở 2 hàng cuối
+Ở ngay giữa có 1 cái lâu đài (5x5), ở ô thứ 6 lên trên cỡ 9 ô thì ta có 1 đám mây lớn  , sau đó cách ra 2 ô, ta sẽ có 1 cột nấm (với trụ là 6x1, cái grass ở trên là 8x1)
+Ngay trên phần cỏ đó (có có 1 cái stair là 5->4->3) với điểm kết thúc là ngay tại điểm kết thúc của trụ nấm luôn. Ngay tại chân cầu thang (tức bắt đầu của bậc 5) lên trên 5 ô có đám mây nhỏ
+Nối tiếp với bậc thang 3 ô thì ta sẽ có 16 ô là cầu (là trong hình tôi gửi ấy)
+Ở ô cầu thứ 3 thì lên 3 ô có 1 CheepCheep (lấy đó làm trung tâm, đặt giới hạn đi qua lại là +-4 ô 16x16). Lên trên cheep cheep thêm 4 ô có 1 đám mây bự.
+Cuối của cây cầu dài 16 ô này là 1 cái trụ, trụ này (1x5 - cao 5 , rộng 1) Ngay bên trái cây cột (dưới cây cầu có 1 đám mây nhỏ)
+Ngay trên cột (ý tôi là điểm cao nhất) lên 4 ô thì có 1 Cheep cheep . Tính từ vị trí cheep cheep đó sang trái 2 ô, lên 2 ô có thêm 1 cheep cheep nữa)
+Sau đó nối tiếp với cột ta lại có cây cầu dài 16 ô (cùng chiều cao)
+ở ô thứ 4 của cây cầu này lên 2 ô có đám mây nhỏ,  lên 2 ô nữa (tức tổng 4 ô)  sẽ là điểm bắt đầu của chuỗi 4 coins (theo chiều dài 4x1). Ở ngay dưới coin thứ 4 có 1 đám mây.
+Ở ô thứ 14 ccủa cây cầu lên trên 7 ô có 1 cheep cheep)
+Cuối cây cầu này cũng là 1 trụ 1x5. Tiếp nối lại là cây cầu 16 ô
+Ngay ô cầu thứ 5 lên trên 6 ô có đám mây lớn, ở ô cầu thứ 8, lên 4 ô sẽ bắt đầu cho chuỗi xu zig zag có 2 hàng như ma trận sau [[1,0,1,0,1][0,1,0,1,0]]
+Cuối cầu lại có 1 trụ 1x5. tiếp đó ta không n ối tiếp và để trống ra 4 ô (có 1 con cheep cheep bay ngay khoảng trông đó - giới hạn nó bao +-2 thôi)
+sau khoảng trống 4 ô ta lại đến với 1 trụ 1x5 , nối tiếp với nó là cầu dài 8 ô), ngay trên trụ 1x5 8 ô là 1 đám mây lớn, giữa cầu có 1 cheep cheep (cách 2 ô so với chiều cao cầu). Trên cheep cheep 2 ô có xu như sau [[0,1,10][1,0,0,1]. Cuối cầu lên 3 ô có 1 cheep cheep. nối tiếp cầu là một trụ 1x5.
+
+--> Lại có khoảng trống 4 ô tiếp theo rồi lại xuất hiện 1 trụ 1x5  + cầu 8 ô + trụ 1x5
+ ở ô 1 và 3 lên 2 và 3 có đám mây nhỏ
+giữa cầu lên 8 có cheep cheep, xuống dưới cầu (tức giữa 2 cột + dưới cầu sẽ có 2 cheep bay với 2 độ cao khác nhau - tùy bạn)
+
+Lại có khoảng trống 3 ô, nhưng ô tiếp nối sau khoảng trống lại là 1 trụ 1x6 chứ không phải 1x5. Ngay ô đầu tiên của trụ lên 4 ô sẽ có chuỗi coin (về phía bên trái (tức là nó bắt đầu từ khoảng trống) dài 3 block))
+, có cây cầu dài 5 ô, giữa cầu lên 4 có 1 block lucky (đập ra nấm)
+giữa lucky và xu + lên 2 ô sẽ có đám mây lớn
+Cuối cầu là trụ 1x6. + lên 2 ô có đám mây nhỏ
+
+Cách trụ 2 ô về bên phải + lên 3 ô có chuỗi 3 đồng xu đi về bên phải
+
+Cách 6 ô ta sẽ lại có 1 trụ nấm giống như ở đầu,ta sẽ có 1 cột nấm (với trụ là 6x1, cái grass ở trên là 8x1)
+
+Ngay giữa trụ nấm lên 3 ô có 1 cheep cheep
+lên 8 ô thì có đám mây lớn
+
+Tiếp theo đó ta có một cây cầu 3 ô (không có trụ 2 bên) nằm lơ lững ở chiều cao là 5 (theo block), cách trụ nấm là 3 theo chiều ngang). Cách cây cầu 2 ô (2 ô này là khoảng trống). Tiếp nối có 1 trụ 1x5 + cây cầu 16 ô + trụ 1x5).  ô thứ 4 và thứ 6  lần lượt với lên 2 ô và lên 3 ô có đám mây nhỏ.  Ở ô cầu thứ 5 lên 4 ô  (có chuỗi 6 coins)
+
+Sau đó cách 2 ô khoảng trống, ta sẽ có 1 trụ chỉ có 1x3, cầu 8 ô + trụ 1x3
+Ngay trụ đầu lên 3 ô có 1 cheep cheep
+Giữa cầu có chuỗi 4 xu cách cầu 4 ô chiều cao. Cách cầu 8 ô chiều cao có 1 mây lớn
+Cuối cầu cách chiều cao 3 ô có 1 đám mây nhỏ, lên 8 ô có 1 Cheep cheep
+
+Lại cách 3 ô khoảng trống, sau đó có trụ 1x5 + cầu 8 ô + trụ 1x5
+Sau đó ở cùng chiều cao sẽ có pattern ntn [0,0,1,1,0,0,1,1,0,0,1,1,0,0] với 0 là khoảng trống, 1 là cầu)
+Ngay trên cầu sẽ cách 3 ô có 1 chuỗi 6 coin ntn [0,0,0,0,1,1,1,1,1,1,0,0,0,0] với 0 là khoàng trống, 1 là coin)
+Ở cây cầu thứ 3 (cuối của chuỗi) lên 2 ô có đám mây nhỏ
+
+kết thúc của chuỗi cầu này (trong chuỗi có để 2 ô trống rồi) nên tiếp nối sẽ là trụ 1x5 + cầu 8 ô + tiếp nối là stair 2,3,4 (từ trên xuống) stair này đi xuống chứ k đi lên,  ngay dưới cầu thang là bệ đỡ
+là nấm với ta sẽ lại có 1 trụ nấm giống như ở đầu,ta sẽ có 1 cột nấm (với trụ là 6x1, cái grass ở trên là 8x1)
+
+Cách ô nấm 3 ô sẽ là chuỗi đất liền dài 30 ô (30x2)
+Ở ô đất liền thứ 2 có 1 cầu thang đi lên như sau (9,8,7,6,5,4,3,2), hiểu chứ, ở ô bắt đầu tới 9 ô, --> lên 1 --> tới 8 ô, tạo thành hình cầu thang)
+Kết thúc cầu thang (tức ô thứ 10) đi tiếp 8 ô sẽ có 1 block 1x1, trên block đó sẽ là flagppole
+
+đi tiếp 3 ô sẽ là lâu đài lớn (kết thúc màn chơi)

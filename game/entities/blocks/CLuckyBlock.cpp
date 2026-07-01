@@ -1,5 +1,6 @@
 #include "CLuckyBlock.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../../engine/audio/CAudioManager.h"
 #include "../items/CCoin.h"
 #include "../items/CMushroom.h"
 #include "../items/CStar.h"
@@ -8,8 +9,9 @@
 static const float LUCKY_BOUNCE_HEIGHT = 5.0f;
 static const float LUCKY_BOUNCE_SPEED = 0.1f;
 
-CLuckyBlock::CLuckyBlock(float x, float y)
-    : CBlock(x, y), state(ELuckyBlockState::IDLE), hiddenItem(nullptr), bounceStartY(y)
+CLuckyBlock::CLuckyBlock(float x, float y, bool isEmpty)
+    : CBlock(x, y), state(isEmpty ? ELuckyBlockState::EMPTY : ELuckyBlockState::IDLE),
+      hiddenItem(nullptr), bounceStartY(y)
 {
 }
 
@@ -22,22 +24,23 @@ void CLuckyBlock::_SpawnHiddenItem()
     if (hiddenItem == nullptr)
         return;
 
-    if (auto coin = dynamic_cast<CCoin *>(hiddenItem))
+    if (auto coin = dynamic_cast<CCoin*>(hiddenItem))
     {
+        CAudioManager::GetInstance()->Play("coin");
         coin->SetState(COIN_STATE_POPPING);
     }
-    else if (auto mushroom = dynamic_cast<CMushroom *>(hiddenItem))
+    else if (auto mushroom = dynamic_cast<CMushroom*>(hiddenItem))
     {
         // Position the mushroom just above the block so it slides out
         mushroom->y = y + 16.0f;
         mushroom->SetState(MUSHROOM_STATE_MOVING);
     }
-    else if (auto star = dynamic_cast<CStar *>(hiddenItem))
+    else if (auto star = dynamic_cast<CStar*>(hiddenItem))
     {
         star->y = y + 16.0f;
         star->SetState(STAR_STATE_MOVING);
     }
-    else if (auto flower = dynamic_cast<CFireFlower *>(hiddenItem))
+    else if (auto flower = dynamic_cast<CFireFlower*>(hiddenItem))
     {
         flower->y = y + 16.0f;
         flower->SetState(FLOWER_STATE_VISIBLE);
@@ -88,7 +91,7 @@ void CLuckyBlock::Render()
     }
 }
 
-void CLuckyBlock::GetBoundingBox(float &left, float &bottom, float &right, float &top)
+void CLuckyBlock::GetBoundingBox(float& left, float& bottom, float& right, float& top)
 {
     const float BLOCK_W = 16.0f;
     const float BLOCK_H = 16.0f;
@@ -98,12 +101,13 @@ void CLuckyBlock::GetBoundingBox(float &left, float &bottom, float &right, float
     top = y + BLOCK_H;
 }
 
-void CLuckyBlock::OnHitFromBelow(CGameObject *hitter)
+void CLuckyBlock::OnHitFromBelow(CGameObject* hitter)
 {
     // Only react while in IDLE state; subsequent hits are ignored
     if (state != ELuckyBlockState::IDLE)
         return;
 
+    CAudioManager::GetInstance()->Play("bump");
     bounceStartY = y;
     state = ELuckyBlockState::BOUNCING_UP;
 }

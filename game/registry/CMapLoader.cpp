@@ -8,10 +8,18 @@
 #include "../entities/blocks/CPipe.h"
 #include "../entities/enemies/CGoomba.h"
 #include "../entities/enemies/CKoopa.h"
+#include "../entities/enemies/CCheepCheep.h"
+#include "../entities/enemies/CBowser.h"
+#include "../entities/enemies/CFireBar.h"
+#include "../entities/enemies/CPodoboo.h"
 #include "../entities/items/CMushroom.h"
 #include "../entities/items/CStar.h"
 #include "../entities/items/CFireFlower.h"
 #include "../entities/items/CCoin.h"
+#include "../entities/blocks/CPlatform.h"
+#include "../entities/blocks/CCastleBridge.h"
+#include "../entities/blocks/CBridge.h"
+#include "../entities/blocks/CLava.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
 
@@ -97,11 +105,22 @@ void CMapLoader::_ParseSettings(const std::string& line, CPlayScene* scene) {
         DebugOut(L"[INFO] Setting cellSize = %d\n", cellSize);
     }
     else if (parts[0] == "background_color") {
-        if (parts[1] == "black") {
-            scene->SetClearColor(D3DXCOLOR(0, 0, 0, 1.0f));
-        }
-        else if (parts[1] == "blue") {
-            scene->SetClearColor(D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f));
+        // Support both named colors ("black", "blue") and RGB triplets (r,g,b)
+        if (parts.size() >= 4) {
+            // Numeric RGB format: background_color,r,g,b
+            int r = std::stoi(parts[1]);
+            int g = std::stoi(parts[2]);
+            int b = std::stoi(parts[3]);
+            scene->SetBackgroundColor(r, g, b);
+            DebugOut(L"[INFO] Setting backgroundColor = (%d, %d, %d)\n", r, g, b);
+        } else {
+            // Named color format: background_color,name
+            if (parts[1] == "black") {
+                scene->SetClearColor(D3DXCOLOR(0, 0, 0, 1.0f));
+            }
+            else if (parts[1] == "blue") {
+                scene->SetClearColor(D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f));
+            }
         }
     }
     else if (parts[0] == "theme") {
@@ -122,6 +141,10 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
         matrix.push_back(row);
     }
 
+    if (!matrix.empty()) {
+        scene->mapWidth = (float)(matrix[0].size() * cellSize);
+    }
+
     int H = (int)matrix.size();
     mapHeight = (float)(H * cellSize);
     for (int i = 0; i < H; i++) {
@@ -133,28 +156,51 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
             switch (id) {
             case 0: // Air
                 break;
+
             case 1: // Ground
                 scene->blocks.push_back(new CBrick(x, y, "ANI_GROUND_BRICK_OW"));
                 break;
+
             case 5: // Brick (stair/structure)
                 scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_STAIR"));
                 break;
-            case 7: // Brick (platform)
-                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_PLATFORM"));
-                break;
-            case 3: // Bush
-                scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
-                break;
-            case 2: // Cloud
-                scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED"));
-                break;
-            case 4: // Question block
-                scene->blocks.push_back(new CLuckyBlock(x, y));
-                break;
+
             case 6: // Breakable brick
                 scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_IDLE"));
                 break;
-            case 8: // Flag pole segment
+
+            case 7: // Brick (platform)
+                scene->blocks.push_back(new CBrick(x, y, "ANI_BRICK_PLATFORM"));
+                break;
+
+            case 4: // Lucky Block (animated ? block)
+                scene->blocks.push_back(new CLuckyBlock(x, y));
+                break;
+
+            case 2: // Cloud - render composite cloud (assembled sprite)
+            {
+                // Clouds are precisely cropped in the atlas and have different heights.
+                // Using mathematically matched pixel offsets to seamlessly stitch them with zero gaps!
+                CDecorBlock* cloudParts[6];
+                cloudParts[0] = new CDecorBlock(x + 0.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_LEFT");
+                cloudParts[1] = new CDecorBlock(x + 8.0f,  y + 0.0f, "ANI_CLOUD_OW_TOP_MID");
+                cloudParts[2] = new CDecorBlock(x + 24.0f, y + 0.0f, "ANI_CLOUD_OW_TOP_RIGHT");
+                cloudParts[3] = new CDecorBlock(x + 2.0f,  y - 5.0f, "ANI_CLOUD_OW_BOTTOM_LEFT");
+                cloudParts[4] = new CDecorBlock(x + 8.0f,  y - 8.0f, "ANI_CLOUD_OW_BOTTOM_MID");
+                cloudParts[5] = new CDecorBlock(x + 24.0f, y - 7.0f, "ANI_CLOUD_OW_BOTTOM_RIGHT");
+
+                for (int k = 0; k < 6; k++) {
+                    cloudParts[k]->SetDrifting(true);
+                    scene->decors.push_back(cloudParts[k]);
+                }
+                break;
+            }
+
+            case 3: // Bush
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED"));
+                break;
+
+            case 8: // Flag Pole segment
             {
                 scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
                 bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
@@ -164,9 +210,71 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
                 }
                 break;
             }
+
             case 9: // Castle
                 scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
                 break;
+
+            // --- ASSEMBLED PREFABS ---
+            case 10: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_SMALL_ASSEMBLED")); break;
+            case 11: scene->decors.push_back(new CDecorBlock(x, y, "ANI_HILL_BIG_ASSEMBLED")); break;
+            case 12: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_SMALL_ASSEMBLED")); break;
+            case 13: scene->decors.push_back(new CDecorBlock(x, y, "ANI_BUSH_BIG_ASSEMBLED")); break;
+            case 14: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED")); break;
+            case 15: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED")); break;
+            case 16: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_SMALL_ASSEMBLED")); break;
+            case 17: scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED")); break;
+            case 18: scene->decors.push_back(new CDecorBlock(x, y, "ANI_PIPE_UPWARDS_ASSEMBLED")); break;
+            case 19: scene->decors.push_back(new CDecorBlock(x, y, "ANI_2FLOORS_CASTLE_ASSEMBLED")); break;
+            case 20: scene->decors.push_back(new CDecorBlock(x, y, "ANI_3FLOORS_CASTLE_ASSEMBLED")); break;
+
+            // --- WORLD 2-3 SPECIAL ASSETS ---
+            case 21: {
+                CBridge* bridge = new CBridge(x, y - 8.0f, "ANI_BRIDGE_BLOCK");
+                scene->blocks.push_back(bridge);       // Collision (one-way)
+                scene->foregrounds.push_back(bridge);  // Render over Mario
+                break;
+            }
+            case 22: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_LEFT")); break;
+            case 23: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_MID")); break;
+            case 24: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_RIGHT")); break;
+            case 25: scene->blocks.push_back(new CBrick(x, y, "ANI_MUSHROOM_PLATFORM_STEM")); break;
+            case 26: scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK")); break;
+
+            // --- WORLD 2-4 SPECIAL ASSETS ---
+            case 30: scene->blocks.push_back(new CBrick(x, y, "ANI_CASTLE_BRICK_WHITE")); break;
+            case 31: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_TOP")); break;
+            case 32: scene->blocks.push_back(new CLava(x, y, "ANI_LAVA_BOTTOM")); break;
+            case 33: scene->blocks.push_back(new CBrick(x, y, "ANI_WHITE_FURNACE_BRICK")); break;
+            case 34: {
+                CBridge* bridge = new CBridge(x, y, "ANI_WHITE_RED_STEEL_BRIDGE");
+                scene->blocks.push_back(bridge);
+                scene->foregrounds.push_back(bridge);
+                break;
+            }
+            case 35: scene->decors.push_back(new CDecorBlock(x, y, "ANI_AXE")); break;
+            case 36: scene->decors.push_back(new CDecorBlock(x, y, "ANI_CHAIN")); break;
+            case 37: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+            case 38: scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR")); break;
+
+            case 138: // Used Lucky Block
+            {
+                scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                break;
+            }
+
+            case 139: // Fire Circle (Used Lucky Block + 5 Fire Orbs)
+            {
+                scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+                // The FireBar update logic will handle rotation
+                for (int k = 0; k < 5; k++) {
+                    CFireBar* orb = new CFireBar(x + 4, y + 4);
+                    orb->SetOffset((float)(k * 9)); // 9px apart for 8px orbs
+                    scene->enemies.push_back(orb);
+                }
+                break;
+            }
+
             default:
                 DebugOut(L"[WARNING] Unknown tile ID %d at col=%d, row=%d\n", id, j, i);
                 break;
@@ -246,8 +354,69 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         spawnedObj = new CCoin(x, y, hidden_in_block);
         scene->items.push_back(spawnedObj);
     }
+    else if (type == "cheep_cheep") {
+        float limit = 32.0f;
+        for (auto p : parts) if (p.find("limit=") == 0) limit = std::stof(p.substr(6)) * 16.0f;
+        auto cheep = new CCheepCheep(x, y);
+        cheep->SetLimit(limit);
+        spawnedObj = cheep;
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "firebar") {
+        spawnedObj = new CFireBar(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "bowser") {
+        spawnedObj = new CBowser(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "podoboo") {
+        spawnedObj = new CPodoboo(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "platform" || type == "moving_platform") {
+        float dir = 1.0f;
+        float speed = 0.05f;
+        std::string direction = "vertical";
+        for (auto p : parts) {
+            if (p.find("dir=") == 0) dir = std::stof(p.substr(4));
+            if (p.find("direction=") == 0) direction = p.substr(10);
+            if (p.find("speed=") == 0) speed = std::stof(p.substr(6));
+        }
+        CPlatform* plat = new CPlatform(x, y, dir);
+        plat->SetSpeed(speed);
+        plat->SetIsVertical(direction == "vertical");
+        spawnedObj = plat;
+        scene->blocks.push_back((CBlock*)spawnedObj);
+    }
+    else if (type == "npc_toad") {
+        spawnedObj = new CDecorBlock(x, y, "ANI_NPC_TOAD");
+        scene->decors.push_back((CDecorBlock*)spawnedObj);
+    }
+    else if (type == "lucky_block") {
+        std::string item = "coin";
+        for (auto p : parts) if (p.find("hidden_item=") == 0) item = p.substr(12);
+        
+        CLuckyBlock* lucky = new CLuckyBlock(x, y);
+        if (item == "mushroom") lucky->SetHiddenItem(new CMushroom(x, y));
+        else if (item == "fireflower") lucky->SetHiddenItem(new CFireFlower(x, y));
+        else lucky->SetHiddenItem(new CCoin(x, y, true));
+        
+        scene->blocks.push_back((CBlock*)lucky);
+    }
+    else if (type == "castle_bridge") {
+        scene->blocks.push_back((CBlock*)new CCastleBridge(x, y));
+    }
+    else if (type == "cloud") {
+        std::string size = "small";
+        for (auto p : parts) if (p.find("size=") == 0) size = p.substr(5);
+        CDecorBlock* cloud;
+        if (size == "large") cloud = new CDecorBlock(x, y, "ANI_CLOUD_BIG_ASSEMBLED");
+        else cloud = new CDecorBlock(x, y, "ANI_CLOUD_SMALL_ASSEMBLED");
+        cloud->SetDrifting(true);
+        scene->decors.push_back(cloud);
+    }
     else if (type == "pipe") {
-        // Since Y was subtracted by 16 as a general rule, we must add 16 back to get the Top Edge!
         float topEdgeY = y + 16.0f;
         float pipeHeight = height;
         float pipeBottomY = y;
@@ -275,6 +444,19 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
     }
     else if (type == "tree_big") {
         scene->decors.push_back(new CDecorBlock(x, y, "ANI_TREE_BIG_ASSEMBLED"));
+    }
+    else if (type == "flagpole") {
+        // Use the full assembled flagpole sprite (10+ blocks high)
+        scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_FULL_ASSEMBLED"));
+        
+        // The flag itself (initially near the top, ~150px up from base)
+        scene->decors.push_back(new CDecorBlock(x - 8.0f, y + 150.0f, "ANI_FLAG_OW"));
+    }
+    else if (type == "start_castle") {
+        scene->decors.push_back(new CDecorBlock(x, y + 16.0f, "ANI_2FLOORS_CASTLE_ASSEMBLED"));
+    }
+    else if (type == "end_castle") {
+        scene->decors.push_back(new CDecorBlock(x, y + 16.0f, "ANI_3FLOORS_CASTLE_ASSEMBLED"));
     }
 
     if (spawnedObj && hidden_in_block) {

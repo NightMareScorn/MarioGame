@@ -1,5 +1,6 @@
 #include "CGoomba.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../../engine/audio/CAudioManager.h"
 
 CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameObject() {
     this->x = x;
@@ -34,5 +35,6 @@ void CGoomba::SetState(int s) {
     if (state == GOOMBA_STATE_DIE) {
         vx = 0;
         vy = 0;
+        CAudioManager::GetInstance()->Play("stomp");
     }
 }

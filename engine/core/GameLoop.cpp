@@ -12,6 +12,7 @@
 #define BACKGROUND_COLOR D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f) // NES SMB1 sky blue (#5C94FC)
 
 CPlayScene* scene = nullptr;
+static std::string selectedLevel = "content/levels/level_1_1.csv";
 
 void HandleDebugInput() {
 #ifdef _DEBUG      
@@ -31,7 +32,7 @@ void HandleDebugInput() {
 void Update(float dt)
 {
     if (scene == nullptr) {
-        scene = new CPlayScene();
+        scene = new CPlayScene(selectedLevel);
         scene->Load();
     }
 
@@ -51,11 +52,12 @@ void LoadAssets()
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
-    D3DXCOLOR clearColor = D3DXCOLOR(0, 0, 0, 1); // Default to black if no scene
+    // Use GetClearColor() which reads the scene's configured background color
+    D3DXCOLOR bgColor = BACKGROUND_COLOR; // Default sky blue
     if (scene != nullptr) {
-        clearColor = scene->GetClearColor();
+        bgColor = scene->GetClearColor();
     }
-    pD3DDevice->ClearRenderTargetView(pRenderTargetView, clearColor);
+    pD3DDevice->ClearRenderTargetView(pRenderTargetView, bgColor);
 }
 
 void RenderGame(CGame* g)
@@ -88,8 +90,9 @@ void Render()
     pSwapChain->Present(0, 0);
 }
 
-int Run()
+int Run(std::string level)
 {
+    selectedLevel = level;
 	MSG msg;
 	int done = 0;
 
@@ -97,7 +100,7 @@ int Run()
 
 	while (!done)
 	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT) done = 1;
 
@@ -111,6 +114,7 @@ int Run()
 		{
 			Update(time.GetDeltaTime() * 1000.0f);
 			time.OnUpdate();
+			if (CGame::GetInstance()->IsExitLevelRequested()) done = 1;
 		}
 
 		Render();

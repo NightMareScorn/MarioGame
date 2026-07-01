@@ -445,3 +445,14 @@ GameLoop_ours.cpp
 .gitignore
 MarioGame.vcxproj
 instruction.md
+
+# Reference Repository
+/../Super-Mario-Bros.-Remastered-Public/
+scratch/
+ui/AGENTS.md
+ui/CLAUDE.md
+
+# Next.js
+ui/.next/
+ui/next-env.d.ts
+ui/out/

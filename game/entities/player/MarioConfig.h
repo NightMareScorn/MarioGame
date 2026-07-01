@@ -1,10 +1,12 @@
 #pragma once
 namespace MarioConfig {
     const float GRAVITY = -0.0007f;
-    const float ACCEL_X = 0.0008f;
+    const float ACCEL_X = 0.0006f;
     const float FRICTION = 0.0006f;
-    const float MAX_SPEED_X = 0.15f;
-    const float JUMP_FORCE = 0.35f;
+    const float MAX_SPEED_X = 0.11f; 
+    const float JUMP_FORCE = 0.32f;        // Minimum jump impulse (tap)
+    const float JUMP_HOLD_FORCE = 0.0005f; // Extra push per dt while holding
+    const float MAX_JUMP_HEIGHT = 114.0f;  // Deprecated usage
 
     const int ANI_IDLE_RIGHT = 100;
     const int ANI_IDLE_LEFT = 101;

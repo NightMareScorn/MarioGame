@@ -1,12 +1,14 @@
 #include "CBrick.h"
 #include "../../../engine/Graphics/Animations.h"
-#include "../player/CMario.h"
+#include "../../../engine/audio/CAudioManager.h"
 #include "../../../engine/utils/debug.h"
+#include "../../registry/CResourceRegistry.h"
+#include "../player/CMario.h"
 
 static const float BOUNCE_HEIGHT = 5.0f;
 static const float BOUNCE_SPEED = 0.1f;
 
-CBrick::CBrick(float x, float y, const std::string &aniName, bool isInvisible)
+CBrick::CBrick(float x, float y, const std::string& aniName, bool isInvisible)
     : CBlock(x, y), state(EBrickState::IDLE), aniName(aniName), bounceStartY(y), isInvisible(isInvisible)
 {
 }
@@ -19,7 +21,7 @@ void CBrick::Render()
     CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
-void CBrick::GetBoundingBox(float &left, float &bottom, float &right, float &top)
+void CBrick::GetBoundingBox(float& left, float& bottom, float& right, float& top)
 {
     if (state == EBrickState::BROKEN)
     {
@@ -36,7 +38,7 @@ void CBrick::GetBoundingBox(float &left, float &bottom, float &right, float &top
     top = y + BLOCK_H;
 }
 
-void CBrick::OnHitFromBelow(CGameObject *hitter) // Mario
+void CBrick::OnHitFromBelow(CGameObject* hitter)
 {
     if (state == EBrickState::BROKEN)
         return;
@@ -49,7 +51,8 @@ void CBrick::OnHitFromBelow(CGameObject *hitter) // Mario
 
     if (state == EBrickState::IDLE)
     {
-        CMario *mario = dynamic_cast<CMario *>(hitter);
+        CAudioManager::GetInstance()->Play("bump");
+        CMario* mario = dynamic_cast<CMario*>(hitter);
         if (mario && mario->IsBig())
         {
             state = EBrickState::BROKEN;

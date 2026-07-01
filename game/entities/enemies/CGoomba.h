@@ -13,11 +13,13 @@
 #define GOOMBA_BBOX_HEIGHT_DIE 7
 
 class CGoomba : public CGameObject {
+protected:
+    float start_x;
     int state;
 public:
     CGoomba(float x, float y, float patrolLeft = 0, float patrolRight = 0);
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
+    void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
     void SetState(int s);
 };

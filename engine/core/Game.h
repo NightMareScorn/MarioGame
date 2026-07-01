@@ -13,6 +13,13 @@ class CGame
 	int backBufferWidth = 0;
 	int backBufferHeight = 0;
 
+	int minWidth = 800;
+	int minHeight = 600;
+
+	float renderOffsetX = 0;
+	float renderOffsetY = 0;
+	float renderScale = 1.0f;
+
 	// Viewport = visible world area. Smaller values = more zoom.
 	// NES resolution: 256x240. Window: 640x480 → ~2.5x zoom.
 	int viewportWidth = 256;
@@ -28,6 +35,8 @@ class CGame
 	HINSTANCE hInstance;
 
 	ID3D10SamplerState* pPointSamplerState;
+
+	bool exitLevelRequested = false;
 
 public:
 	void Init(HWND hWnd, HINSTANCE hInstance);
@@ -59,12 +68,20 @@ public:
 	int GetViewportWidth() { return viewportWidth; }
 	int GetViewportHeight() { return viewportHeight; }
 
+	float GetRenderOffsetX() { return renderOffsetX; }
+	float GetRenderOffsetY() { return renderOffsetY; }
+	float GetRenderScale() { return renderScale; }
+
 	static CGame* GetInstance();
 
+	void ProcessResize(int width, int height);
 	void SetPointSamplerState();
 
 	void GetCamPos(float& x, float& y) { CCamera::GetInstance()->GetCamPos(x, y); }
 	void SetCamPos(float x, float y) { CCamera::GetInstance()->SetCamPos(x, y); }
+
+	void SetExitLevel(bool exit) { exitLevelRequested = exit; }
+	bool IsExitLevelRequested() { return exitLevelRequested; }
 
 	~CGame();
 };
