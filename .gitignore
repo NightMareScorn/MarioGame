@@ -451,3 +451,8 @@ instruction.md
 scratch/
 ui/AGENTS.md
 ui/CLAUDE.md
+
+# Next.js
+ui/.next/
+ui/next-env.d.ts
+ui/out/
