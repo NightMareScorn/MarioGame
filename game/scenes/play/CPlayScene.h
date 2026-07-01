@@ -50,6 +50,18 @@ public:
     int GetCoins() const { return coins; }
     void AddCoin() { coins++; }
     int GetTime() const { return (int)std::ceil(timeLeft); }
+    std::string GetLevelId() const {
+        std::string levelId = "1-1";
+        size_t lastSlash = levelPath.find_last_of("\\/");
+        std::string fileName = (lastSlash == std::string::npos) ? levelPath : levelPath.substr(lastSlash + 1);
+        if (fileName.find("level_") == 0) {
+            levelId = fileName.substr(6, 3);
+            for (size_t i = 0; i < levelId.length(); ++i) {
+                if (levelId[i] == '_') levelId[i] = '-';
+            }
+        }
+        return levelId;
+    }
 
     void TransitionToMap(const std::string& mapPath) { pendingMapPath = mapPath; }
 

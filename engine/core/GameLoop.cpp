@@ -97,8 +97,10 @@ void Render()
         rect.bottom = g->GetBackBufferHeight();
 
         wchar_t buffer[256];
-        swprintf_s(buffer, L"MARIO\n%06d\n\nCOINS\n%02d\n\nWORLD\n1-1\n\nTIME\n%03d", 
-                    scene->GetScore(), scene->GetCoins(), scene->GetTime());
+        std::string lvl = scene->GetLevelId();
+        std::wstring wlvl(lvl.begin(), lvl.end());
+        swprintf_s(buffer, L"MARIO\n%06d\n\nCOINS\n%02d\n\nWORLD\n%s\n\nTIME\n%03d", 
+                    scene->GetScore(), scene->GetCoins(), wlvl.c_str(), scene->GetTime());
         g->DrawTextRaw(buffer, rect, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
