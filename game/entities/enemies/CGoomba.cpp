@@ -2,6 +2,7 @@
 #include "../../../engine/Graphics/Animations.h"
 #include "../../../engine/audio/CAudioManager.h"
 #include "../player/CMario.h"
+#include "../../scenes/play/CPlayScene.h"
 
 CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameObject()
 {
@@ -14,7 +15,14 @@ CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameO
 void CGoomba::Update(float dt)
 {
     if (state == GOOMBA_STATE_DIE)
+    {
+        dieTimer -= dt;
+        if (dieTimer <= 0)
+        {
+            isDead = true;
+        }
         return;
+    }
     vy -= GOOMBA_GRAVITY * dt;
 }
 
@@ -43,18 +51,30 @@ bool CGoomba::IsBlocking(CGameObject *other)
     return true; // Optionally don't block running shell
 }
 
-#include "../../scenes/play/CPlayScene.h"
+void CGoomba::OnCollisionX(CGameObject* other, float nx)
+{
+    if (state == GOOMBA_STATE_DIE) return;
+    if (auto mario = dynamic_cast<CMario*>(other))
+    {
+        mario->Hurt();
+    }
+}
 
 void CGoomba::OnCollisionY(CGameObject *other, float ny)
 {
-    if (ny > 0)
-    { // Hit from top
-        if (dynamic_cast<CMario *>(other))
+    if (state == GOOMBA_STATE_DIE) return;
+    if (auto mario = dynamic_cast<CMario*>(other))
+    {
+        if (ny > 0) // Mario dẫm lên đầu Goomba
         {
             SetState(GOOMBA_STATE_DIE);
             if (scene)
                 scene->AddScore(100);
-            other->vy = 0.2f; // bounce mario
+            mario->StompBounce();
+        }
+        else
+        {
+            mario->Hurt();
         }
     }
 }
@@ -66,6 +86,7 @@ void CGoomba::SetState(int s)
     {
         vx = 0;
         vy = 0;
+        dieTimer = 500.0f;
         CAudioManager::GetInstance()->Play("stomp");
     }
 }

@@ -15,9 +15,12 @@ public:
     void Render() override;
     void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     
-    void SetState(int s);
+    void SetState(int s) override;
     void OnCollisionX(CGameObject* other, float nx) override;
     void OnCollisionY(CGameObject* other, float ny) override;
     bool IsBlocking(CGameObject* other) override;
     int GetState() { return state; }
+
+    bool IsEnemy() const override { return state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING; }
+    void OnStomped() override { SetState(KOOPA_STATE_SHELL); }
 };

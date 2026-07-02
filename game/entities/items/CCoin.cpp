@@ -51,13 +51,11 @@ void CCoin::Render() {
 }
 
 void CCoin::GetBoundingBox(float& left, float& bottom, float& right, float& top) {
-    // Coins don't have physically solid collisions, they just get collected
     if (state == COIN_STATE_HIDDEN || state == COIN_STATE_DONE || in_block) {
         left = bottom = right = top = 0;
         return;
     }
     
-    // Size for collectable coin trigger box
     left = x;
     bottom = y;
     right = x + 16.0f;
@@ -71,7 +69,7 @@ void CCoin::SetState(int s) {
     }
     else if (state == COIN_STATE_COLLECTED) {
         vy = COIN_POP_SPEED * 0.8f;
-        in_block = false; // Use popping animation but it's now a free effect
+        in_block = false;
     }
 }
 

@@ -6,9 +6,15 @@
 #include "../../../engine/utils/debug.h"
 #include "../../../engine/utils/CScoreManager.h"
 #include "../../entities/blocks/CPipe.h"
+#include "../../entities/items/CFireBall.h"
+#include "../../entities/items/CFireFlower.h"
+#include "../../entities/items/CMushroom.h"
+#include "../../entities/blocks/CFlagpole.h"
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
 #include <algorithm>
+
+
 
 void CPlayScene::Load()
 {
@@ -17,11 +23,13 @@ void CPlayScene::Load()
 
 void CPlayScene::Load(const std::string& mapPath)
 {
+    scene = this; // Gán con trỏ scene toàn cục
     auto registry = CResourceRegistry::GetInstance();
     registry->LoadResourcesForPlayScene();
 
     currentMapPath = mapPath;
     pendingMapPath = "";
+    goalTimer = 0.0f;
 
     mario = nullptr; // MapLoader sẽ khởi tạo Mario
     CMapLoader::GetInstance()->Load(mapPath, this);
@@ -35,7 +43,7 @@ void CPlayScene::Load(const std::string& mapPath)
     }
 
     CCamera::GetInstance()->SetCamPos(0, 0);
-    CCamera::GetInstance()->SetMapWidth(0); // Will be set in process map or update
+    CCamera::GetInstance()->SetMapWidth(0); 
 
     DebugOut(L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
              mapPath.c_str(), (int)blocks.size(), (int)decors.size());
@@ -43,6 +51,55 @@ void CPlayScene::Load(const std::string& mapPath)
 
 void CPlayScene::Update(float dt)
 {
+    // Chuyển map pending
+    if (!pendingMapPath.empty())
+    {
+        std::string nextMap = pendingMapPath;
+        Unload();
+        Load(nextMap);
+        return;
+    }
+
+    if (!mario) return;
+
+    // --- LOGIC HỒI SINH KHI CHẾT ---
+    if (mario->IsDeadState()) {
+        mario->Update(dt);
+        if (mario->GetDieTimer() <= 0) {
+            if (CMario::lives > 0) {
+                this->TransitionToMap(currentMapPath);
+            } else {
+                CMario::lives = 3; 
+                CMario::hasCheckpoint = false; 
+                this->TransitionToMap("content/levels/level_1_1.csv"); 
+            }
+        }
+        return;
+    }
+
+    // --- LOGIC THẮNG MÀN (CỘT CỜ) ---
+    if (goalTimer > 0) {
+        goalTimer -= dt;
+        for (auto d : decors) d->Update(dt);
+
+        if (mario->GetState() == EMarioState::GOAL_SLIDE) {
+            if (mario->y <= 32.5f) { // Chạm đất
+                mario->y = 32.0f;
+                mario->SetState(static_cast<int>(EMarioState::GOAL_WALK));
+            }
+        }
+        mario->Update(dt); 
+        mario->SetOnGround(true);
+        CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+
+        if (goalTimer <= 0) {
+            CMario::hasCheckpoint = false;
+            // Chuyển sang màn tiếp theo (level 1-2)
+            this->TransitionToMap("content/levels/level_1_2_first_half.csv");
+        }
+        return; 
+    }
+
     // 1. HUD logic update (timeLeft)
     if (timeLeft > 0) {
         timeLeft -= (dt / 1000.0f);
@@ -59,16 +116,14 @@ void CPlayScene::Update(float dt)
     for (auto b : blocks) {
         if (b->type == "platform") {
             float ml, mt, mr, mb;
-            mario->GetBoundingBox(ml, mt, mr, mb);
+            mario->GetBoundingBox(ml, mb, mr, mb);
             float pl, pt, pr, pb;
             b->GetBoundingBox(pl, pt, pr, pb);
 
-            // Stickiness: if Mario is on top OR just above the platform while it moves down
             if (mr > pl && ml < pr && mb >= pb && mb <= pb + 4.0f && mario->vy <= 0) {
                 mario->x += b->vx * dt;
                 mario->y += b->vy * dt;
                 
-                // If the platform is moving down, snap Mario to it to keep him on ground
                 if (b->vy < 0) {
                     mario->y = pb + 0.1f;
                     mario->SetOnGround(true);
@@ -79,8 +134,7 @@ void CPlayScene::Update(float dt)
 
     mario->Update(dt);
 
-    // Lọc các blocks, enemies và items ở trong khoảng 256 pixels quanh Mario để
-    // tối ưu collision checks
+    // Lọc đối tượng xung quanh Mario để tối ưu va chạm
     auto nearbyBlocks = GetObjectsInRange(mario->x, mario->y, blocks);
     auto nearbyEnemies = GetObjectsInRange(mario->x, mario->y, enemies);
     auto nearbyItems = GetObjectsInRange(mario->x, mario->y, items);
@@ -91,13 +145,46 @@ void CPlayScene::Update(float dt)
     coObjectsForMario.insert(coObjectsForMario.end(), nearbyEnemies.begin(), nearbyEnemies.end());
     coObjectsForMario.insert(coObjectsForMario.end(), nearbyItems.begin(), nearbyItems.end());
 
-    if (mario->GetState() != EMarioState::DIE) {
-        CCollision::ResolveCollision(mario, dt, coObjectsForMario);
+    CCollision::ResolveCollision(mario, dt, coObjectsForMario);
+
+    // --- LOGIC STAR MODE: Chạm vào quái là quái chết ---
+    if (mario->IsStarMode()) {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        for (auto e : nearbyEnemies) {
+            if (e->IsDead()) continue;
+            float el, eb, er, et;
+            e->GetBoundingBox(el, eb, er, et);
+            if (CCollision::CheckAABB({ml, mb, mr, mt}, {el, eb, er, et})) {
+                e->OnStomped();
+                this->AddScore(100);
+            }
+        }
     }
 
-    // Xử lý collision cho từng enemy với block xung quanh nó và các enemy khác
+    // --- LOGIC FLAGPOLE (CỘT CỜ) ---
+    if (!mario->IsInputLocked()) {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        for (auto d : decors) {
+            if (auto flagpole = dynamic_cast<CFlagpole*>(d)) { 
+                float dl, db, dr, dt_b; 
+                flagpole->GetBoundingBox(dl, db, dr, dt_b);
+                if (CCollision::CheckAABB({ml, mb, mr, mt}, {dl, db, dr, dt_b})) {
+                    mario->x = dl - 4.0f;
+                    mario->HitGoal();
+                    flagpole->SetState(200); // Hạ cờ
+                    goalTimer = 4000.0f; // 4 giây trượt cờ và chạy vào lâu đài
+                    break;
+                }
+            }
+        }
+    }
+
+    // Xử lý collision cho từng enemy
     for (auto e : enemies)
     {
+        if (e->IsDead()) continue;
         float old_vx = e->vx;
 
         auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
@@ -111,7 +198,7 @@ void CPlayScene::Update(float dt)
 
         CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
 
-        // Quay đầu nếu bị chạm vật cản trục X (e->vx == 0)
+        // Quay đầu nếu đụng tường
         if (e->vx == 0 && old_vx != 0) {
             e->vx = -old_vx;
             e->nx = (e->vx > 0) ? 1 : -1;
@@ -146,11 +233,14 @@ void CPlayScene::Update(float dt)
         }
     }
 
-    // Xử lý collision cho từng item với block xung quanh nó
+    // Xử lý collision cho từng item
     for (auto i : items)
     {
-        auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
-        CCollision::ResolveCollision(i, dt, blocksAroundItem);
+        if (i->IsDead()) continue;
+        if (!dynamic_cast<CFireFlower*>(i) && !dynamic_cast<CFireball*>(i)) {
+            auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
+            CCollision::ResolveCollision(i, dt, blocksAroundItem);
+        }
     }
 
     mario->UpdateState();
@@ -160,9 +250,8 @@ void CPlayScene::Update(float dt)
     if (mapWidth > 0 && mario->x > mapWidth - 16) mario->x = mapWidth - 16;
     mario->SetMapWidth(mapWidth);
 
-    if (mario->IsDead()) {
-        Unload();
-        Load();
+    if (mario->y < -64.0f) {
+        mario->Die();
         return;
     }
 
@@ -178,7 +267,6 @@ void CPlayScene::Update(float dt)
                     float pLeft, pBottom, pRight, pTop;
                     pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
 
-                    // Chân của Mario phải cách đỉnh ống nước trong khoảng 2 pixel
                     if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
                         mLeft < pRight && mRight > pLeft)
                     {
@@ -193,54 +281,40 @@ void CPlayScene::Update(float dt)
     CCamera::GetInstance()->SetMapWidth(mapWidth);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 
-    // Check for level completion (near end castle)
-    if (mapWidth > 0 && mario->x > mapWidth - 64.0f) {
-        std::string levelId = "1-1";
-        size_t lastSlash = levelPath.find_last_of("\\/");
-        std::string fileName = (lastSlash == std::string::npos) ? levelPath : levelPath.substr(lastSlash + 1);
-        if (fileName.find("level_") == 0) {
-            levelId = fileName.substr(6, 3);
-            std::replace(levelId.begin(), levelId.end(), '_', '-');
-        }
+    // Dọn dẹp items & enemies bị chết
+    items.erase(std::remove_if(items.begin(), items.end(), [](CGameObject* o) { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; 
+    }), items.end());
 
-        // Dummy score/time for now, could be calculated based on coins/enemies/time
-        CScoreManager::GetInstance()->UpdateBest(levelId, 80000, "01:23");
-        CGame::GetInstance()->SetExitLevel(true);
-    }
-
-    // Chuyển map
-    if (!pendingMapPath.empty())
-    {
-        std::string nextMap = pendingMapPath;
-        Unload();
-        Load(nextMap);
-    }
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](CGameObject* o) { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; 
+    }), enemies.end());
 }
 
 void CPlayScene::Render()
 {
     ID3DX10Sprite* spriteHandler = CGame::GetInstance()->GetSpriteHandler();
 
-    // Layer 1: Background (hills, clouds, bushes, flag, castle)
+    // Layer 1: Background
     for (auto d : decors)
         d->Render();
-    // Đẩy lên GPU batch chứa riêng decors
     spriteHandler->Flush();
 
-    // Layer 2: blocks, items, enemies, mario (skip foregrounds in this pass)
+    // Layer 2: blocks, items, enemies, mario
     for (auto b : blocks) {
-        // Skip bridges/foregrounds in normal pass - they render in foreground layer
         bool isForeground = false;
         for (auto f : foregrounds) {
             if (f == b) { isForeground = true; break; }
         }
         if (!isForeground) b->Render();
     }
-    for (auto i : items) i->Render();
-    for (auto e : enemies) e->Render();
-    mario->Render();
+    for (auto i : items) if (!i->IsDead()) i->Render();
+    for (auto e : enemies) if (!e->IsDead()) e->Render();
+    if (mario) mario->Render();
 
-    // Layer 3: Foreground (bridges render over Mario)
+    // Layer 3: Foreground
     for (auto f : foregrounds) f->Render();
 }
 
@@ -249,7 +323,6 @@ void CPlayScene::Unload()
     delete mario;
     mario = nullptr;
 
-    // Delete blocks, but skip bridges (they're owned by foregrounds)
     for (auto b : blocks) {
         bool inForegrounds = false;
         for (auto f : foregrounds) {

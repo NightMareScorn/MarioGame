@@ -1,5 +1,6 @@
 #include "CFireFlower.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CFireFlower::CFireFlower(float x, float y) : CGameObject() {
     this->x = x;
@@ -31,4 +32,27 @@ void CFireFlower::GetBoundingBox(float& left, float& bottom, float& right, float
 
 void CFireFlower::SetState(int s) {
     state = s;
+}
+
+#include "../../../engine/audio/CAudioManager.h"
+#include "../../scenes/play/CPlayScene.h"
+
+void CFireFlower::OnCollisionX(CGameObject* other, float nx) {
+    if (state == FLOWER_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        SetState(FLOWER_STATE_HIDDEN);
+        mario->PowerUpFlower();
+        CAudioManager::GetInstance()->Play("powerup");
+        if (scene) scene->AddScore(1000);
+    }
+}
+
+void CFireFlower::OnCollisionY(CGameObject* other, float ny) {
+    if (state == FLOWER_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        SetState(FLOWER_STATE_HIDDEN);
+        mario->PowerUpFlower();
+        CAudioManager::GetInstance()->Play("powerup");
+        if (scene) scene->AddScore(1000);
+    }
 }

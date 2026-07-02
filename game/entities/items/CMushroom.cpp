@@ -2,6 +2,7 @@
 #include "../../../engine/Graphics/Animations.h"
 #include "../../entities/player/CMario.h"
 #include "../../scenes/play/CPlayScene.h"
+#include "../../../engine/audio/CAudioManager.h"
 
 CMushroom::CMushroom(float x, float y) : CGameObject() {
     this->x = x;
@@ -16,8 +17,8 @@ void CMushroom::Update(float dt) {
     vy -= MUSHROOM_GRAVITY * dt;
 
     if (vx == 0) { // Bumped into wall horizontally
-        vx = (nx > 0) ? MUSHROOM_SPEED : -MUSHROOM_SPEED;
         nx = -nx;
+        vx = (nx > 0) ? MUSHROOM_SPEED : -MUSHROOM_SPEED;
     }
 }
 
@@ -45,8 +46,9 @@ void CMushroom::OnCollisionX(CGameObject* other, float nx) {
     if (state == MUSHROOM_STATE_HIDDEN) return;
     if (auto mario = dynamic_cast<CMario*>(other)) {
          SetState(MUSHROOM_STATE_HIDDEN); // Mark as consumed
+         mario->PowerUpMushroom();
+         CAudioManager::GetInstance()->Play("powerup");
          if (scene) scene->AddScore(1000);
-         // Todo: make Mario become big mario
     }
 }
 
@@ -54,7 +56,8 @@ void CMushroom::OnCollisionY(CGameObject* other, float ny) {
     if (state == MUSHROOM_STATE_HIDDEN) return;
     if (auto mario = dynamic_cast<CMario*>(other)) {
          SetState(MUSHROOM_STATE_HIDDEN); // Mark as consumed
+         mario->PowerUpMushroom();
+         CAudioManager::GetInstance()->Play("powerup");
          if (scene) scene->AddScore(1000);
-         // Todo: make Mario become big mario
     }
 }

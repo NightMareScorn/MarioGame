@@ -16,6 +16,7 @@ class CGoomba : public CGameObject {
 protected:
     float start_x;
     int state;
+    float dieTimer = 0.0f;
 public:
     CGoomba(float x, float y, float patrolLeft = 0, float patrolRight = 0);
     void Update(float dt) override;
@@ -24,5 +25,9 @@ public:
     void SetState(int s);
 
     bool IsBlocking(CGameObject* other) override;
+    void OnCollisionX(CGameObject* other, float nx) override;
     void OnCollisionY(CGameObject* other, float ny) override;
+
+    bool IsEnemy() const override { return state != GOOMBA_STATE_DIE; }
+    void OnStomped() override { SetState(GOOMBA_STATE_DIE); }
 };

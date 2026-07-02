@@ -1,5 +1,6 @@
 #include "CStar.h"
 #include "../../../engine/Graphics/Animations.h"
+#include "../../entities/player/CMario.h"
 
 CStar::CStar(float x, float y) : CGameObject() {
   this->x = x;
@@ -44,3 +45,26 @@ void CStar::GetBoundingBox(float &left, float &bottom, float &right, float &top)
 }
 
 void CStar::SetState(int s) { state = s; }
+
+#include "../../../engine/audio/CAudioManager.h"
+#include "../../scenes/play/CPlayScene.h"
+
+void CStar::OnCollisionX(CGameObject* other, float nx) {
+    if (state == STAR_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        SetState(STAR_STATE_HIDDEN);
+        mario->BecomeInvincible(10.0f);
+        CAudioManager::GetInstance()->Play("powerup");
+        if (scene) scene->AddScore(1000);
+    }
+}
+
+void CStar::OnCollisionY(CGameObject* other, float ny) {
+    if (state == STAR_STATE_HIDDEN) return;
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        SetState(STAR_STATE_HIDDEN);
+        mario->BecomeInvincible(10.0f);
+        CAudioManager::GetInstance()->Play("powerup");
+        if (scene) scene->AddScore(1000);
+    }
+}

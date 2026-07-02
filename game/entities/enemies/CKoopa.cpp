@@ -25,13 +25,12 @@ void CKoopa::SetState(int s) {
 
 void CKoopa::Update(float dt) {
     vy -= 0.002f * dt;
-    // Movement resolution happens in scene
 }
 
 void CKoopa::Render() {
     std::string ani = "ANI_KOOPA_WALK";
     if (state == KOOPA_STATE_SHELL || state == KOOPA_STATE_SHELL_RUNNING) {
-        ani = "ANI_KOOPA_SHELL"; // Assuming you have this animation
+        ani = "ANI_KOOPA_SHELL";
     }
     CAnimations::GetInstance()->Render(ani, x, y, nx);
 }
@@ -41,9 +40,9 @@ void CKoopa::GetBoundingBox(float& left, float& bottom, float& right, float& top
     bottom = y;
     right = x + 16.0f;
     if (state == KOOPA_STATE_WALKING) {
-        top = y + 24.0f; // Walk bbox
+        top = y + 24.0f;
     } else {
-        top = y + 16.0f; // Shell bbox
+        top = y + 16.0f;
     }
 }
 
@@ -55,42 +54,47 @@ void CKoopa::OnCollisionX(CGameObject* other, float nx) {
             goomba->SetState(GOOMBA_STATE_DIE);
             if (scene) scene->AddScore(100);
         } else if (auto koopa = dynamic_cast<CKoopa*>(other)) {
-            koopa->SetState(KOOPA_STATE_SHELL); // or whatever
+            koopa->SetState(KOOPA_STATE_SHELL);
             if (scene) scene->AddScore(100);
         } else if (auto mario = dynamic_cast<CMario*>(other)) {
-            // mario takes hit if it's running? Actually Mario handles his own hits.
+            mario->Hurt();
         }
     } else if (state == KOOPA_STATE_SHELL) {
         if (auto mario = dynamic_cast<CMario*>(other)) {
             this->nx = (mario->x < this->x) ? 1 : -1;
             SetState(KOOPA_STATE_SHELL_RUNNING);
         }
+    } else if (state == KOOPA_STATE_WALKING) {
+        if (auto mario = dynamic_cast<CMario*>(other)) {
+            mario->Hurt();
+        }
     }
 }
 
 void CKoopa::OnCollisionY(CGameObject* other, float ny) {
-    if (ny > 0) { // Hit from top (other landed on this)
+    if (ny > 0) { // Hit from top
         if (auto mario = dynamic_cast<CMario*>(other)) {
             if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
                 SetState(KOOPA_STATE_SHELL);
                 if (scene) scene->AddScore(100);
-                mario->vy = 0.2f; // Mario bounces up
+                mario->StompBounce();
             } else if (state == KOOPA_STATE_SHELL) {
                 this->nx = (mario->x < this->x) ? 1 : -1;
                 SetState(KOOPA_STATE_SHELL_RUNNING);
-                mario->vy = 0.2f;
+                mario->StompBounce();
+            }
+        }
+    } else {
+        // Hit from below or sides when falling
+        if (auto mario = dynamic_cast<CMario*>(other)) {
+            if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
+                mario->Hurt();
             }
         }
     }
 }
 
 bool CKoopa::IsBlocking(CGameObject* other) {
-    if (auto mario = dynamic_cast<CMario*>(other)) {
-        // If Koopa is Shell running, or Mario runs into Shell, does it physically block?
-        // Usually Mario takes damage or kicks it, but we can let it be non-blocking physically
-        // so Mario overlaps slightly, and trigger event pushes/damages Mario?
-        // Or keep it blocking. Let's just return true except maybe if Koopa is running and other is enemy
-    }
     if (state == KOOPA_STATE_SHELL_RUNNING && dynamic_cast<CGoomba*>(other)) {
         return false; // don't block physics when plowing
     }

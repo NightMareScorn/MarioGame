@@ -4,6 +4,7 @@
 #include "../entities/blocks/CBrick.h"
 #include "../entities/blocks/CLuckyBlock.h"
 #include "../entities/blocks/CDecorBlock.h"
+#include "../entities/blocks/CFlagpole.h"
 #include "../entities/blocks/CInvisibleBlock.h"
 #include "../entities/blocks/CPipe.h"
 #include "../entities/enemies/CGoomba.h"
@@ -202,11 +203,16 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string>& lines, CPlaySce
 
             case 8: // Flag Pole segment
             {
-                scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
-                bool isTopmost = (i == 0) || (matrix[i - 1][j] != 8);
-                if (isTopmost) {
-                    scene->decors.push_back(new CDecorBlock(x - 3.0f, y + 8.0f, "ANI_FLAG_OW_TOP"));
-                    scene->decors.push_back(new CDecorBlock(x - 12.0f, y + 8.0f, "ANI_FLAG_OW"));
+                // Kiểm tra: Nếu ô phía DƯỚI ô này KHÔNG PHẢI là số 8 (nghĩa là đây là ô chân cột)
+                // thì mới tạo đối tượng CFlagpole có logic.
+                bool isBottom = (i == H - 1) || (matrix[i + 1][j] != 8);
+
+                if (isBottom) {
+                    // Tạo 1 đối tượng duy nhất quản lý toàn bộ cột cờ tại vị trí chân
+                    scene->decors.push_back(new CFlagpole(x, y, "ANI_FLAG_OW_POLE"));
+                } else {
+                    // Các ô số 8 ở trên chỉ là hình ảnh trang trí, không có logic
+                    scene->decors.push_back(new CDecorBlock(x, y, "ANI_FLAG_OW_POLE"));
                 }
                 break;
             }
@@ -325,8 +331,13 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
 
     if (type == "mario") {
         if (scene->mario == nullptr) scene->mario = new CMario();
-        scene->mario->x = x;
-        scene->mario->y = y;
+        if (CMario::hasCheckpoint) {
+            scene->mario->x = CMario::checkpointX;
+            scene->mario->y = CMario::checkpointY;
+        } else {
+            scene->mario->x = x;
+            scene->mario->y = y;
+        }
         spawnedObj = scene->mario;
         DebugOut(L"[INFO] Object: Mario at (%.2f, %.2f)\n", x, y);
     }
@@ -339,8 +350,8 @@ void CMapLoader::_ParseObjectLine(const std::string& line, CPlayScene* scene) {
         scene->enemies.push_back(spawnedObj);
     }
     else if (type == "mushroom" || type == "1-up") {
-        spawnedObj = new CBrick(x, y, "ANI_BRICK_IDLE", invisible_block);
-        scene->items.push_back(spawnedObj); // Treat as item-carrying brick
+        spawnedObj = new CMushroom(x, y);
+        scene->items.push_back(spawnedObj);
     }
     else if (type == "star") {
         spawnedObj = new CStar(x, y);

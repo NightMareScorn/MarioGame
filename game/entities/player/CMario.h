@@ -6,31 +6,59 @@
 
 class CMario : public CGameObject {
 public:
+    static int lives; 
+    static float checkpointX, checkpointY;
+    static bool hasCheckpoint;
+
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float& l, float& t, float& r, float& b) override;
+    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     void UpdateState();
+    
     void SetOnGround(bool v) { onGround = v; }
     bool IsOnGround() const { return onGround; }
     void SetMapWidth(float w) { mapWidth = w; }
-    bool IsBig() const { return form == EMarioForm::BIG; }
-    void SetForm(EMarioForm f) { form = f; }
-    bool IsDead() const { return isDead; }
+
+    void PowerUpMushroom(); // Ăn nấm thành BIG
+    void PowerUpFlower();
+    void GrowToBig();
+    EMarioPower GetPower() const { return power; }
+    void SetPower(EMarioPower p) { power = p; }
+    void StompBounce();
+    bool IsInvincible() const;
+    void BecomeInvincible(float time);
+    void Hurt();
+    void TryShootFireball();
+    void Die();
+    void HitGoal(); // Hàm khi chạm cột cờ
+    void SetState(int s);
+    bool IsStarMode() const { return starTimer > 0; }
+    bool IsBig() const { return power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE; }
+    void StartDeath() { Die(); }
+
+    void SetInputLocked(bool v) { inputLocked = v; }
+    bool IsInputLocked() const { return inputLocked; }
+
+    bool IsDeadState() const { return state == EMarioState::DIE; }
+    float GetDieTimer() const { return dieTimer; }
     EMarioState GetState() const { return state; }
-    void StartDeath();
+    bool IsDead() const { return isDead || state == EMarioState::DIE; }
 
 private:
     EMarioState state = EMarioState::IDLE;
-    EMarioForm form = EMarioForm::SMALL;
-    int nx = 1; // 1 for right, -1 for left
     bool onGround = false;
     bool isJumping = false;
     float jumpHoldTime = 0.0f;
-    float jumpStartY = 0.0f;
     float mapWidth = 0.0f;
-    float dieTimer = 0.0f;
     bool isDead = false;
 
-    void HandleInput(const InputState& input, float dt);
+    bool inputLocked = false; // Biến quản lý khóa phím
+
+    void HandleInput(const InputState &input, float dt);
     void ApplyPhysics(float dt);
+
+    EMarioPower power = EMarioPower::SMALL;
+    float untouchableTimer = 0.0f;
+    float starTimer = 0.0f;
+    float dieTimer = 0.0f;
 };

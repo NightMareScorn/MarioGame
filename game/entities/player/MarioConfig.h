@@ -8,6 +8,11 @@ namespace MarioConfig {
     const float JUMP_HOLD_FORCE = 0.0005f; // Extra push per dt while holding
     const float MAX_JUMP_HEIGHT = 114.0f;  // Deprecated usage
 
+    // Fireball settings
+    // Lifetime expressed in seconds (used with game delta-time in seconds)
+    const float FIREBALL_LIFETIME_MS = 3.0f;
+    const float FIREBALL_SPEED = 0.12f;
+
     const int ANI_IDLE_RIGHT = 100;
     const int ANI_IDLE_LEFT = 101;
     const int ANI_WALK_RIGHT = 200;
@@ -22,7 +27,16 @@ enum class EMarioState {
     JUMP, 
     FALL, 
     SKID, 
-    DIE
+    DIE,
+    GOAL_SLIDE,
+    GOAL_WALK
+};
+
+enum class EMarioPower {
+    SMALL,
+    BIG,
+    SMALL_FIRE,
+    BIG_FIRE
 };
 
 enum class EMarioForm {

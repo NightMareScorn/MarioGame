@@ -32,7 +32,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
             other->GetBoundingBox(l2, b2, r2, t2);
             if (CheckAABB(A, ToBox(l2, b2, r2, t2))) {
                 obj->OnCollisionX(other, 0);
-                other->OnCollisionX(obj, 0);
+                obj->OnCollisionX(obj, 0);
             }
             continue;
         }
@@ -80,7 +80,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
                 other->GetBoundingBox(l2, b2, r2, t2);
                 if (CheckAABB(A, ToBox(l2, b2, r2, t2))) {
                     obj->OnCollisionY(other, 0);
-                    other->OnCollisionY(obj, 0);
+                    obj->OnCollisionY(obj, 0);
                 }
             }
             continue;
@@ -109,7 +109,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
                 obj->y = B.top;
                 obj->vy = 0;
                 obj->OnCollisionY(other, -1);
-                other->OnCollisionY(obj, 1);
+                obj->OnCollisionY(obj, 1);
                 if (auto m = dynamic_cast<CMario*>(obj)) m->SetOnGround(true);
             } else if (obj->vy > 0) {
                 // Jumping up, hit bottom side of 'other' (Ceiling)

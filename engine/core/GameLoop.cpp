@@ -7,9 +7,8 @@
 #include "../rendering/Camera.h"
 #include "../utils/debug.h"
 #include <stdio.h>
+#include "../../game/scenes/CSceneManager.h"
 #include "../../game/scenes/play/CPlayScene.h"
-
-#define BACKGROUND_COLOR D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f) // NES SMB1 sky blue (#5C94FC)
 
 CPlayScene* scene = nullptr;
 static std::string selectedLevel = "content/levels/level_1_1.csv";
@@ -31,15 +30,16 @@ void HandleDebugInput() {
 
 void Update(float dt)
 {
-    if (scene == nullptr) {
-        scene = new CPlayScene(selectedLevel);
-        scene->Load();
+    auto sceneManager = CSceneManager::GetInstance();
+    if (sceneManager->GetCurrentScene() == nullptr) {
+        sceneManager->SetScene(new CPlayScene(selectedLevel));
     }
+    scene = (CPlayScene*)sceneManager->GetCurrentScene();
 
     CInputManager::GetInstance()->Update();
     HandleDebugInput();
 
-    scene->Update(dt);
+    sceneManager->Update(dt);
 
     // Update keyboard state at the very end
     KeyboardManager::GetInstance()->Update();
@@ -52,19 +52,16 @@ void LoadAssets()
 
 void RenderBackground(CGame* g, ID3D10RenderTargetView* pRenderTargetView, ID3D10Device* pD3DDevice)
 {
-    // Use GetClearColor() which reads the scene's configured background color
-    D3DXCOLOR bgColor = BACKGROUND_COLOR; // Default sky blue
-    if (scene != nullptr) {
-        bgColor = scene->GetClearColor();
+    D3DXCOLOR bgColor = D3DXCOLOR(92.0f/255, 148.0f/255, 252.0f/255, 1.0f); // NES SMB1 sky blue (#5C94FC)
+    if (CSceneManager::GetInstance()->GetCurrentScene() != nullptr) {
+        bgColor = ((CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene())->GetClearColor();
     }
     pD3DDevice->ClearRenderTargetView(pRenderTargetView, bgColor);
 }
 
 void RenderGame(CGame* g)
 {
-    if (scene != nullptr) {
-        scene->Render();
-    }
+    CSceneManager::GetInstance()->Render();
 }
 
 void Render()

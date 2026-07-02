@@ -22,4 +22,6 @@ public:
     bool IsBlocking(CGameObject* other) override { return (dynamic_cast<CMushroom*>(other) == nullptr); }
     void OnCollisionX(CGameObject* other, float nx) override;
     void OnCollisionY(CGameObject* other, float ny) override;
+
+    bool IsItem() const override { return true; }
 };

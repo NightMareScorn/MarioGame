@@ -20,6 +20,7 @@ class CPlayScene : public CScene {
 
     std::string currentMapPath;
     std::string pendingMapPath;
+    float goalTimer = 0.0f;
 
     // HUD stats
     int score = 0;
@@ -44,6 +45,10 @@ public:
     D3DXCOLOR GetClearColor() {
         return D3DXCOLOR(bgR / 255.0f, bgG / 255.0f, bgB / 255.0f, 1.0f);
     }
+
+    void AddItem(CGameObject* item) { items.push_back(item); }
+    std::string GetCurrentMapPath() const { return currentMapPath; }
+    CMario* GetPlayer() { return mario; }
 
     int GetScore() const { return score; }
     void AddScore(int s) { score += s; }

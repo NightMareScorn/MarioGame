@@ -9,6 +9,7 @@ class CSceneManager {
 public:
     static CSceneManager* GetInstance();
     void SetScene(CScene* scene);
+    CScene* GetCurrentScene() const { return currentScene; }
     void Update(float dt);
     void Render();
 };
