@@ -60,7 +60,10 @@ void CKoopa::OnCollisionX(CGameObject* other, float nx) {
             return;
 
         if (state == KOOPA_STATE_SHELL_RUNNING) {
-            mario->Hurt();
+            bool runningTowardsMario = (vx > 0 && mario->x > this->x) || (vx < 0 && mario->x < this->x);
+            if (runningTowardsMario) {
+                mario->Hurt();
+            }
         } else if (state == KOOPA_STATE_SHELL) {
             this->nx = (mario->x < this->x) ? 1 : -1;
             SetState(KOOPA_STATE_SHELL_RUNNING);
@@ -98,8 +101,13 @@ void CKoopa::OnCollisionY(CGameObject* other, float ny) {
             }
         } else {
             // Hit from below or sides when falling
-            if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
+            if (state == KOOPA_STATE_WALKING) {
                 mario->Hurt();
+            } else if (state == KOOPA_STATE_SHELL_RUNNING) {
+                bool runningTowardsMario = (vx > 0 && mario->x > this->x) || (vx < 0 && mario->x < this->x);
+                if (runningTowardsMario) {
+                    mario->Hurt();
+                }
             }
         }
     }

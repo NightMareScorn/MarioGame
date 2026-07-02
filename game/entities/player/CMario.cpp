@@ -153,6 +153,7 @@ void CMario::Die() {
 }
 
 void CMario::Hurt() {
+
     if (IsInvincible() || state == EMarioState::DIE) return;
     if (power != EMarioPower::SMALL) {
         power = EMarioPower::SMALL;

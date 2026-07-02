@@ -32,7 +32,7 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
             other->GetBoundingBox(l2, b2, r2, t2);
             if (CheckAABB(A, ToBox(l2, b2, r2, t2))) {
                 obj->OnCollisionX(other, 0);
-                obj->OnCollisionX(obj, 0);
+                other->OnCollisionX(obj, 0);
             }
             continue;
         }
@@ -74,13 +74,14 @@ void CCollision::ResolveCollision(CGameObject* obj, float dt, const std::vector<
     float objHeight = top1 - bottom1;
 
     for (auto other : coObjects) {
-        if (!other || other == obj || !obj->IsBlocking(other) || !other->IsBlocking(obj)) {
+        if (!other || other == obj) continue;
+        if (!obj->IsBlocking(other) || !other->IsBlocking(obj)) {
             if (other && other != obj) {
                 float l2, b2, r2, t2;
                 other->GetBoundingBox(l2, b2, r2, t2);
                 if (CheckAABB(A, ToBox(l2, b2, r2, t2))) {
                     obj->OnCollisionY(other, 0);
-                    obj->OnCollisionY(obj, 0);
+                    other->OnCollisionY(obj, 0);
                 }
             }
             continue;
