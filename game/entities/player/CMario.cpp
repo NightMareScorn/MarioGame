@@ -265,3 +265,9 @@ void CMario::BecomeInvincible(float timeInSeconds) {
     this->starTimer = timeInSeconds * 1000.0f; 
     DebugOut(L"[POWERUP] Mario is now INVINCIBLE for 10s!\n");
 }
+
+bool CMario::IsBlocking(CGameObject* other) {
+    if (!other) return true;
+    if (other->IsEnemy() || other->IsItem()) return false;
+    return true;
+}

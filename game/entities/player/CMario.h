@@ -35,6 +35,7 @@ public:
     bool IsStarMode() const { return starTimer > 0; }
     bool IsBig() const { return power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE; }
     void StartDeath() { Die(); }
+    bool IsBlocking(CGameObject* other) override;
 
     void SetInputLocked(bool v) { inputLocked = v; }
     bool IsInputLocked() const { return inputLocked; }

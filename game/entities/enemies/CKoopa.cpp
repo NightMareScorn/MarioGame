@@ -106,6 +106,9 @@ void CKoopa::OnCollisionY(CGameObject* other, float ny) {
 }
 
 bool CKoopa::IsBlocking(CGameObject* other) {
+    if (dynamic_cast<CMario*>(other)) {
+        return false;
+    }
     if (state == KOOPA_STATE_SHELL_RUNNING && dynamic_cast<CGoomba*>(other)) {
         return false; // don't block physics when plowing
     }

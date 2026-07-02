@@ -48,7 +48,9 @@ bool CGoomba::IsBlocking(CGameObject *other)
 {
     if (state == GOOMBA_STATE_DIE)
         return false;
-    return true; // Optionally don't block running shell
+    if (dynamic_cast<CMario*>(other))
+        return false;
+    return true; 
 }
 
 void CGoomba::OnCollisionX(CGameObject* other, float nx)
