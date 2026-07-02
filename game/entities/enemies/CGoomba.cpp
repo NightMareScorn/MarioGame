@@ -56,6 +56,15 @@ void CGoomba::OnCollisionX(CGameObject* other, float nx)
     if (state == GOOMBA_STATE_DIE) return;
     if (auto mario = dynamic_cast<CMario*>(other))
     {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        float gl, gb, gr, gt;
+        this->GetBoundingBox(gl, gb, gr, gt);
+
+        // Nếu Mario đang rơi xuống từ phía trên, không làm Mario bị thương ở trục X (chờ trục Y xử lý dẫm)
+        if (mario->vy <= 0 && mb > gb)
+            return;
+
         mario->Hurt();
     }
 }
@@ -65,7 +74,12 @@ void CGoomba::OnCollisionY(CGameObject *other, float ny)
     if (state == GOOMBA_STATE_DIE) return;
     if (auto mario = dynamic_cast<CMario*>(other))
     {
-        if (ny > 0) // Mario dẫm lên đầu Goomba
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        float gl, gb, gr, gt;
+        this->GetBoundingBox(gl, gb, gr, gt);
+
+        if (mario->vy <= 0 && mb > gb) // Mario dẫm lên đầu Goomba từ phía trên
         {
             SetState(GOOMBA_STATE_DIE);
             if (scene)

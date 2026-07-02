@@ -49,31 +49,44 @@ void CKoopa::GetBoundingBox(float& left, float& bottom, float& right, float& top
 #include "../../scenes/play/CPlayScene.h"
 
 void CKoopa::OnCollisionX(CGameObject* other, float nx) {
-    if (state == KOOPA_STATE_SHELL_RUNNING) {
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        float kl, kb, kr, kt;
+        this->GetBoundingBox(kl, kb, kr, kt);
+
+        // Nếu Mario đang rơi xuống từ phía trên, không làm Mario bị thương ở trục X (chờ trục Y xử lý dẫm)
+        if (mario->vy <= 0 && mb > kb)
+            return;
+
+        if (state == KOOPA_STATE_SHELL_RUNNING) {
+            mario->Hurt();
+        } else if (state == KOOPA_STATE_SHELL) {
+            this->nx = (mario->x < this->x) ? 1 : -1;
+            SetState(KOOPA_STATE_SHELL_RUNNING);
+        } else if (state == KOOPA_STATE_WALKING) {
+            mario->Hurt();
+        }
+    } 
+    else if (state == KOOPA_STATE_SHELL_RUNNING) {
         if (auto goomba = dynamic_cast<CGoomba*>(other)) {
             goomba->SetState(GOOMBA_STATE_DIE);
             if (scene) scene->AddScore(100);
         } else if (auto koopa = dynamic_cast<CKoopa*>(other)) {
             koopa->SetState(KOOPA_STATE_SHELL);
             if (scene) scene->AddScore(100);
-        } else if (auto mario = dynamic_cast<CMario*>(other)) {
-            mario->Hurt();
-        }
-    } else if (state == KOOPA_STATE_SHELL) {
-        if (auto mario = dynamic_cast<CMario*>(other)) {
-            this->nx = (mario->x < this->x) ? 1 : -1;
-            SetState(KOOPA_STATE_SHELL_RUNNING);
-        }
-    } else if (state == KOOPA_STATE_WALKING) {
-        if (auto mario = dynamic_cast<CMario*>(other)) {
-            mario->Hurt();
         }
     }
 }
 
 void CKoopa::OnCollisionY(CGameObject* other, float ny) {
-    if (ny > 0) { // Hit from top
-        if (auto mario = dynamic_cast<CMario*>(other)) {
+    if (auto mario = dynamic_cast<CMario*>(other)) {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        float kl, kb, kr, kt;
+        this->GetBoundingBox(kl, kb, kr, kt);
+
+        if (mario->vy <= 0 && mb > kb) { // Mario dẫm lên đầu từ phía trên
             if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
                 SetState(KOOPA_STATE_SHELL);
                 if (scene) scene->AddScore(100);
@@ -83,10 +96,8 @@ void CKoopa::OnCollisionY(CGameObject* other, float ny) {
                 SetState(KOOPA_STATE_SHELL_RUNNING);
                 mario->StompBounce();
             }
-        }
-    } else {
-        // Hit from below or sides when falling
-        if (auto mario = dynamic_cast<CMario*>(other)) {
+        } else {
+            // Hit from below or sides when falling
             if (state == KOOPA_STATE_WALKING || state == KOOPA_STATE_SHELL_RUNNING) {
                 mario->Hurt();
             }
