@@ -19,256 +19,357 @@ int CMario::lives = 3;
 float CMario::checkpointX = 0;
 float CMario::checkpointY = 0;
 bool CMario::hasCheckpoint = false;
+EMarioPower CMario::currentPower = EMarioPower::SMALL;
 
-void CMario::Update(float dt) {
-    if (state == EMarioState::DIE) {
-        vy += MarioConfig::GRAVITY * dt; 
+CMario::CMario() : CGameObject()
+{
+    this->power = currentPower;
+}
+
+void CMario::Update(float dt)
+{
+    if (state == EMarioState::DIE)
+    {
+        vy += MarioConfig::GRAVITY * dt;
         y += vy * dt;
-        dieTimer -= dt; 
-        if (dieTimer <= 0) {
+        dieTimer -= dt;
+        if (dieTimer <= 0)
+        {
             isDead = true;
         }
         return;
     }
 
-    if (y < -32.0f) {
+    if (y < -32.0f)
+    {
         Die();
         return;
     }
 
-    if (untouchableTimer > 0) untouchableTimer -= dt;
-    if (starTimer > 0) starTimer -= dt;
+    if (untouchableTimer > 0)
+        untouchableTimer -= dt;
+    if (starTimer > 0)
+        starTimer -= dt;
 
     // --- XỬ LÝ LOGIC THẮNG MÀN ---
-    if (state == EMarioState::GOAL_SLIDE) {
+    if (state == EMarioState::GOAL_SLIDE)
+    {
         vx = 0;
         vy = -0.05f; // Trượt xuống
         y += vy * dt;
         return;
-    } 
-    else if (state == EMarioState::GOAL_WALK) {
-        vx = 0.06f; 
+    }
+    else if (state == EMarioState::GOAL_WALK)
+    {
+        vx = 0.06f;
         nx = 1;
         x += vx * dt; // Di chuyển tự động
         vy += MarioConfig::GRAVITY * dt;
         y += vy * dt;
-        if (y < 32.0f) y = 32.0f; // Bám sàn
+        if (y < 32.0f)
+            y = 32.0f; // Bám sàn
         return;
-    } 
-    else {
-        if (!IsInputLocked()) {
+    }
+    else
+    {
+        if (!IsInputLocked())
+        {
             HandleInput(CInputManager::GetInstance()->GetState(), dt);
         }
         ApplyPhysics(dt);
     }
     onGround = false;
+
+    CMario::currentPower = this->power;
 }
 
-void CMario::HandleInput(const InputState& input, float dt) {
-    if (input.right) {
+void CMario::HandleInput(const InputState &input, float dt)
+{
+    if (input.right)
+    {
         vx += MarioConfig::ACCEL_X * dt;
-        if (vx >= 0) nx = 1;
+        if (vx >= 0)
+            nx = 1;
     }
-    else if (input.left) {
+    else if (input.left)
+    {
         vx -= MarioConfig::ACCEL_X * dt;
-        if (vx <= 0) nx = -1;
+        if (vx <= 0)
+            nx = -1;
     }
-    else {
-        if (vx > 0) {
+    else
+    {
+        if (vx > 0)
+        {
             vx -= MarioConfig::FRICTION * dt;
-            if (vx < 0) vx = 0;
+            if (vx < 0)
+                vx = 0;
         }
-        else if (vx < 0) {
+        else if (vx < 0)
+        {
             vx += MarioConfig::FRICTION * dt;
-            if (vx > 0) vx = 0;
+            if (vx > 0)
+                vx = 0;
         }
     }
 
-    if (input.jump && onGround) {
+    if (input.jump && onGround)
+    {
         vy = MarioConfig::JUMP_FORCE;
         isJumping = true;
         jumpHoldTime = 0.0f;
         CAudioManager::GetInstance()->Play("jump");
     }
 
-    if (input.attack && (power == EMarioPower::SMALL_FIRE || power == EMarioPower::BIG_FIRE)) {
+    if (input.attack && (power == EMarioPower::SMALL_FIRE || power == EMarioPower::BIG_FIRE))
+    {
         TryShootFireball();
     }
 }
 
-void CMario::UpdateState() {
-    if (state == EMarioState::DIE || 
-        state == EMarioState::GOAL_SLIDE || 
-        state == EMarioState::GOAL_WALK) return;
+void CMario::UpdateState()
+{
+    if (state == EMarioState::DIE ||
+        state == EMarioState::GOAL_SLIDE ||
+        state == EMarioState::GOAL_WALK)
+        return;
 
     EMarioState oldState = state;
-    const auto& input = CInputManager::GetInstance()->GetState();
+    const auto &input = CInputManager::GetInstance()->GetState();
 
-    if (!onGround) {
-        if (vy > 0) state = EMarioState::JUMP;
-        else state = EMarioState::FALL;
+    if (!onGround)
+    {
+        if (vy > 0)
+            state = EMarioState::JUMP;
+        else
+            state = EMarioState::FALL;
     }
-    else {
-        if (std::abs(vx) > 0.01f) {
-            if ((vx > 0 && input.left) || (vx < 0 && input.right)) state = EMarioState::SKID;
-            else state = EMarioState::WALK;
+    else
+    {
+        if (std::abs(vx) > 0.01f)
+        {
+            if ((vx > 0 && input.left) || (vx < 0 && input.right))
+                state = EMarioState::SKID;
+            else
+                state = EMarioState::WALK;
         }
-        else {
+        else
+        {
             vx = 0;
             state = EMarioState::IDLE;
         }
     }
 }
 
-void CMario::PowerUpFlower() {
-    if (this->power == EMarioPower::SMALL) {
+void CMario::PowerUpFlower()
+{
+    if (this->power == EMarioPower::SMALL)
+    {
         this->power = EMarioPower::SMALL_FIRE;
-    } else if (this->power == EMarioPower::BIG) {
+    }
+    else if (this->power == EMarioPower::BIG)
+    {
         this->power = EMarioPower::BIG_FIRE;
     }
     this->untouchableTimer = 500.0f;
 }
 
-void CMario::PowerUpMushroom() {
-    if (this->power == EMarioPower::SMALL) {
+void CMario::PowerUpMushroom()
+{
+    if (this->power == EMarioPower::SMALL)
+    {
         GrowToBig();
-    } else if (this->power == EMarioPower::SMALL_FIRE) {
-        this->y -= 16.0f; 
+    }
+    else if (this->power == EMarioPower::SMALL_FIRE)
+    {
+        this->y -= 16.0f;
         this->power = EMarioPower::BIG_FIRE;
     }
 }
 
-bool CMario::IsInvincible() const {
+bool CMario::IsInvincible() const
+{
     return untouchableTimer > 0 || starTimer > 0;
 }
 
-void CMario::Die() {
-    if (state == EMarioState::DIE) return;
+void CMario::Die()
+{
+    if (state == EMarioState::DIE)
+        return;
     state = EMarioState::DIE;
-    lives--; 
+    lives--;
     vx = 0;
     vy = MarioConfig::JUMP_FORCE;
-    dieTimer = 2000.0f; 
+    dieTimer = 2000.0f;
     CAudioManager::GetInstance()->Play("die");
 }
 
-void CMario::Hurt() {
+void CMario::Hurt()
+{
 
-    if (IsInvincible() || state == EMarioState::DIE) return;
-    if (power != EMarioPower::SMALL) {
+    if (IsInvincible() || state == EMarioState::DIE)
+        return;
+    if (power != EMarioPower::SMALL)
+    {
         power = EMarioPower::SMALL;
         untouchableTimer = 2000.0f;
         CAudioManager::GetInstance()->Play("pipe-down"); // Chơi tạm âm thanh biến đổi
-    } else {
+    }
+    else
+    {
         Die();
     }
 }
 
-void CMario::ApplyPhysics(float dt) {
+void CMario::ApplyPhysics(float dt)
+{
     vy += MarioConfig::GRAVITY * dt;
 
-    if (isJumping) {
-        if (CInputManager::GetInstance()->GetState().jump) {
+    if (isJumping)
+    {
+        if (CInputManager::GetInstance()->GetState().jump)
+        {
             jumpHoldTime += dt;
-            if (jumpHoldTime < 200.0f) { 
+            if (jumpHoldTime < 200.0f)
+            {
                 vy += MarioConfig::JUMP_HOLD_FORCE * dt;
-            } else {
-                isJumping = false; 
             }
-        } else {
-            isJumping = false; 
+            else
+            {
+                isJumping = false;
+            }
+        }
+        else
+        {
+            isJumping = false;
         }
     }
 
-    if (vx > MarioConfig::MAX_SPEED_X) vx = MarioConfig::MAX_SPEED_X;
-    if (vx < -MarioConfig::MAX_SPEED_X) vx = -MarioConfig::MAX_SPEED_X;
+    if (vx > MarioConfig::MAX_SPEED_X)
+        vx = MarioConfig::MAX_SPEED_X;
+    if (vx < -MarioConfig::MAX_SPEED_X)
+        vx = -MarioConfig::MAX_SPEED_X;
 
-    if (x < 0) x = 0;
-    if (mapWidth > 0 && x > mapWidth - MARIO_W) x = mapWidth - MARIO_W;
+    if (x < 0)
+        x = 0;
+    if (mapWidth > 0 && x > mapWidth - MARIO_W)
+        x = mapWidth - MARIO_W;
 
     float camX, camY;
     CCamera::GetInstance()->GetCamPos(camX, camY);
-    if (x < camX) x = camX;
+    if (x < camX)
+        x = camX;
 }
 
-void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
-    left = x; bottom = y; right = x + MARIO_W;
+void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top)
+{
+    left = x;
+    bottom = y;
+    right = x + MARIO_W;
     bool isTall = (power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE);
     top = isTall ? y + 31.0f : y + 15.0f;
 }
 
-void CMario::GrowToBig() {
-    if (power != EMarioPower::SMALL) return;
-    this->y -= 16.0f; 
+void CMario::GrowToBig()
+{
+    if (power != EMarioPower::SMALL)
+        return;
+    this->y -= 16.0f;
     this->power = EMarioPower::BIG;
 }
 
 void CMario::StompBounce() { this->vy = 0.22f; }
 
-void CMario::TryShootFireball() {
+void CMario::TryShootFireball()
+{
     static DWORD lastShot = 0;
-    if (GetTickCount() - lastShot < 300) return;
+    if (GetTickCount() - lastShot < 300)
+        return;
     lastShot = GetTickCount();
-    CPlayScene* playScene = dynamic_cast<CPlayScene*>(CSceneManager::GetInstance()->GetCurrentScene());
-    if (playScene) {
-        CFireball* fb = new CFireball(x + (nx > 0 ? 10 : -5), y + 10.0f, nx);
+    CPlayScene *playScene = dynamic_cast<CPlayScene *>(CSceneManager::GetInstance()->GetCurrentScene());
+    if (playScene)
+    {
+        CFireball *fb = new CFireball(x + (nx > 0 ? 10 : -5), y + 10.0f, nx);
         playScene->AddItem(fb);
         CAudioManager::GetInstance()->Play("fireball"); // Nếu có
     }
 }
 
-void CMario::Render() {
-    if (untouchableTimer > 0 && starTimer <= 0) {
-        if ((int(GetTickCount64()) / 50) % 2 == 0) return; 
+void CMario::Render()
+{
+    if (untouchableTimer > 0 && starTimer <= 0)
+    {
+        if ((int(GetTickCount64()) / 50) % 2 == 0)
+            return;
     }
 
     std::string aniName = "";
 
-    if (starTimer > 0) {
-        int colorFrame = (int(GetTickCount64() / 100) % 4) + 1; 
+    if (starTimer > 0)
+    {
+        int colorFrame = (int(GetTickCount64() / 100) % 4) + 1;
         aniName = "ANI_STAR" + std::to_string(colorFrame) + "_OW";
-    } 
-    else {
+    }
+    else
+    {
         std::string prefix = "ANI_MARIO_";
-        if (power == EMarioPower::BIG) prefix = "ANI_BIG_MARIO_";
-        else if (power == EMarioPower::SMALL_FIRE) prefix = "ANI_SMALL_FIRE_MARIO_";
-        else if (power == EMarioPower::BIG_FIRE) prefix = "ANI_BIG_FIRE_MARIO_";
+        if (power == EMarioPower::BIG)
+            prefix = "ANI_BIG_MARIO_";
+        else if (power == EMarioPower::SMALL_FIRE)
+            prefix = "ANI_SMALL_FIRE_MARIO_";
+        else if (power == EMarioPower::BIG_FIRE)
+            prefix = "ANI_BIG_FIRE_MARIO_";
 
         aniName = prefix + "IDLE";
-        if (state == EMarioState::DIE) aniName = "ANI_MARIO_DIE";
-        else if (!onGround) aniName = prefix + "JUMP";
-        else if (state == EMarioState::SKID) aniName = prefix + "SKID";
-        else if (abs(vx) > 0.01f) aniName = prefix + "WALK";
+        if (state == EMarioState::DIE)
+            aniName = "ANI_MARIO_DIE";
+        else if (!onGround)
+            aniName = prefix + "JUMP";
+        else if (state == EMarioState::SKID)
+            aniName = prefix + "SKID";
+        else if (abs(vx) > 0.01f)
+            aniName = prefix + "WALK";
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);
 }
 
-void CMario::HitGoal() {
-    if (state == EMarioState::GOAL_SLIDE || state == EMarioState::GOAL_WALK) return;
+void CMario::HitGoal()
+{
+    if (state == EMarioState::GOAL_SLIDE || state == EMarioState::GOAL_WALK)
+        return;
     state = EMarioState::GOAL_SLIDE;
     this->SetInputLocked(true);
-    vx = 0.0f; vy = -0.05f; nx = 1;
+    vx = 0.0f;
+    vy = -0.05f;
+    nx = 1;
 }
 
-void CMario::SetState(int s) {
+void CMario::SetState(int s)
+{
     EMarioState newState = static_cast<EMarioState>(s);
-    if (this->state == newState) return;
+    if (this->state == newState)
+        return;
     this->state = newState;
 
-    if (this->state == EMarioState::GOAL_WALK) {
-        this->vx = 0.06f; 
+    if (this->state == EMarioState::GOAL_WALK)
+    {
+        this->vx = 0.06f;
         this->nx = 1;
     }
 }
 
-void CMario::BecomeInvincible(float timeInSeconds) {
-    this->starTimer = timeInSeconds * 1000.0f; 
+void CMario::BecomeInvincible(float timeInSeconds)
+{
+    this->starTimer = timeInSeconds * 1000.0f;
     DebugOut(L"[POWERUP] Mario is now INVINCIBLE for 10s!\n");
 }
 
-bool CMario::IsBlocking(CGameObject* other) {
-    if (!other) return true;
-    if (other->IsEnemy() || other->IsItem()) return false;
+bool CMario::IsBlocking(CGameObject *other)
+{
+    if (!other)
+        return true;
+    if (other->IsEnemy() || other->IsItem())
+        return false;
     return true;
 }

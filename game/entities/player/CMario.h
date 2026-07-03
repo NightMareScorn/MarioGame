@@ -4,17 +4,19 @@
 #include "../CGameObject.h"
 #include "MarioConfig.h"
 
-class CMario : public CGameObject {
+class CMario : public CGameObject
+{
 public:
-    static int lives; 
+    static int lives;
     static float checkpointX, checkpointY;
     static bool hasCheckpoint;
+    static EMarioPower currentPower;
 
     void Update(float dt) override;
     void Render() override;
     void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     void UpdateState();
-    
+
     void SetOnGround(bool v) { onGround = v; }
     bool IsOnGround() const { return onGround; }
     void SetMapWidth(float w) { mapWidth = w; }
@@ -35,7 +37,7 @@ public:
     bool IsStarMode() const { return starTimer > 0; }
     bool IsBig() const { return power == EMarioPower::BIG || power == EMarioPower::BIG_FIRE; }
     void StartDeath() { Die(); }
-    bool IsBlocking(CGameObject* other) override;
+    bool IsBlocking(CGameObject *other) override;
 
     void SetInputLocked(bool v) { inputLocked = v; }
     bool IsInputLocked() const { return inputLocked; }
@@ -44,6 +46,8 @@ public:
     float GetDieTimer() const { return dieTimer; }
     EMarioState GetState() const { return state; }
     bool IsDead() const { return isDead || state == EMarioState::DIE; }
+
+    CMario();
 
 private:
     EMarioState state = EMarioState::IDLE;

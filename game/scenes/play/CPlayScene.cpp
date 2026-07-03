@@ -106,6 +106,7 @@ void CPlayScene::Update(float dt)
         if (goalTimer <= 0)
         {
             CMario::hasCheckpoint = false;
+            CMario::currentPower = EMarioPower::SMALL;
             // Chuyển sang màn tiếp theo
             std::string nextLevel = "content/levels/level_1_1.csv";
 
