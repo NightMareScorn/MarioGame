@@ -250,15 +250,18 @@ void CMario::ApplyPhysics(float dt)
     if (vx < -MarioConfig::MAX_SPEED_X)
         vx = -MarioConfig::MAX_SPEED_X;
 
-    if (x < 0)
-        x = 0;
     if (mapWidth > 0 && x > mapWidth - MARIO_W)
         x = mapWidth - MARIO_W;
 
     float camX, camY;
     CCamera::GetInstance()->GetCamPos(camX, camY);
-    if (x < camX)
-        x = camX;
+    float renderOffsetX = CGame::GetInstance()->GetRenderOffsetX();
+    float renderScale = CGame::GetInstance()->GetRenderScale();
+    float xMin = camX - (renderScale > 0 ? renderOffsetX / renderScale : 0.0f);
+    if (xMin < 0)
+        xMin = 0;
+    if (x < xMin)
+        x = xMin;
 }
 
 void CMario::GetBoundingBox(float &left, float &bottom, float &right, float &top)

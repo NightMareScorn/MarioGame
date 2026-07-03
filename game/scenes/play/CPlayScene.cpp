@@ -383,9 +383,6 @@ void CPlayScene::Update(float dt)
 
     mario->UpdateState();
 
-    // Boundary checks for Mario
-    if (mario->x < 0)
-        mario->x = 0;
     if (mapWidth > 0 && mario->x > mapWidth - 16)
         mario->x = mapWidth - 16;
     mario->SetMapWidth(mapWidth);
