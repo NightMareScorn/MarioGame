@@ -8,6 +8,8 @@ CGoomba::CGoomba(float x, float y, float patrolLeft, float patrolRight) : CGameO
 {
     this->x = x;
     this->y = y;
+    this->patrolLeft = patrolLeft;
+    this->patrolRight = patrolRight;
     this->vx = -GOOMBA_WALKING_SPEED;
     SetState(GOOMBA_STATE_WALKING);
 }
@@ -24,6 +26,20 @@ void CGoomba::Update(float dt)
         return;
     }
     vy -= GOOMBA_GRAVITY * dt;
+
+    if ((patrolLeft != 0 || patrolRight != 0) && (patrolLeft < patrolRight))
+    {
+        if (x < patrolLeft && vx < 0)
+        {
+            x = patrolLeft;
+            vx = -vx;
+        }
+        else if (x > patrolRight && vx > 0)
+        {
+            x = patrolRight;
+            vx = -vx;
+        }
+    }
 }
 
 void CGoomba::Render()
@@ -48,15 +64,16 @@ bool CGoomba::IsBlocking(CGameObject *other)
 {
     if (state == GOOMBA_STATE_DIE)
         return false;
-    if (dynamic_cast<CMario*>(other))
+    if (dynamic_cast<CMario *>(other))
         return false;
-    return true; 
+    return true;
 }
 
-void CGoomba::OnCollisionX(CGameObject* other, float nx)
+void CGoomba::OnCollisionX(CGameObject *other, float nx)
 {
-    if (state == GOOMBA_STATE_DIE) return;
-    if (auto mario = dynamic_cast<CMario*>(other))
+    if (state == GOOMBA_STATE_DIE)
+        return;
+    if (auto mario = dynamic_cast<CMario *>(other))
     {
         float ml, mb, mr, mt;
         mario->GetBoundingBox(ml, mb, mr, mt);
@@ -73,8 +90,9 @@ void CGoomba::OnCollisionX(CGameObject* other, float nx)
 
 void CGoomba::OnCollisionY(CGameObject *other, float ny)
 {
-    if (state == GOOMBA_STATE_DIE) return;
-    if (auto mario = dynamic_cast<CMario*>(other))
+    if (state == GOOMBA_STATE_DIE)
+        return;
+    if (auto mario = dynamic_cast<CMario *>(other))
     {
         float ml, mb, mr, mt;
         mario->GetBoundingBox(ml, mb, mr, mt);
