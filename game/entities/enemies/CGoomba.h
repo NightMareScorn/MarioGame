@@ -15,6 +15,7 @@
 class CGoomba : public CGameObject
 {
 protected:
+    float start_x;
     float patrolLeft, patrolRight;
     int state;
     float dieTimer = 0.0f;
