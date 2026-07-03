@@ -319,6 +319,18 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string> &lines, CPlaySce
             case 26:
                 scene->blocks.push_back(new CBrick(x, y, "ANI_PILLAR_BLOCK"));
                 break;
+            case 27:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_LEFT_GREEN_LEAF_BLOCK"));
+                break;
+            case 28:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_MID_GREEN_LEAF_BLOCK"));
+                break;
+            case 29:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_RIGHT_GREEN_LEAF_BLOCK"));
+                break;
+            case 40:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_WOOD_BLOCK"));
+                break;
 
             // --- WORLD 2-4 SPECIAL ASSETS ---
             case 30:
