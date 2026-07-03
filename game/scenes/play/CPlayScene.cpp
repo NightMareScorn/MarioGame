@@ -7,7 +7,7 @@
 #include "../../../engine/utils/CScoreManager.h"
 #include "../../../engine/audio/CAudioManager.h"
 #include "../../entities/blocks/CPipe.h"
-#include "../../entities/items/CFireBall.h"
+#include "../../entities/items/CFireball.h"
 #include "../../entities/items/CFireFlower.h"
 #include "../../entities/items/CMushroom.h"
 #include "../../entities/blocks/CFlagpole.h"
@@ -371,6 +371,13 @@ void CPlayScene::Update(float dt)
         if (o->IsDead()) { delete o; return true; } 
         return false; }),
                   enemies.end());
+
+    // Dọn dẹp blocks bị chết (ví dụ: gạch cầu bị sập)
+    blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](CBlock *o)
+                                { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                 blocks.end());
 }
 
 void CPlayScene::Render()

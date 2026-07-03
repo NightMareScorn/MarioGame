@@ -8,6 +8,7 @@
 
 class CPlayScene : public CScene {
     friend class CMapLoader;
+    friend class CAxe;
     std::string levelPath;
     CMario* mario;
     std::vector<CBlock*> blocks;
