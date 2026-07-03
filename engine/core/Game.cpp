@@ -192,7 +192,7 @@ void CGame::DrawTextRaw(LPCWSTR text, RECT rect, D3DXCOLOR color)
 		return;
 	pFont->DrawTextW(NULL, text, -1, &rect, DT_CENTER | DT_TOP | DT_NOCLIP, color);
 }
-void CGame::Draw(float x, float y, LPTEXTURE tex, RECT *rect, float alpha, int sprite_width, int sprite_height)
+void CGame::Draw(float x, float y, LPTEXTURE tex, RECT *rect, float alpha, int sprite_width, int sprite_height, D3DXCOLOR color)
 {
 	if (tex == NULL)
 		return;
@@ -229,7 +229,7 @@ void CGame::Draw(float x, float y, LPTEXTURE tex, RECT *rect, float alpha, int s
 	sprite.TexCoord.y = 0;
 	sprite.TexSize.x = 1.0f;
 	sprite.TexSize.y = 1.0f;
-	sprite.ColorModulate = D3DXCOLOR(1.0f, 1.0f, 1.0f, alpha);
+	sprite.ColorModulate = D3DXCOLOR(color.r, color.g, color.b, color.a * alpha);
 	sprite.matWorld = matTransform;
 	sprite.TextureIndex = 0;
 

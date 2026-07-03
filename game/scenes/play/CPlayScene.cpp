@@ -84,11 +84,11 @@ void CPlayScene::Update(float dt)
     {
         if (kb->IsKeyPressed(VK_UP))
         {
-            pauseSelection = 0; // Chọn Mute
+            pauseSelection = 0; // Mute Game
         }
         else if (kb->IsKeyPressed(VK_DOWN))
         {
-            pauseSelection = 1; // Chọn Back to Menu
+            pauseSelection = 1; // Back to Main Menu
         }
         if (kb->IsKeyPressed(VK_RETURN))
         {
@@ -100,10 +100,10 @@ void CPlayScene::Update(float dt)
             else if (pauseSelection == 1)
             {
                 isPaused = false;
-                CGame::GetInstance()->SetExitLevel(true); // Thoát về Menu WebView2
+                CGame::GetInstance()->SetExitLevel(true);
             }
         }
-        return; // Dừng toàn bộ cập nhật vật lý, quái vật, thời gian bên dưới!
+        return;
     }
 
     // Chuyển map pending
@@ -388,7 +388,7 @@ void CPlayScene::Update(float dt)
         return false; }),
                   enemies.end());
 
-    // Dọn dẹp blocks bị chết (ví dụ: gạch cầu bị sập)
+    // Dọn dẹp blocks bị chết (víду: gạch cầu bị sập)
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](CBlock *o)
                                 { 
         if (o->IsDead()) { delete o; return true; } 
@@ -402,14 +402,49 @@ void CPlayScene::Render()
     {
         CGame *g = CGame::GetInstance();
 
+        float camX, camY;
+        CCamera::GetInstance()->GetCamPos(camX, camY);
+
         auto dummyTex = CTextures::GetInstance()->Get(2);
-        g->Draw(0, 0, dummyTex, 0, 0, 1, 1, 1.0f, g->GetViewportWidth(), g->GetViewportHeight());
+        g->Draw(camX, camY, dummyTex, 0, 16, 1, 17, 1.0f, g->GetViewportWidth(), g->GetViewportHeight(), D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f));
         // Game Over text
         RECT rectGameOver = {0, 200, g->GetBackBufferWidth(), 260};
         g->DrawTextRaw(L"GAME OVER", rectGameOver, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
         // Enter to return to menu text
         RECT rectHelp = {0, 300, g->GetBackBufferWidth(), 340};
         g->DrawTextRaw(L"Press Enter to Back to Main Menu", rectHelp, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
+    if (isPaused)
+    {
+        CGame *g = CGame::GetInstance();
+
+        int bufferWidth = g->GetBackBufferWidth();
+        RECT rectPause;
+        rectPause.left = 0;
+        rectPause.right = bufferWidth;
+        rectPause.top = 80;
+        rectPause.bottom = 120;
+        g->DrawTextRaw(L"GAME PAUSED", rectPause, D3DXCOLOR(1.0f, 1.0f, 0.0f, 1.0f));
+
+        bool isMuted = CAudioManager::GetInstance()->IsMuted();
+        std::wstring muteText = isMuted ? L"MUTED GAME" : L"MUTE GAME";
+        std::wstring muteOption = (pauseSelection == 0) ? (L"> " + muteText + L" <") : (L"  " + muteText + L"  ");
+        RECT rectMute;
+        rectMute.left = 0;
+        rectMute.right = bufferWidth;
+        rectMute.top = 160;
+        rectMute.bottom = 190;
+        g->DrawTextRaw(muteOption.c_str(), rectMute, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        std::wstring menuOption = (pauseSelection == 1) ? L"> BACK TO MAIN MENU <" : L"  BACK TO MAIN MENU  ";
+        RECT rectMenu;
+        rectMenu.left = 0;
+        rectMenu.right = bufferWidth;
+        rectMenu.top = 220;
+        rectMenu.bottom = 250;
+        g->DrawTextRaw(menuOption.c_str(), rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
         return;
     }
 
@@ -447,21 +482,6 @@ void CPlayScene::Render()
     // Layer 3: Foreground
     for (auto f : foregrounds)
         f->Render();
-
-    if (isPaused)
-    {
-        CGame *g = CGame::GetInstance();
-
-        auto dummyTex = CTextures::GetInstance()->Get(2);
-        g->Draw(0, 0, dummyTex, 0, 0, 1, 1, 0.5f, g->GetViewportWidth(), g->GetViewportHeight());
-
-        RECT rectPause = {0, 80, g->GetBackBufferWidth(), 120};
-        g->DrawTextRaw(L"GAME PAUSED", rectPause, D3DXCOLOR(1.0f, 1.0f, 0.0f, 1.0f));
-        RECT rectMute = {0, 160, g->GetBackBufferWidth(), 190};
-        g->DrawTextRaw(pauseSelection == 0 ? L"> MUTE GAME <" : L"  MUTE GAME  ", rectMute, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-        RECT rectMenu = {0, 220, g->GetBackBufferWidth(), 250};
-        g->DrawTextRaw(pauseSelection == 1 ? L"> BACK TO MAIN MENU <" : L"  BACK TO MAIN MENU  ", rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-    }
 }
 
 void CPlayScene::Unload()
