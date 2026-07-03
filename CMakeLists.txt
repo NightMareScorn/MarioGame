@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(MarioGame)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17) # Re-evaluate globs for new files
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- NuGet Package Management ---

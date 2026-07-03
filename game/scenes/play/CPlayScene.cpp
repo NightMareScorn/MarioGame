@@ -118,6 +118,25 @@ void CPlayScene::Update(float dt)
     if (!mario)
         return;
 
+    auto ResolveNextGoalMap = [this]() -> std::string
+    {
+        if (levelPath.find("level_1_1.csv") != std::string::npos)
+            return "content/levels/level_1_2_first_half.csv";
+        if (levelPath.find("level_1_2_second_half.csv") != std::string::npos)
+            return "content/levels/level_1_3.csv";
+        if (levelPath.find("level_1_3.csv") != std::string::npos)
+            return "content/levels/level_1_4.csv";
+        if (levelPath.find("level_1_4.csv") != std::string::npos)
+            return "content/levels/level_2_1.csv";
+        if (levelPath.find("level_2_1.csv") != std::string::npos)
+            return "content/levels/level_2_2.csv";
+        if (levelPath.find("level_2_2_second_half.csv") != std::string::npos)
+            return "content/levels/level_2_3.csv";
+        if (levelPath.find("level_2_3.csv") != std::string::npos)
+            return "content/levels/level_2_4.csv";
+        return "";
+    };
+
     // --- LOGIC HỒI SINH KHI CHẾT ---
     if (mario->IsDeadState())
     {
@@ -161,34 +180,9 @@ void CPlayScene::Update(float dt)
         {
             CMario::hasCheckpoint = false;
             CMario::currentPower = EMarioPower::SMALL;
-            // Chuyển sang màn tiếp theo
-            std::string nextLevel = "content/levels/level_1_1.csv";
+            std::string nextLevel = ResolveNextGoalMap();
 
-            bool shouldExitToMenu = false;
-            if (levelPath.find("level_1_1.csv") != std::string::npos)
-            {
-                nextLevel = "content/levels/level_1_2_first_half.csv";
-            }
-            else if (levelPath.find("level_1_2_second_half.csv") != std::string::npos)
-            {
-                nextLevel = "content/levels/level_1_3.csv";
-            }
-            else if (levelPath.find("level_1_3.csv") != std::string::npos)
-            {
-                nextLevel = "content/levels/level_1_4.csv";
-            }
-
-            // Thiếu 2 màn chơi 2.1 và 2.2
-            else if (levelPath.find("level_2_3.csv") != std::string::npos)
-            {
-                nextLevel = "content/levels/level_2_4.csv";
-            }
-            else
-            {
-                shouldExitToMenu = true;
-            }
-
-            if (shouldExitToMenu)
+            if (nextLevel.empty())
             {
                 CGame::GetInstance()->SetExitLevel(true);
             }
@@ -350,27 +344,46 @@ void CPlayScene::Update(float dt)
         return;
     }
 
-    // Logic đi xuống ống nước
-    if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN))
-        for (auto b : blocks)
-            if (auto pipe = dynamic_cast<CPipe *>(b))
-                if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down")
-                {
-                    float mLeft, mBottom, mRight, mTop;
-                    mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
-                    float pLeft, pBottom, pRight, pTop;
-                    pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
+    // Logic đi vào ống nước: hỗ trợ ống dọc và miệng cống ngang
+    bool pressDown = kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN);
+    bool pressRight = kb->IsKeyPressed('D') || kb->IsKeyPressed(VK_RIGHT);
+    for (auto b : blocks)
+    {
+        auto pipe = dynamic_cast<CPipe *>(b);
+        if (!pipe || !pipe->IsWarpPipe())
+            continue;
 
-                    if (mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
-                        mLeft < pRight && mRight > pLeft)
-                    {
-                        DebugOut(L"[INFO] Entering pipe to map: %hs\n",
-                                 pipe->GetDestMap().c_str());
-                        std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
-                        TransitionToMap(dest);
-                        break;
-                    }
-                }
+        float mLeft, mBottom, mRight, mTop;
+        mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
+        float pLeft, pBottom, pRight, pTop;
+        pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
+
+        bool shouldEnter = false;
+        if (pipe->GetEnterDirection() == "down")
+        {
+            shouldEnter = pressDown &&
+                          mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
+                          mLeft < pRight && mRight > pLeft;
+        }
+        else if (pipe->GetEnterDirection() == "right")
+        {
+            shouldEnter = pressRight &&
+                          mRight >= pLeft - 2.0f && mRight <= pLeft + 4.0f &&
+                          mTop > pBottom && mBottom < pTop;
+        }
+
+        if (shouldEnter)
+        {
+            mario->SetInputLocked(true);
+            mario->vx = 0.0f;
+            mario->vy = 0.0f;
+            DebugOut(L"[INFO] Entering pipe to map: %hs\n",
+                     pipe->GetDestMap().c_str());
+            std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
+            TransitionToMap(dest);
+            break;
+        }
+    }
 
     CCamera::GetInstance()->SetMapWidth(mapWidth);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);

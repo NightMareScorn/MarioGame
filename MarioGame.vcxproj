@@ -183,9 +183,11 @@
     <ClCompile Include="game\entities\blocks\CDecorBlock.cpp" />
     <ClCompile Include="game\entities\blocks\CLuckyBlock.cpp" />
     <ClCompile Include="game\entities\blocks\CPipe.cpp" />
+    <ClCompile Include="game\entities\enemies\CBlooper.cpp" />
     <ClCompile Include="game\entities\enemies\CCheepCheep.cpp" />
     <ClCompile Include="game\entities\enemies\CGoomba.cpp" />
     <ClCompile Include="game\entities\enemies\CKoopa.cpp" />
+    <ClCompile Include="game\entities\enemies\CPiranhaPlant.cpp" />
     <ClCompile Include="game\entities\items\CCoin.cpp" />
     <ClCompile Include="game\entities\items\CFireFlower.cpp" />
     <ClCompile Include="game\entities\items\CMushroom.cpp" />
@@ -239,11 +241,13 @@
     <ClInclude Include="game\entities\blocks\CPipe.h" />
     <ClInclude Include="game\entities\blocks\CPlatform.h" />
     <ClInclude Include="game\entities\enemies\CBowser.h" />
+    <ClInclude Include="game\entities\enemies\CBlooper.h" />
     <ClInclude Include="game\entities\enemies\CCheepCheep.h" />
     <ClInclude Include="game\entities\enemies\CFireBar.h" />
     <ClInclude Include="game\entities\enemies\CGoomba.h" />
     <ClInclude Include="game\entities\enemies\CKoopa.h" />
     <ClInclude Include="game\entities\enemies\CPodoboo.h" />
+    <ClInclude Include="game\entities\enemies\CPiranhaPlant.h" />
     <ClInclude Include="game\entities\items\CCoin.h" />
     <ClInclude Include="game\entities\items\CFireFlower.h" />
     <ClInclude Include="game\entities\items\CMushroom.h" />

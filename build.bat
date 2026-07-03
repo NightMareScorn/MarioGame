@@ -18,7 +18,8 @@ if !errorlevel! neq 0 (
 
 :: Configure CMake
 echo Configuring CMake...
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+set CMAKE="C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+%CMAKE% -S . -B build -G "Visual Studio 17 2022" -A x64
 if !errorlevel! neq 0 (
     echo Error: CMake configuration failed.
     exit /b 1
@@ -26,7 +27,7 @@ if !errorlevel! neq 0 (
 
 :: Build C++ project
 echo Building C++ project...
-cmake --build build --config Debug
+%CMAKE% --build build --config Debug
 if !errorlevel! neq 0 (
     echo Error: C++ build failed.
     exit /b 1

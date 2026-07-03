@@ -41,14 +41,12 @@ void CCastleBridge::Render()
 
 void CBowser::Update(float dt)
 {
-    static float startX = this->x;
     x += vx * dt;
     if (abs(x - startX) > 64.0f)
     {
         vx = -vx;
     }
 
-    static float fireTimer = 0;
     fireTimer += dt;
     if (fireTimer > 3000.0f)
     {
@@ -147,8 +145,7 @@ void CPlatform::Update(float dt)
         x += vx * dt;
         // Horizontal platforms in 2-4 usually bounce between some limits
         // For simplicity, let's just make it bounce within a 48px range
-        static float startX = -1;
-        if (startX == -1)
+        if (startX == -1.0f)
             startX = x;
         if (abs(x - startX) > 48)
         {

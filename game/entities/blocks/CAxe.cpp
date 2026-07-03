@@ -7,7 +7,7 @@
 
 void CAxe::OnCollision(CGameObject *obj)
 {
-    if (dynamic_cast<CMario *>(obj))
+    if (auto mario = dynamic_cast<CMario *>(obj))
     {
         // 1. Tắt nhạc nền lâu đài và phát nhạc thắng màn
         CAudioManager::GetInstance()->StopBGM();
@@ -22,7 +22,15 @@ void CAxe::OnCollision(CGameObject *obj)
             }
         }
 
-        // 3. Ẩn rìu
+        // 3. Khóa phím điều khiển của Mario và đặt tốc độ về 0
+        mario->SetInputLocked(true);
+        mario->vx = 0.0f;
+        mario->vy = 0.0f;
+
+        // 4. Kích hoạt đếm ngược thắng màn để tự động chuyển tiếp sang World tiếp theo
+        scene->goalTimer = 6000.0f;
+
+        // 5. Ẩn rìu
         this->SetIsDead(true);
     }
 }

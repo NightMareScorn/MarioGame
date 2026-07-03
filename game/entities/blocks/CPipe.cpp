@@ -5,6 +5,11 @@ CPipe::CPipe(float x, float y, float width, float height, std::string aniName, s
     : CBlock(x, y), width(width), height(height), aniName(aniName), destMap(destMap), enterDirection(enterDirection) {}
 
 void CPipe::Render() {
+    if (aniName == "ANI_PIPE_2WAYS_ASSEMBLED") {
+        CAnimations::GetInstance()->Render("ANI_PIPE_2WAYS_ASSEMBLED", x, y);
+        return;
+    }
+
     // Pipe is built from individual 32x16 tile pieces:
     //   - Head (opening): 1 row at the top (ANI_PIPE_OW_HEAD)
     //   - Body (shaft):   repeating rows below (ANI_PIPE_OW_BODY)
@@ -30,6 +35,11 @@ void CPipe::Render() {
 void CPipe::GetBoundingBox(float &left, float &bottom, float &right, float &top) {
     left = x;
     bottom = y;
-    right = x + width;
-    top = y + height;
+    if (aniName == "ANI_PIPE_2WAYS_ASSEMBLED") {
+        right = x + 64.0f;
+        top = y + 64.0f;
+    } else {
+        right = x + width;
+        top = y + height;
+    }
 }

@@ -58,6 +58,7 @@ private:
     bool isDead = false;
 
     bool inputLocked = false; // Biến quản lý khóa phím
+    bool wasJumpKeyPressed = false;
 
     void HandleInput(const InputState &input, float dt);
     void ApplyPhysics(float dt);
