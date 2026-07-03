@@ -33,6 +33,9 @@ class CPlayScene : public CScene
     bool isPaused = false;
     int pauseSelection = 0; // 0: Mute, 1: Back to Menu
 
+    // Game over
+    bool isGameOver = false;
+
 public:
     CPlayScene(std::string levelPath = "content/levels/level_1_1.csv") : levelPath(levelPath) {}
     void Load() override;

@@ -53,6 +53,18 @@ void CPlayScene::Load(const std::string &mapPath)
 
 void CPlayScene::Update(float dt)
 {
+    if (isGameOver)
+    {
+        if (KeyboardManager::GetInstance()->IsKeyPressed(VK_RETURN))
+        {
+            CMario::lives = 3;
+            CMario::hasCheckpoint = false;
+            CMario::currentPower = EMarioPower::SMALL;
+            CGame::GetInstance()->SetExitLevel(true);
+        }
+        return;
+    }
+
     auto kb = KeyboardManager::GetInstance();
 
     if (kb->IsKeyPressed('P') || kb->IsKeyPressed('p'))
@@ -127,9 +139,8 @@ void CPlayScene::Update(float dt)
             }
             else
             {
-                CMario::lives = 3;
-                CMario::hasCheckpoint = false;
-                this->TransitionToMap("content/levels/level_1_1.csv");
+                isGameOver = true;
+                CAudioManager::GetInstance()->StopBGM();
             }
         }
         return;
@@ -433,6 +444,21 @@ void CPlayScene::Update(float dt)
 
 void CPlayScene::Render()
 {
+    if (isGameOver)
+    {
+        CGame *g = CGame::GetInstance();
+
+        auto dummyTex = CTextures::GetInstance()->Get(2);
+        g->Draw(0, 0, dummyTex, 0, 0, 1, 1, 1.0f, g->GetViewportWidth(), g->GetViewportHeight());
+        // Game Over text
+        RECT rectGameOver = {0, 200, g->GetBackBufferWidth(), 260};
+        g->DrawTextRaw(L"GAME OVER", rectGameOver, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        // Enter to return to menu text
+        RECT rectHelp = {0, 300, g->GetBackBufferWidth(), 340};
+        g->DrawTextRaw(L"Press Enter to Back to Main Menu", rectHelp, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
     ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
 
     // Layer 1: Background
