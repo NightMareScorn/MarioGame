@@ -13,6 +13,7 @@
 #include "../../entities/blocks/CFlagpole.h"
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
+#include "../../../engine/rendering/Textures.h"
 #include <algorithm>
 
 void CPlayScene::Load()
@@ -52,6 +53,56 @@ void CPlayScene::Load(const std::string &mapPath)
 
 void CPlayScene::Update(float dt)
 {
+    auto kb = KeyboardManager::GetInstance();
+
+    if (kb->IsKeyPressed('P') || kb->IsKeyPressed('p'))
+    {
+        isPaused = !isPaused;
+        if (isPaused)
+        {
+            mciSendStringA("pause bgm", NULL, 0, NULL); // Tạm dừng nhạc nền
+        }
+        else
+        {
+            mciSendStringA("resume bgm", NULL, 0, NULL); // Phát tiếp nhạc nền
+        }
+    }
+
+    if (isPaused)
+    {
+        if (kb->IsKeyPressed(VK_UP))
+        {
+            pauseSelection = 0; // Chọn Mute
+        }
+        else if (kb->IsKeyPressed(VK_DOWN))
+        {
+            pauseSelection = 1; // Chọn Back to Menu
+        }
+        if (kb->IsKeyPressed(VK_RETURN))
+        {
+            if (pauseSelection == 0)
+            {
+                // Logic bật tắt âm thanh (Mute/Unmute)
+                static bool isMuted = false;
+                isMuted = !isMuted;
+                if (isMuted)
+                {
+                    mciSendStringA("setaudio bgm volume to 0", NULL, 0, NULL);
+                }
+                else
+                {
+                    mciSendStringA("setaudio bgm volume to 1000", NULL, 0, NULL);
+                }
+            }
+            else if (pauseSelection == 1)
+            {
+                isPaused = false;
+                CGame::GetInstance()->SetExitLevel(true); // Thoát về Menu WebView2
+            }
+        }
+        return; // Dừng toàn bộ cập nhật vật lý, quái vật, thời gian bên dưới!
+    }
+
     // Chuyển map pending
     if (!pendingMapPath.empty())
     {
@@ -335,7 +386,6 @@ void CPlayScene::Update(float dt)
     }
 
     // Logic đi xuống ống nước
-    auto kb = KeyboardManager::GetInstance();
     if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN))
         for (auto b : blocks)
             if (auto pipe = dynamic_cast<CPipe *>(b))
@@ -417,6 +467,21 @@ void CPlayScene::Render()
     // Layer 3: Foreground
     for (auto f : foregrounds)
         f->Render();
+
+    if (isPaused)
+    {
+        CGame *g = CGame::GetInstance();
+
+        auto dummyTex = CTextures::GetInstance()->Get(2);
+        g->Draw(0, 0, dummyTex, 0, 0, 1, 1, 0.5f, g->GetViewportWidth(), g->GetViewportHeight());
+
+        RECT rectPause = {0, 80, g->GetBackBufferWidth(), 120};
+        g->DrawTextRaw(L"GAME PAUSED", rectPause, D3DXCOLOR(1.0f, 1.0f, 0.0f, 1.0f));
+        RECT rectMute = {0, 160, g->GetBackBufferWidth(), 190};
+        g->DrawTextRaw(pauseSelection == 0 ? L"> MUTE GAME <" : L"  MUTE GAME  ", rectMute, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        RECT rectMenu = {0, 220, g->GetBackBufferWidth(), 250};
+        g->DrawTextRaw(pauseSelection == 1 ? L"> BACK TO MAIN MENU <" : L"  BACK TO MAIN MENU  ", rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+    }
 }
 
 void CPlayScene::Unload()
