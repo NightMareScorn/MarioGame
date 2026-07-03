@@ -106,8 +106,41 @@ void CPlayScene::Update(float dt)
         if (goalTimer <= 0)
         {
             CMario::hasCheckpoint = false;
-            // Chuyển sang màn tiếp theo (level 1-2)
-            this->TransitionToMap("content/levels/level_1_2_first_half.csv");
+            // Chuyển sang màn tiếp theo
+            std::string nextLevel = "content/levels/level_1_1.csv";
+
+            bool shouldExitToMenu = false;
+            if (levelPath.find("level_1_1.csv") != std::string::npos)
+            {
+                nextLevel = "content/levels/level_1_2_first_half.csv";
+            }
+            else if (levelPath.find("level_1_2_second_half.csv") != std::string::npos)
+            {
+                nextLevel = "content/levels/level_1_3.csv";
+            }
+            else if (levelPath.find("level_1_3.csv") != std::string::npos)
+            {
+                nextLevel = "content/levels/level_1_4.csv";
+            }
+
+            // Thiếu 2 màn chơi 2.1 và 2.2
+            else if (levelPath.find("level_2_3.csv") != std::string::npos)
+            {
+                nextLevel = "content/levels/level_2_4.csv";
+            }
+            else
+            {
+                shouldExitToMenu = true;
+            }
+
+            if (shouldExitToMenu)
+            {
+                CGame::GetInstance()->SetExitLevel(true);
+            }
+            else
+            {
+                this->TransitionToMap(nextLevel);
+            }
         }
         return;
     }

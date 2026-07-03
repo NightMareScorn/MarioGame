@@ -73,9 +73,12 @@ void CAudioManager::PlayBGM(std::string path)
 {
     StopBGM();
 
-    std::string openCmd = "open \"" + path + "\" type mpegvideo alias bgm";
-    mciSendStringA(openCmd.c_str(), NULL, 0, NULL);
+    std::filesystem::path p(path);
+    std::string absPath = std::filesystem::absolute(p).string();
+    std::replace(absPath.begin(), absPath.end(), '/', '\\');
 
+    std::string openCmd = "open \"" + absPath + "\" type mpegvideo alias bgm";
+    mciSendStringA(openCmd.c_str(), NULL, 0, NULL);
     mciSendStringA("play bgm repeat", NULL, 0, NULL);
 }
 
