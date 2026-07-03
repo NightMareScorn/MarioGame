@@ -414,18 +414,14 @@ void CPlayScene::Render()
     if (isGameOver)
     {
         CGame *g = CGame::GetInstance();
+        int bufferWidth = g->GetBackBufferWidth();
 
-        float camX, camY;
-        CCamera::GetInstance()->GetCamPos(camX, camY);
-
-        auto dummyTex = CTextures::GetInstance()->Get(2);
-        g->Draw(camX, camY, dummyTex, 0, 16, 1, 17, 1.0f, g->GetViewportWidth(), g->GetViewportHeight(), D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f));
-        // Game Over text
-        RECT rectGameOver = {0, 200, g->GetBackBufferWidth(), 260};
+        RECT rectGameOver = {0, 200, bufferWidth, 260};
         g->DrawTextRaw(L"GAME OVER", rectGameOver, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
-        // Enter to return to menu text
-        RECT rectHelp = {0, 300, g->GetBackBufferWidth(), 340};
+
+        RECT rectHelp = {0, 300, bufferWidth, 340};
         g->DrawTextRaw(L"Press Enter to Back to Main Menu", rectHelp, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
         return;
     }
 
