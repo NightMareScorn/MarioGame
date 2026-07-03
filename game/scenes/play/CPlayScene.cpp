@@ -27,6 +27,7 @@ void CPlayScene::Load(const std::string &mapPath)
     auto registry = CResourceRegistry::GetInstance();
     registry->LoadResourcesForPlayScene();
 
+    levelPath = mapPath;
     currentMapPath = mapPath;
     pendingMapPath = "";
     goalTimer = 0.0f;
@@ -146,6 +147,7 @@ void CPlayScene::Update(float dt)
             if (CMario::lives > 0)
             {
                 this->TransitionToMap(currentMapPath);
+                this->timeLeft = 400.0f;
             }
             else
             {
@@ -189,6 +191,7 @@ void CPlayScene::Update(float dt)
             else
             {
                 this->TransitionToMap(nextLevel);
+                this->timeLeft = 400.0f;
             }
         }
         return;

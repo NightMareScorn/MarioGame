@@ -83,6 +83,11 @@ void CAudioManager::PlayBGM(std::string path)
     std::string openCmd = "open \"" + absPath + "\" type mpegvideo alias bgm";
     mciSendStringA(openCmd.c_str(), NULL, 0, NULL);
     mciSendStringA("play bgm repeat", NULL, 0, NULL);
+
+    if (isMuted)
+    {
+        mciSendStringA("setaudio bgm volume to 0", NULL, 0, NULL);
+    }
 }
 
 void CAudioManager::StopBGM()

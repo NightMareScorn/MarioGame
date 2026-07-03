@@ -182,5 +182,8 @@ int Run(std::string level)
         time.PrintFPS();
     }
 
+    CSceneManager::GetInstance()->SetScene(nullptr);
+    scene = nullptr;
+
     return 1;
 }

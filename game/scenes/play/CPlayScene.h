@@ -38,7 +38,14 @@ class CPlayScene : public CScene
     bool isGameOver = false;
 
 public:
-    CPlayScene(std::string levelPath = "content/levels/level_1_1.csv") : levelPath(levelPath) {}
+    CPlayScene::CPlayScene(std::string levelPath) : levelPath(levelPath)
+    {
+        CMario::lives = 3;
+        CMario::currentPower = EMarioPower::SMALL;
+        CMario::hasCheckpoint = false;
+        CMario::checkpointX = 0.0f;
+        CMario::checkpointY = 0.0f;
+    }
     void Load() override;
     void Load(const std::string &mapPath);
     void Update(float dt) override;
@@ -70,7 +77,7 @@ public:
 
     void AddItem(CGameObject *item) { items.push_back(item); }
     std::string GetCurrentMapPath() const { return currentMapPath; }
-    CMario* GetPlayer() { return mario; }
+    CMario *GetPlayer() { return mario; }
     std::string GetTheme() const { return theme; }
 
     int GetScore() const { return score; }
