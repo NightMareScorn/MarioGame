@@ -60,3 +60,15 @@ void CBlooper::GetBoundingBox(float &left, float &bottom, float &right, float &t
     right = x + 16.0f;
     top = y + 24.0f;
 }
+
+void CBlooper::OnCollisionX(CGameObject *other, float nx) {
+    if (auto mario = dynamic_cast<CMario *>(other)) {
+        mario->Hurt();
+    }
+}
+
+void CBlooper::OnCollisionY(CGameObject *other, float ny) {
+    if (auto mario = dynamic_cast<CMario *>(other)) {
+        mario->Hurt();
+    }
+}

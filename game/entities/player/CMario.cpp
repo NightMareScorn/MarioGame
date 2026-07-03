@@ -85,40 +85,85 @@ void CMario::Update(float dt)
 
 void CMario::HandleInput(const InputState &input, float dt)
 {
-    if (input.right)
+    CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+    bool isUnderwater = (scene && scene->GetTheme() == "underwater");
+
+    if (isUnderwater)
     {
-        vx += MarioConfig::ACCEL_X * dt;
-        if (vx >= 0)
-            nx = 1;
-    }
-    else if (input.left)
-    {
-        vx -= MarioConfig::ACCEL_X * dt;
-        if (vx <= 0)
-            nx = -1;
+        if (input.right)
+        {
+            vx += MarioConfig::ACCEL_X * 0.5f * dt;
+            if (vx >= 0)
+                nx = 1;
+        }
+        else if (input.left)
+        {
+            vx -= MarioConfig::ACCEL_X * 0.5f * dt;
+            if (vx <= 0)
+                nx = -1;
+        }
+        else
+        {
+            if (vx > 0)
+            {
+                vx -= MarioConfig::FRICTION * 1.5f * dt;
+                if (vx < 0)
+                    vx = 0;
+            }
+            else if (vx < 0)
+            {
+                vx += MarioConfig::FRICTION * 1.5f * dt;
+                if (vx > 0)
+                    vx = 0;
+            }
+        }
+
+        if (input.jump && !wasJumpKeyPressed)
+        {
+            vy = 0.11f; // Swim flap upwards
+            isJumping = false;
+            CAudioManager::GetInstance()->Play("jump");
+        }
+        wasJumpKeyPressed = input.jump;
     }
     else
     {
-        if (vx > 0)
+        if (input.right)
         {
-            vx -= MarioConfig::FRICTION * dt;
-            if (vx < 0)
-                vx = 0;
+            vx += MarioConfig::ACCEL_X * dt;
+            if (vx >= 0)
+                nx = 1;
         }
-        else if (vx < 0)
+        else if (input.left)
         {
-            vx += MarioConfig::FRICTION * dt;
+            vx -= MarioConfig::ACCEL_X * dt;
+            if (vx <= 0)
+                nx = -1;
+        }
+        else
+        {
             if (vx > 0)
-                vx = 0;
+            {
+                vx -= MarioConfig::FRICTION * dt;
+                if (vx < 0)
+                    vx = 0;
+            }
+            else if (vx < 0)
+            {
+                vx += MarioConfig::FRICTION * dt;
+                if (vx > 0)
+                    vx = 0;
+            }
         }
-    }
 
-    if (input.jump && onGround)
-    {
-        vy = MarioConfig::JUMP_FORCE;
-        isJumping = true;
-        jumpHoldTime = 0.0f;
-        CAudioManager::GetInstance()->Play("jump");
+        if (input.jump && onGround)
+        {
+            vy = MarioConfig::JUMP_FORCE;
+            isJumping = true;
+            jumpHoldTime = 0.0f;
+            CAudioManager::GetInstance()->Play("jump");
+        }
+        wasJumpKeyPressed = input.jump;
     }
 
     if (input.attack && (power == EMarioPower::SMALL_FIRE || power == EMarioPower::BIG_FIRE))
@@ -223,25 +268,37 @@ void CMario::Hurt()
 
 void CMario::ApplyPhysics(float dt)
 {
-    vy += MarioConfig::GRAVITY * dt;
+    CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+    bool isUnderwater = (scene && scene->GetTheme() == "underwater");
 
-    if (isJumping)
+    if (isUnderwater)
     {
-        if (CInputManager::GetInstance()->GetState().jump)
+        vy += MarioConfig::GRAVITY * 0.15f * dt;
+        if (vy < -0.04f)
+            vy = -0.04f; // slow sink limit
+    }
+    else
+    {
+        vy += MarioConfig::GRAVITY * dt;
+
+        if (isJumping)
         {
-            jumpHoldTime += dt;
-            if (jumpHoldTime < 200.0f)
+            if (CInputManager::GetInstance()->GetState().jump)
             {
-                vy += MarioConfig::JUMP_HOLD_FORCE * dt;
+                jumpHoldTime += dt;
+                if (jumpHoldTime < 200.0f)
+                {
+                    vy += MarioConfig::JUMP_HOLD_FORCE * dt;
+                }
+                else
+                {
+                    isJumping = false;
+                }
             }
             else
             {
                 isJumping = false;
             }
-        }
-        else
-        {
-            isJumping = false;
         }
     }
 
@@ -312,23 +369,33 @@ void CMario::Render()
     }
     else
     {
-        std::string prefix = "ANI_MARIO_";
-        if (power == EMarioPower::BIG)
-            prefix = "ANI_BIG_MARIO_";
-        else if (power == EMarioPower::SMALL_FIRE)
-            prefix = "ANI_SMALL_FIRE_MARIO_";
-        else if (power == EMarioPower::BIG_FIRE)
-            prefix = "ANI_BIG_FIRE_MARIO_";
+        CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+        bool isUnderwater = (scene && scene->GetTheme() == "underwater");
 
-        aniName = prefix + "IDLE";
-        if (state == EMarioState::DIE)
-            aniName = "ANI_MARIO_DIE";
-        else if (!onGround)
-            aniName = prefix + "JUMP";
-        else if (state == EMarioState::SKID)
-            aniName = prefix + "SKID";
-        else if (abs(vx) > 0.01f)
-            aniName = prefix + "WALK";
+        if (isUnderwater && state != EMarioState::DIE)
+        {
+            aniName = IsBig() ? "ANI_MARIO_BIG_SWIM" : "ANI_MARIO_SWIM";
+        }
+        else
+        {
+            std::string prefix = "ANI_MARIO_";
+            if (power == EMarioPower::BIG)
+                prefix = "ANI_BIG_MARIO_";
+            else if (power == EMarioPower::SMALL_FIRE)
+                prefix = "ANI_SMALL_FIRE_MARIO_";
+            else if (power == EMarioPower::BIG_FIRE)
+                prefix = "ANI_BIG_FIRE_MARIO_";
+
+            aniName = prefix + "IDLE";
+            if (state == EMarioState::DIE)
+                aniName = "ANI_MARIO_DIE";
+            else if (!onGround)
+                aniName = prefix + "JUMP";
+            else if (state == EMarioState::SKID)
+                aniName = prefix + "SKID";
+            else if (abs(vx) > 0.01f)
+                aniName = prefix + "WALK";
+        }
     }
 
     CAnimations::GetInstance()->Render(aniName, x, y, nx);

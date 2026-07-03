@@ -17,6 +17,7 @@ class CPlayScene : public CScene {
     std::vector<CGameObject*> items;
     std::vector<CGameObject*> foregrounds;
     float mapWidth = 0.0f;
+    std::string theme = "surface";
     int bgR = 92, bgG = 148, bgB = 252; // Default Mario blue (#5C94FC)
 
     std::string currentMapPath;
@@ -50,6 +51,7 @@ public:
     void AddItem(CGameObject* item) { items.push_back(item); }
     std::string GetCurrentMapPath() const { return currentMapPath; }
     CMario* GetPlayer() { return mario; }
+    std::string GetTheme() const { return theme; }
 
     int GetScore() const { return score; }
     void AddScore(int s) { score += s; }

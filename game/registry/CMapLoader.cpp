@@ -153,7 +153,7 @@ void CMapLoader::_ParseSettings(const std::string &line, CPlayScene *scene)
     }
     else if (parts[0] == "theme")
     {
-        // Future: handle themes (overworld, underground, etc.)
+        scene->theme = parts[1];
         DebugOut(L"[INFO] Map theme: %hs\n", parts[1].c_str());
     }
 }

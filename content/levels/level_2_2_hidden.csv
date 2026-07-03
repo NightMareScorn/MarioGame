@@ -21,7 +21,7 @@ theme,underwater
 # OBJECTS
 type,x,y,properties
 mario,32,48,
-pipe,2496,80,height=112,dest_map=level_2_2_second_half,enter_direction=down
+pipe,2496,80,height=64,dest_map=level_2_2_second_half,enter_direction=right
 blooper,528,64,
 blooper,1328,176,
 blooper,1632,128,

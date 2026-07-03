@@ -16,6 +16,8 @@ public:
     void Update(float dt) override;
     void Render() override;
     void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
+    void OnCollisionX(CGameObject *other, float nx) override;
+    void OnCollisionY(CGameObject *other, float ny) override;
 
     bool IsSolid() override { return false; }
     bool IsBlocking(CGameObject *other) override { return false; }
