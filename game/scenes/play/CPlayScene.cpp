@@ -94,17 +94,8 @@ void CPlayScene::Update(float dt)
         {
             if (pauseSelection == 0)
             {
-                // Logic bật tắt âm thanh (Mute/Unmute)
-                static bool isMuted = false;
-                isMuted = !isMuted;
-                if (isMuted)
-                {
-                    mciSendStringA("setaudio bgm volume to 0", NULL, 0, NULL);
-                }
-                else
-                {
-                    mciSendStringA("setaudio bgm volume to 1000", NULL, 0, NULL);
-                }
+                bool newMute = !CAudioManager::GetInstance()->IsMuted();
+                CAudioManager::GetInstance()->SetMute(newMute);
             }
             else if (pauseSelection == 1)
             {
@@ -141,6 +132,7 @@ void CPlayScene::Update(float dt)
             {
                 isGameOver = true;
                 CAudioManager::GetInstance()->StopBGM();
+                CAudioManager::GetInstance()->Stop();
             }
         }
         return;
@@ -331,41 +323,6 @@ void CPlayScene::Update(float dt)
         {
             e->vx = -old_vx;
             e->nx = (e->vx > 0) ? 1 : -1;
-        }
-
-        // Logic tuần tra: tránh rơi xuống vực thẳm
-        if (e->vy == 0 && e->vx != 0)
-        {
-            float L, B, R, T;
-            e->GetBoundingBox(L, B, R, T);
-
-            CCollision::Box sensor;
-            if (e->vx < 0)
-            {
-                sensor = CCollision::ToBox(L, B - 4.0f, L + 2.0f, B - 0.5f);
-            }
-            else
-            {
-                sensor = CCollision::ToBox(R - 2.0f, B - 4.0f, R, B - 0.5f);
-            }
-
-            bool hasFloor = false;
-            for (auto b : blocksAroundEnemy)
-            {
-                float bl, bb, br, bt;
-                b->GetBoundingBox(bl, bb, br, bt);
-                if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt)))
-                {
-                    hasFloor = true;
-                    break;
-                }
-            }
-
-            if (!hasFloor)
-            {
-                e->vx = -e->vx;
-                e->nx = (e->vx > 0) ? 1 : -1;
-            }
         }
     }
 

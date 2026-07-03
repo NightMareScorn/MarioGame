@@ -51,6 +51,9 @@ void CAudioManager::LoadSound(std::string name, std::string path)
 
 void CAudioManager::Play(std::string name, bool loop)
 {
+    if (isMuted)
+        return;
+
     if (soundMap.find(name) != soundMap.end())
     {
         DWORD flags = SND_MEMORY | SND_ASYNC;
@@ -86,4 +89,18 @@ void CAudioManager::StopBGM()
 {
     mciSendStringA("stop bgm", NULL, 0, NULL);
     mciSendStringA("close bgm", NULL, 0, NULL);
+}
+
+void CAudioManager::SetMute(bool mute)
+{
+    isMuted = mute;
+    if (mute)
+    {
+        PlaySound(NULL, NULL, 0);
+        mciSendStringA("setaudio bgm volume to 0", NULL, 0, NULL);
+    }
+    else
+    {
+        mciSendStringA("setaudio bgm volume to 1000", NULL, 0, NULL);
+    }
 }

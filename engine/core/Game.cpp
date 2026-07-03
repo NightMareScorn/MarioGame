@@ -105,7 +105,7 @@ void CGame::Init(HWND hWnd, HINSTANCE hInstance)
 
 	D3DX10_FONT_DESCW fd;
 	ZeroMemory(&fd, sizeof(fd));
-	fd.Height = 16;
+	fd.Height = 28;
 	fd.Width = 0;
 	fd.Weight = FW_BOLD;
 	fd.MipLevels = 1;
