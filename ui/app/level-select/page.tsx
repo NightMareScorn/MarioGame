@@ -6,12 +6,12 @@ import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const LEVELS = [
-  { id: "1-1", title: "World 1-1", image: "/background/SuperMarioBrosMap1-1.png", targetCSV: "level_1_1.csv", bestScore: "080000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
-  { id: "1-2", title: "World 1-2", image: "/background/SuperMarioBrosMap1-2.png", targetCSV: "level_1_1_hidden.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
-  { id: "1-3", title: "World 1-3", image: "/background/SuperMarioBrosMap1-3.png", targetCSV: "level_1_2_first_half.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
-  { id: "1-4", title: "World 1-4", image: "/background/SuperMarioBrosMap1-4.png", targetCSV: "level_1_2_hidden.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
-  { id: "2-1", title: "World 2-1", image: "/background/SuperMarioBrosMap2-1.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
-  { id: "2-2", title: "World 2-2", image: "/background/SuperMarioBrosMap2-2.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
+  { id: "1-1", title: "World 1-1", image: "/background/SuperMarioBrosMap1-1.png", targetCSV: "level_1_1.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
+  { id: "1-2", title: "World 1-2", image: "/background/SuperMarioBrosMap1-2.png", targetCSV: "level_1_2_first_half.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
+  { id: "1-3", title: "World 1-3", image: "/background/SuperMarioBrosMap1-3.png", targetCSV: "level_1_3.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
+  { id: "1-4", title: "World 1-4", image: "/background/SuperMarioBrosMap1-4.png", targetCSV: "level_1_4.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
+  { id: "2-1", title: "World 2-1", image: "/background/SuperMarioBrosMap2-1.png", targetCSV: "level_2_1.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left top", transform: "scale(2.2) translateY(-10%)" } },
+  { id: "2-2", title: "World 2-2", image: "/background/SuperMarioBrosMap2-2.png", targetCSV: "level_2_2.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left 70%", transform: "scale(2.8)" } },
   { id: "2-3", title: "World 2-3", image: "/background/SuperMarioBrosMap2-3.png", targetCSV: "level_2_3.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
   { id: "2-4", title: "World 2-4", image: "/background/SuperMarioBrosMap2-4.png", targetCSV: "level_2_4.csv", bestScore: "000000", time: "--:--", imgStyle: { objectPosition: "left center", transform: "scale(1.1)" } },
 ];
