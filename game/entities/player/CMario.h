@@ -67,4 +67,7 @@ private:
     float untouchableTimer = 0.0f;
     float starTimer = 0.0f;
     float dieTimer = 0.0f;
+
+    bool isPoweringUp = false;
+    float powerUpTimer = 0.0f;
 };

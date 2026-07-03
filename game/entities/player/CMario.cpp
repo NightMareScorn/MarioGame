@@ -28,6 +28,21 @@ CMario::CMario() : CGameObject()
 
 void CMario::Update(float dt)
 {
+    if (isPoweringUp)
+    {
+        vx = 0.0f;
+        vy = 0.0f;
+        powerUpTimer += dt;
+        if (powerUpTimer >= 600.0f)
+        {
+            isPoweringUp = false;
+            this->y -= 16.0f;
+            this->power = EMarioPower::BIG;
+            this->SetInputLocked(false);
+        }
+        return;
+    }
+
     if (state == EMarioState::DIE)
     {
         vy += MarioConfig::GRAVITY * dt;
@@ -85,7 +100,7 @@ void CMario::Update(float dt)
 
 void CMario::HandleInput(const InputState &input, float dt)
 {
-    CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+    CPlayScene *scene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
     bool isUnderwater = (scene && scene->GetTheme() == "underwater");
 
     if (isUnderwater)
@@ -223,7 +238,11 @@ void CMario::PowerUpMushroom()
 {
     if (this->power == EMarioPower::SMALL)
     {
-        GrowToBig();
+        this->isPoweringUp = true;
+        this->powerUpTimer = 0.0f;
+        this->SetInputLocked(true);
+        this->vx = 0.0f;
+        this->vy = 0.0f;
     }
     else if (this->power == EMarioPower::SMALL_FIRE)
     {
@@ -268,7 +287,7 @@ void CMario::Hurt()
 
 void CMario::ApplyPhysics(float dt)
 {
-    CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+    CPlayScene *scene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
     bool isUnderwater = (scene && scene->GetTheme() == "underwater");
 
     if (isUnderwater)
@@ -365,14 +384,20 @@ void CMario::Render()
 
     std::string aniName = "";
 
-    if (starTimer > 0)
+    if (isPoweringUp)
+    {
+        int cycle = (int)(powerUpTimer / 100.0f) % 2;
+        std::string prefix = (cycle == 0) ? "ANI_BIG_MARIO_" : "ANI_MARIO_";
+        aniName = prefix + "IDLE";
+    }
+    else if (starTimer > 0)
     {
         int colorFrame = (int(GetTickCount64() / 100) % 4) + 1;
         aniName = "ANI_STAR" + std::to_string(colorFrame) + "_OW";
     }
     else
     {
-        CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
+        CPlayScene *scene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
         bool isUnderwater = (scene && scene->GetTheme() == "underwater");
 
         if (isUnderwater && state != EMarioState::DIE)

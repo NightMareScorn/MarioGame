@@ -2,6 +2,7 @@
 #include "../../../engine/Graphics/Animations.h"
 #include "../../entities/player/CMario.h"
 #include "CGoomba.h"
+#include "../../../engine/audio/CAudioManager.h"
 
 CKoopa::CKoopa(float x, float y, std::string type, float patrolLeft, float patrolRight)
     : CGameObject(), type(type)
@@ -124,9 +125,10 @@ void CKoopa::OnCollisionX(CGameObject *other, float nx)
         }
         else if (auto koopa = dynamic_cast<CKoopa *>(other))
         {
-            koopa->SetState(KOOPA_STATE_SHELL);
+            koopa->SetIsDead(true);
+            CAudioManager::GetInstance()->Play("kick");
             if (scene)
-                scene->AddScore(100);
+                scene->AddScore(200);
         }
     }
 }

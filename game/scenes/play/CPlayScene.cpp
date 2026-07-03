@@ -168,9 +168,20 @@ void CPlayScene::Update(float dt)
 
         if (mario->GetState() == EMarioState::GOAL_SLIDE)
         {
-            if (mario->y <= 32.5f)
-            { // Chạm đất
-                mario->y = 32.0f;
+            float baseHeight = 32.0f;
+            for (auto d : decors)
+            {
+                if (auto flagpole = dynamic_cast<CFlagpole *>(d))
+                {
+                    float dl, db, dr, dt_b;
+                    flagpole->GetBoundingBox(dl, db, dr, dt_b);
+                    baseHeight = db;
+                    break;
+                }
+            }
+            if (mario->y <= baseHeight + 0.5f)
+            {
+                mario->y = baseHeight;
                 mario->SetState(static_cast<int>(EMarioState::GOAL_WALK));
             }
         }

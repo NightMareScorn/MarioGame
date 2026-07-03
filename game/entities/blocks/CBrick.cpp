@@ -4,11 +4,14 @@
 #include "../../../engine/utils/debug.h"
 #include "../../registry/CResourceRegistry.h"
 #include "../player/CMario.h"
+#include "../../scenes/play/CPlayScene.h"
+#include "../../scenes/CSceneManager.h"
+#include "CBrickDebris.h"
 
 static const float BOUNCE_HEIGHT = 5.0f;
 static const float BOUNCE_SPEED = 0.1f;
 
-CBrick::CBrick(float x, float y, const std::string& aniName, bool isInvisible)
+CBrick::CBrick(float x, float y, const std::string &aniName, bool isInvisible)
     : CBlock(x, y), state(EBrickState::IDLE), aniName(aniName), bounceStartY(y), isInvisible(isInvisible)
 {
 }
@@ -21,7 +24,7 @@ void CBrick::Render()
     CAnimations::GetInstance()->Render(aniName, x, y);
 }
 
-void CBrick::GetBoundingBox(float& left, float& bottom, float& right, float& top)
+void CBrick::GetBoundingBox(float &left, float &bottom, float &right, float &top)
 {
     if (state == EBrickState::BROKEN)
     {
@@ -38,7 +41,7 @@ void CBrick::GetBoundingBox(float& left, float& bottom, float& right, float& top
     top = y + BLOCK_H;
 }
 
-void CBrick::OnHitFromBelow(CGameObject* hitter)
+void CBrick::OnHitFromBelow(CGameObject *hitter)
 {
     if (state == EBrickState::BROKEN)
         return;
@@ -51,16 +54,26 @@ void CBrick::OnHitFromBelow(CGameObject* hitter)
 
     if (state == EBrickState::IDLE)
     {
-        CAudioManager::GetInstance()->Play("bump");
-        CMario* mario = dynamic_cast<CMario*>(hitter);
+        CMario *mario = dynamic_cast<CMario *>(hitter);
         if (mario && mario->IsBig())
         {
             state = EBrickState::BROKEN;
+            CAudioManager::GetInstance()->Play("break");
+
+            CPlayScene *playScene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
+            if (playScene)
+            {
+                playScene->AddItem(new CBrickDebris(x + 4.0f, y + 8.0f, -0.04f, 0.12f)); // Trên trái
+                playScene->AddItem(new CBrickDebris(x + 12.0f, y + 8.0f, 0.04f, 0.12f)); // Trên phải
+                playScene->AddItem(new CBrickDebris(x + 4.0f, y + 4.0f, -0.03f, 0.07f)); // Dưới trái
+                playScene->AddItem(new CBrickDebris(x + 12.0f, y + 4.0f, 0.03f, 0.07f)); // Dưới phải
+            }
         }
         else
         {
             state = EBrickState::BOUNCING_UP;
             bounceStartY = y;
+            CAudioManager::GetInstance()->Play("bump");
         }
     }
 }
