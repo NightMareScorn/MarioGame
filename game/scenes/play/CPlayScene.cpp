@@ -5,6 +5,7 @@
 #include "../../../engine/rendering/Camera.h"
 #include "../../../engine/utils/debug.h"
 #include "../../../engine/utils/CScoreManager.h"
+#include "../../../engine/audio/CAudioManager.h"
 #include "../../entities/blocks/CPipe.h"
 #include "../../entities/items/CFireBall.h"
 #include "../../entities/items/CFireFlower.h"
@@ -14,14 +15,12 @@
 #include "../../registry/CResourceRegistry.h"
 #include <algorithm>
 
-
-
 void CPlayScene::Load()
 {
     Load(levelPath);
 }
 
-void CPlayScene::Load(const std::string& mapPath)
+void CPlayScene::Load(const std::string &mapPath)
 {
     scene = this; // Gán con trỏ scene toàn cục
     auto registry = CResourceRegistry::GetInstance();
@@ -43,10 +42,12 @@ void CPlayScene::Load(const std::string& mapPath)
     }
 
     CCamera::GetInstance()->SetCamPos(0, 0);
-    CCamera::GetInstance()->SetMapWidth(0); 
+    CCamera::GetInstance()->SetMapWidth(0);
 
     DebugOut(L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
              mapPath.c_str(), (int)blocks.size(), (int)decors.size());
+
+    CAudioManager::GetInstance()->PlayBGM("content/audio/overworld_theme.wav");
 }
 
 void CPlayScene::Update(float dt)
@@ -60,71 +61,92 @@ void CPlayScene::Update(float dt)
         return;
     }
 
-    if (!mario) return;
+    if (!mario)
+        return;
 
     // --- LOGIC HỒI SINH KHI CHẾT ---
-    if (mario->IsDeadState()) {
+    if (mario->IsDeadState())
+    {
         mario->Update(dt);
-        if (mario->GetDieTimer() <= 0) {
-            if (CMario::lives > 0) {
+        if (mario->GetDieTimer() <= 0)
+        {
+            if (CMario::lives > 0)
+            {
                 this->TransitionToMap(currentMapPath);
-            } else {
-                CMario::lives = 3; 
-                CMario::hasCheckpoint = false; 
-                this->TransitionToMap("content/levels/level_1_1.csv"); 
+            }
+            else
+            {
+                CMario::lives = 3;
+                CMario::hasCheckpoint = false;
+                this->TransitionToMap("content/levels/level_1_1.csv");
             }
         }
         return;
     }
 
     // --- LOGIC THẮNG MÀN (CỘT CỜ) ---
-    if (goalTimer > 0) {
+    if (goalTimer > 0)
+    {
         goalTimer -= dt;
-        for (auto d : decors) d->Update(dt);
+        for (auto d : decors)
+            d->Update(dt);
 
-        if (mario->GetState() == EMarioState::GOAL_SLIDE) {
-            if (mario->y <= 32.5f) { // Chạm đất
+        if (mario->GetState() == EMarioState::GOAL_SLIDE)
+        {
+            if (mario->y <= 32.5f)
+            { // Chạm đất
                 mario->y = 32.0f;
                 mario->SetState(static_cast<int>(EMarioState::GOAL_WALK));
             }
         }
-        mario->Update(dt); 
+        mario->Update(dt);
         mario->SetOnGround(true);
         CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 
-        if (goalTimer <= 0) {
+        if (goalTimer <= 0)
+        {
             CMario::hasCheckpoint = false;
             // Chuyển sang màn tiếp theo (level 1-2)
             this->TransitionToMap("content/levels/level_1_2_first_half.csv");
         }
-        return; 
+        return;
     }
 
     // 1. HUD logic update (timeLeft)
-    if (timeLeft > 0) {
+    if (timeLeft > 0)
+    {
         timeLeft -= (dt / 1000.0f);
-        if (timeLeft < 0) timeLeft = 0;
+        if (timeLeft < 0)
+            timeLeft = 0;
     }
 
     // Update các entities
-    for (auto b : blocks) b->Update(dt);
-    for (auto e : enemies) e->Update(dt);
-    for (auto i : items) i->Update(dt);
-    for (auto d : decors) d->Update(dt);
+    for (auto b : blocks)
+        b->Update(dt);
+    for (auto e : enemies)
+        e->Update(dt);
+    for (auto i : items)
+        i->Update(dt);
+    for (auto d : decors)
+        d->Update(dt);
 
     // Sync Mario with moving platforms
-    for (auto b : blocks) {
-        if (b->type == "platform") {
+    for (auto b : blocks)
+    {
+        if (b->type == "platform")
+        {
             float ml, mt, mr, mb;
-            mario->GetBoundingBox(ml, mb, mr, mb);
+            mario->GetBoundingBox(ml, mt, mr, mb);
             float pl, pt, pr, pb;
             b->GetBoundingBox(pl, pt, pr, pb);
 
-            if (mr > pl && ml < pr && mb >= pb && mb <= pb + 4.0f && mario->vy <= 0) {
+            if (mr > pl && ml < pr && mb >= pb && mb <= pb + 4.0f && mario->vy <= 0)
+            {
                 mario->x += b->vx * dt;
                 mario->y += b->vy * dt;
-                
-                if (b->vy < 0) {
+
+                if (b->vy < 0)
+                {
                     mario->y = pb + 0.1f;
                     mario->SetOnGround(true);
                 }
@@ -139,7 +161,7 @@ void CPlayScene::Update(float dt)
     auto nearbyEnemies = GetObjectsInRange(mario->x, mario->y, enemies);
     auto nearbyItems = GetObjectsInRange(mario->x, mario->y, items);
 
-    std::vector<CGameObject*> coObjectsForMario;
+    std::vector<CGameObject *> coObjectsForMario;
     coObjectsForMario.reserve(nearbyBlocks.size() + nearbyEnemies.size() + nearbyItems.size());
     coObjectsForMario.insert(coObjectsForMario.end(), nearbyBlocks.begin(), nearbyBlocks.end());
     coObjectsForMario.insert(coObjectsForMario.end(), nearbyEnemies.begin(), nearbyEnemies.end());
@@ -148,14 +170,18 @@ void CPlayScene::Update(float dt)
     CCollision::ResolveCollision(mario, dt, coObjectsForMario);
 
     // --- LOGIC STAR MODE: Chạm vào quái là quái chết ---
-    if (mario->IsStarMode()) {
+    if (mario->IsStarMode())
+    {
         float ml, mb, mr, mt;
         mario->GetBoundingBox(ml, mb, mr, mt);
-        for (auto e : nearbyEnemies) {
-            if (e->IsDead()) continue;
+        for (auto e : nearbyEnemies)
+        {
+            if (e->IsDead())
+                continue;
             float el, eb, er, et;
             e->GetBoundingBox(el, eb, er, et);
-            if (CCollision::CheckAABB({ml, mb, mr, mt}, {el, eb, er, et})) {
+            if (CCollision::CheckAABB({ml, mb, mr, mt}, {el, eb, er, et}))
+            {
                 e->OnStomped();
                 this->AddScore(100);
             }
@@ -163,18 +189,22 @@ void CPlayScene::Update(float dt)
     }
 
     // --- LOGIC FLAGPOLE (CỘT CỜ) ---
-    if (!mario->IsInputLocked()) {
+    if (!mario->IsInputLocked())
+    {
         float ml, mb, mr, mt;
         mario->GetBoundingBox(ml, mb, mr, mt);
-        for (auto d : decors) {
-            if (auto flagpole = dynamic_cast<CFlagpole*>(d)) { 
-                float dl, db, dr, dt_b; 
+        for (auto d : decors)
+        {
+            if (auto flagpole = dynamic_cast<CFlagpole *>(d))
+            {
+                float dl, db, dr, dt_b;
                 flagpole->GetBoundingBox(dl, db, dr, dt_b);
-                if (CCollision::CheckAABB({ml, mb, mr, mt}, {dl, db, dr, dt_b})) {
+                if (CCollision::CheckAABB({ml, mb, mr, mt}, {dl, db, dr, dt_b}))
+                {
                     mario->x = dl - 4.0f;
                     mario->HitGoal();
                     flagpole->SetState(200); // Hạ cờ
-                    goalTimer = 4000.0f; // 4 giây trượt cờ và chạy vào lâu đài
+                    goalTimer = 4000.0f;     // 4 giây trượt cờ và chạy vào lâu đài
                     break;
                 }
             }
@@ -184,49 +214,59 @@ void CPlayScene::Update(float dt)
     // Xử lý collision cho từng enemy
     for (auto e : enemies)
     {
-        if (e->IsDead()) continue;
+        if (e->IsDead())
+            continue;
         float old_vx = e->vx;
 
         auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
         auto enemiesAroundEnemy = GetObjectsInRange(e->x, e->y, enemies);
 
         auto it = std::find(enemiesAroundEnemy.begin(), enemiesAroundEnemy.end(), e);
-        if (it != enemiesAroundEnemy.end()) enemiesAroundEnemy.erase(it);
+        if (it != enemiesAroundEnemy.end())
+            enemiesAroundEnemy.erase(it);
 
-        std::vector<CGameObject*> coObjectsForEnemy = blocksAroundEnemy;
+        std::vector<CGameObject *> coObjectsForEnemy = blocksAroundEnemy;
         coObjectsForEnemy.insert(coObjectsForEnemy.end(), enemiesAroundEnemy.begin(), enemiesAroundEnemy.end());
 
         CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
 
         // Quay đầu nếu đụng tường
-        if (e->vx == 0 && old_vx != 0) {
+        if (e->vx == 0 && old_vx != 0)
+        {
             e->vx = -old_vx;
             e->nx = (e->vx > 0) ? 1 : -1;
         }
 
         // Logic tuần tra: tránh rơi xuống vực thẳm
-        if (e->vy == 0 && e->vx != 0) {
+        if (e->vy == 0 && e->vx != 0)
+        {
             float L, B, R, T;
             e->GetBoundingBox(L, B, R, T);
 
             CCollision::Box sensor;
-            if (e->vx < 0) {
+            if (e->vx < 0)
+            {
                 sensor = CCollision::ToBox(L, B - 4.0f, L + 2.0f, B - 0.5f);
-            } else {
+            }
+            else
+            {
                 sensor = CCollision::ToBox(R - 2.0f, B - 4.0f, R, B - 0.5f);
             }
 
             bool hasFloor = false;
-            for (auto b : blocksAroundEnemy) {
+            for (auto b : blocksAroundEnemy)
+            {
                 float bl, bb, br, bt;
                 b->GetBoundingBox(bl, bb, br, bt);
-                if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt))) {
+                if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt)))
+                {
                     hasFloor = true;
                     break;
                 }
             }
 
-            if (!hasFloor) {
+            if (!hasFloor)
+            {
                 e->vx = -e->vx;
                 e->nx = (e->vx > 0) ? 1 : -1;
             }
@@ -236,8 +276,10 @@ void CPlayScene::Update(float dt)
     // Xử lý collision cho từng item
     for (auto i : items)
     {
-        if (i->IsDead()) continue;
-        if (!dynamic_cast<CFireFlower*>(i) && !dynamic_cast<CFireball*>(i)) {
+        if (i->IsDead())
+            continue;
+        if (!dynamic_cast<CFireFlower *>(i) && !dynamic_cast<CFireball *>(i))
+        {
             auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
             CCollision::ResolveCollision(i, dt, blocksAroundItem);
         }
@@ -246,11 +288,14 @@ void CPlayScene::Update(float dt)
     mario->UpdateState();
 
     // Boundary checks for Mario
-    if (mario->x < 0) mario->x = 0;
-    if (mapWidth > 0 && mario->x > mapWidth - 16) mario->x = mapWidth - 16;
+    if (mario->x < 0)
+        mario->x = 0;
+    if (mapWidth > 0 && mario->x > mapWidth - 16)
+        mario->x = mapWidth - 16;
     mario->SetMapWidth(mapWidth);
 
-    if (mario->y < -64.0f) {
+    if (mario->y < -64.0f)
+    {
         mario->Die();
         return;
     }
@@ -259,7 +304,7 @@ void CPlayScene::Update(float dt)
     auto kb = KeyboardManager::GetInstance();
     if (kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN))
         for (auto b : blocks)
-            if (auto pipe = dynamic_cast<CPipe*>(b))
+            if (auto pipe = dynamic_cast<CPipe *>(b))
                 if (pipe->IsWarpPipe() && pipe->GetEnterDirection() == "down")
                 {
                     float mLeft, mBottom, mRight, mTop;
@@ -282,20 +327,22 @@ void CPlayScene::Update(float dt)
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
 
     // Dọn dẹp items & enemies bị chết
-    items.erase(std::remove_if(items.begin(), items.end(), [](CGameObject* o) { 
+    items.erase(std::remove_if(items.begin(), items.end(), [](CGameObject *o)
+                               { 
         if (o->IsDead()) { delete o; return true; } 
-        return false; 
-    }), items.end());
+        return false; }),
+                items.end());
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](CGameObject* o) { 
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](CGameObject *o)
+                                 { 
         if (o->IsDead()) { delete o; return true; } 
-        return false; 
-    }), enemies.end());
+        return false; }),
+                  enemies.end());
 }
 
 void CPlayScene::Render()
 {
-    ID3DX10Sprite* spriteHandler = CGame::GetInstance()->GetSpriteHandler();
+    ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
 
     // Layer 1: Background
     for (auto d : decors)
@@ -303,19 +350,32 @@ void CPlayScene::Render()
     spriteHandler->Flush();
 
     // Layer 2: blocks, items, enemies, mario
-    for (auto b : blocks) {
+    for (auto b : blocks)
+    {
         bool isForeground = false;
-        for (auto f : foregrounds) {
-            if (f == b) { isForeground = true; break; }
+        for (auto f : foregrounds)
+        {
+            if (f == b)
+            {
+                isForeground = true;
+                break;
+            }
         }
-        if (!isForeground) b->Render();
+        if (!isForeground)
+            b->Render();
     }
-    for (auto i : items) if (!i->IsDead()) i->Render();
-    for (auto e : enemies) if (!e->IsDead()) e->Render();
-    if (mario) mario->Render();
+    for (auto i : items)
+        if (!i->IsDead())
+            i->Render();
+    for (auto e : enemies)
+        if (!e->IsDead())
+            e->Render();
+    if (mario)
+        mario->Render();
 
     // Layer 3: Foreground
-    for (auto f : foregrounds) f->Render();
+    for (auto f : foregrounds)
+        f->Render();
 }
 
 void CPlayScene::Unload()
@@ -323,12 +383,19 @@ void CPlayScene::Unload()
     delete mario;
     mario = nullptr;
 
-    for (auto b : blocks) {
+    for (auto b : blocks)
+    {
         bool inForegrounds = false;
-        for (auto f : foregrounds) {
-            if (f == b) { inForegrounds = true; break; }
+        for (auto f : foregrounds)
+        {
+            if (f == b)
+            {
+                inForegrounds = true;
+                break;
+            }
         }
-        if (!inForegrounds) delete b;
+        if (!inForegrounds)
+            delete b;
     }
     blocks.clear();
 
@@ -344,6 +411,9 @@ void CPlayScene::Unload()
         delete i;
     items.clear();
 
-    for (auto f : foregrounds) delete f;
+    for (auto f : foregrounds)
+        delete f;
     foregrounds.clear();
+
+    CAudioManager::GetInstance()->StopBGM();
 }
