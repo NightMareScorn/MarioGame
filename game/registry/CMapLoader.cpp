@@ -13,6 +13,8 @@
 #include "../entities/enemies/CBowser.h"
 #include "../entities/enemies/CFireBar.h"
 #include "../entities/enemies/CPodoboo.h"
+#include "../entities/enemies/CBlooper.h"
+#include "../entities/enemies/CPiranhaPlant.h"
 #include "../entities/items/CMushroom.h"
 #include "../entities/items/CStar.h"
 #include "../entities/items/CFireFlower.h"
@@ -354,6 +356,22 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string> &lines, CPlaySce
                 scene->decors.push_back(new CDecorBlock(x, y, "ANI_WHITE_PILLAR"));
                 break;
 
+            case 50:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_GREEN_GROUND_BRICK"));
+                break;
+            case 51:
+                scene->blocks.push_back(new CBrick(x, y, "ANI_GREEN_BREAKABLE_BRICK"));
+                break;
+            case 52:
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_RED_CORAL"));
+                break;
+            case 53:
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_WATER_WAVE_TOP"));
+                break;
+            case 54:
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_WATER_WAVE_BODY"));
+                break;
+
             case 138: // Used Lucky Block
             {
                 scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
@@ -506,6 +524,16 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
         spawnedObj = new CPodoboo(x, y);
         scene->enemies.push_back(spawnedObj);
     }
+    else if (type == "blooper")
+    {
+        spawnedObj = new CBlooper(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
+    else if (type == "piranha")
+    {
+        spawnedObj = new CPiranhaPlant(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
     else if (type == "platform" || type == "moving_platform")
     {
         float dir = 1.0f;
@@ -583,7 +611,13 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
         if (pipeHeight <= 0)
             pipeHeight = 32.0f; // Minimum fallback height
 
-        scene->blocks.push_back(new CPipe(x, pipeBottomY, 32.0f, pipeHeight, "ANI_PIPE_UPWARDS_ASSEMBLED", dest_map, enter_direction));
+        std::string pipeAni = "ANI_PIPE_UPWARDS_ASSEMBLED";
+        if (enter_direction == "right")
+        {
+            pipeAni = "ANI_PIPE_2WAYS_ASSEMBLED";
+            pipeHeight = 64.0f;
+        }
+        scene->blocks.push_back(new CPipe(x, pipeBottomY, 32.0f, pipeHeight, pipeAni, dest_map, enter_direction));
     }
     // Decorative background objects — no collision
     else if (type == "hill_small")
