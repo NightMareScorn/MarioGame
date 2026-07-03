@@ -468,6 +468,10 @@ void CPlayScene::Render()
     spriteHandler->Flush();
 
     // Layer 2: blocks, items, enemies, mario
+    for (auto i : items)
+        if (!i->IsDead())
+            i->Render();
+    spriteHandler->Flush();
     for (auto b : blocks)
     {
         bool isForeground = false;
@@ -482,9 +486,6 @@ void CPlayScene::Render()
         if (!isForeground)
             b->Render();
     }
-    for (auto i : items)
-        if (!i->IsDead())
-            i->Render();
     for (auto e : enemies)
         if (!e->IsDead())
             e->Render();

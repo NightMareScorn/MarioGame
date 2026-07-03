@@ -6,18 +6,22 @@
 
 #define FLOWER_STATE_HIDDEN 100
 #define FLOWER_STATE_VISIBLE 200
+#define FLOWER_STATE_EMERGING 150
 
 // Fire Flower power-up item. Stays stationary after emerging from a Lucky Block.
-class CFireFlower : public CGameObject {
+class CFireFlower : public CGameObject
+{
     int state;
+
 public:
+    float startY;
     CFireFlower(float x, float y);
     void Update(float dt) override;
     void Render() override;
-    void GetBoundingBox(float& left, float& bottom, float& right, float& top) override;
+    void GetBoundingBox(float &left, float &bottom, float &right, float &top) override;
     void SetState(int s);
-    bool IsBlocking(CGameObject* other) override { return false; }
+    bool IsBlocking(CGameObject *other) override { return false; }
     bool IsItem() const override { return true; }
-    void OnCollisionX(CGameObject* other, float nx) override;
-    void OnCollisionY(CGameObject* other, float ny) override;
+    void OnCollisionX(CGameObject *other, float nx) override;
+    void OnCollisionY(CGameObject *other, float ny) override;
 };
