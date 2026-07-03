@@ -126,6 +126,10 @@ void CPlayScene::Update(float dt)
             return "content/levels/level_1_3.csv";
         if (levelPath.find("level_1_3.csv") != std::string::npos)
             return "content/levels/level_1_4.csv";
+        if (levelPath.find("level_1_4.csv") != std::string::npos)
+            return "content/levels/level_2_1.csv";
+        if (levelPath.find("level_2_1.csv") != std::string::npos)
+            return "content/levels/level_2_2.csv";
         if (levelPath.find("level_2_2_second_half.csv") != std::string::npos)
             return "content/levels/level_2_3.csv";
         if (levelPath.find("level_2_3.csv") != std::string::npos)
@@ -279,8 +283,6 @@ void CPlayScene::Update(float dt)
                 flagpole->GetBoundingBox(dl, db, dr, dt_b);
                 if (CCollision::CheckAABB({ml, mb, mr, mt}, {dl, db, dr, dt_b}))
                 {
-                    if (mb < db + 12.0f)
-                        continue;
                     mario->x = dl - 4.0f;
                     mario->HitGoal();
                     flagpole->SetState(200); // Hạ cờ
@@ -343,7 +345,6 @@ void CPlayScene::Update(float dt)
     }
 
     // Logic đi vào ống nước: hỗ trợ ống dọc và miệng cống ngang
-    auto kb = KeyboardManager::GetInstance();
     bool pressDown = kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN);
     bool pressRight = kb->IsKeyPressed('D') || kb->IsKeyPressed(VK_RIGHT);
     for (auto b : blocks)

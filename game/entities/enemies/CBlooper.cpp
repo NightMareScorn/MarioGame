@@ -23,8 +23,8 @@ void CBlooper::Update(float dt) {
         vy = 0.045f;
         CPlayScene* scene = (CPlayScene*)CSceneManager::GetInstance()->GetCurrentScene();
         if (scene && scene->GetPlayer()) {
-            nx = (scene->GetPlayer()->x < x) ? 1 : -1;
-            vx = (nx == 1) ? -0.035f : 0.035f;
+            nx = (scene->GetPlayer()->x < x) ? -1 : 1;
+            vx = (nx == -1) ? -0.035f : 0.035f;
         }
         timer += dt;
         if (timer >= 700.0f) {

@@ -7,6 +7,7 @@ class CPlatform : public CBridge {
     float direction;
     float speed;
     bool isVertical;
+    float startX;
 public:
     CPlatform(float x, float y, float dir = 1.0f) : CBridge(x, y, "ANI_MOVING_PLATFORM") {
         this->type = "platform";
@@ -14,6 +15,7 @@ public:
         this->direction = dir;
         this->speed = 0.05f;
         this->isVertical = true;
+        this->startX = -1.0f;
     }
     void SetSpeed(float s) { speed = s; }
     void SetIsVertical(bool v) { isVertical = v; }
