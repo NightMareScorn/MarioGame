@@ -13,6 +13,7 @@
 #include "../../entities/blocks/CFlagpole.h"
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
+#include "../../../engine/rendering/Textures.h"
 #include <algorithm>
 
 void CPlayScene::Load()
@@ -52,6 +53,59 @@ void CPlayScene::Load(const std::string &mapPath)
 
 void CPlayScene::Update(float dt)
 {
+    if (isGameOver)
+    {
+        if (KeyboardManager::GetInstance()->IsKeyPressed(VK_RETURN))
+        {
+            CMario::lives = 3;
+            CMario::hasCheckpoint = false;
+            CMario::currentPower = EMarioPower::SMALL;
+            CGame::GetInstance()->SetExitLevel(true);
+        }
+        return;
+    }
+
+    auto kb = KeyboardManager::GetInstance();
+
+    if (kb->IsKeyPressed('P') || kb->IsKeyPressed('p'))
+    {
+        isPaused = !isPaused;
+        if (isPaused)
+        {
+            mciSendStringA("pause bgm", NULL, 0, NULL); // Tạm dừng nhạc nền
+        }
+        else
+        {
+            mciSendStringA("resume bgm", NULL, 0, NULL); // Phát tiếp nhạc nền
+        }
+    }
+
+    if (isPaused)
+    {
+        if (kb->IsKeyPressed(VK_UP))
+        {
+            pauseSelection = 0; // Mute Game
+        }
+        else if (kb->IsKeyPressed(VK_DOWN))
+        {
+            pauseSelection = 1; // Back to Main Menu
+        }
+        if (kb->IsKeyPressed(VK_RETURN))
+        {
+            if (pauseSelection == 0)
+            {
+                bool newMute = !CAudioManager::GetInstance()->IsMuted();
+                CAudioManager::GetInstance()->SetMute(newMute);
+            }
+            else if (pauseSelection == 1)
+            {
+                isPaused = false;
+                CGame::GetInstance()->SetExitLevel(true);
+            }
+        }
+        return;
+    }
+
     // Chuyển map pending
     if (!pendingMapPath.empty())
     {
@@ -91,9 +145,9 @@ void CPlayScene::Update(float dt)
             }
             else
             {
-                CMario::lives = 3;
-                CMario::hasCheckpoint = false;
-                this->TransitionToMap("content/levels/level_1_1.csv");
+                isGameOver = true;
+                CAudioManager::GetInstance()->StopBGM();
+                CAudioManager::GetInstance()->Stop();
             }
         }
         return;
@@ -262,41 +316,6 @@ void CPlayScene::Update(float dt)
             e->vx = -old_vx;
             e->nx = (e->vx > 0) ? 1 : -1;
         }
-
-        // Logic tuần tra: tránh rơi xuống vực thẳm
-        if (e->vy == 0 && e->vx != 0)
-        {
-            float L, B, R, T;
-            e->GetBoundingBox(L, B, R, T);
-
-            CCollision::Box sensor;
-            if (e->vx < 0)
-            {
-                sensor = CCollision::ToBox(L, B - 4.0f, L + 2.0f, B - 0.5f);
-            }
-            else
-            {
-                sensor = CCollision::ToBox(R - 2.0f, B - 4.0f, R, B - 0.5f);
-            }
-
-            bool hasFloor = false;
-            for (auto b : blocksAroundEnemy)
-            {
-                float bl, bb, br, bt;
-                b->GetBoundingBox(bl, bb, br, bt);
-                if (CCollision::CheckAABB(sensor, CCollision::ToBox(bl, bb, br, bt)))
-                {
-                    hasFloor = true;
-                    break;
-                }
-            }
-
-            if (!hasFloor)
-            {
-                e->vx = -e->vx;
-                e->nx = (e->vx > 0) ? 1 : -1;
-            }
-        }
     }
 
     // Xử lý collision cho từng item
@@ -313,9 +332,6 @@ void CPlayScene::Update(float dt)
 
     mario->UpdateState();
 
-    // Boundary checks for Mario
-    if (mario->x < 0)
-        mario->x = 0;
     if (mapWidth > 0 && mario->x > mapWidth - 16)
         mario->x = mapWidth - 16;
     mario->SetMapWidth(mapWidth);
@@ -384,7 +400,7 @@ void CPlayScene::Update(float dt)
         return false; }),
                   enemies.end());
 
-    // Dọn dẹp blocks bị chết (ví dụ: gạch cầu bị sập)
+    // Dọn dẹp blocks bị chết (víду: gạch cầu bị sập)
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](CBlock *o)
                                 { 
         if (o->IsDead()) { delete o; return true; } 
@@ -394,6 +410,56 @@ void CPlayScene::Update(float dt)
 
 void CPlayScene::Render()
 {
+    if (isGameOver)
+    {
+        CGame *g = CGame::GetInstance();
+
+        float camX, camY;
+        CCamera::GetInstance()->GetCamPos(camX, camY);
+
+        auto dummyTex = CTextures::GetInstance()->Get(2);
+        g->Draw(camX, camY, dummyTex, 0, 16, 1, 17, 1.0f, g->GetViewportWidth(), g->GetViewportHeight(), D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f));
+        // Game Over text
+        RECT rectGameOver = {0, 200, g->GetBackBufferWidth(), 260};
+        g->DrawTextRaw(L"GAME OVER", rectGameOver, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        // Enter to return to menu text
+        RECT rectHelp = {0, 300, g->GetBackBufferWidth(), 340};
+        g->DrawTextRaw(L"Press Enter to Back to Main Menu", rectHelp, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
+    if (isPaused)
+    {
+        CGame *g = CGame::GetInstance();
+
+        int bufferWidth = g->GetBackBufferWidth();
+        RECT rectPause;
+        rectPause.left = 0;
+        rectPause.right = bufferWidth;
+        rectPause.top = 80;
+        rectPause.bottom = 120;
+        g->DrawTextRaw(L"GAME PAUSED", rectPause, D3DXCOLOR(1.0f, 1.0f, 0.0f, 1.0f));
+
+        bool isMuted = CAudioManager::GetInstance()->IsMuted();
+        std::wstring muteText = isMuted ? L"MUTED GAME" : L"MUTE GAME";
+        std::wstring muteOption = (pauseSelection == 0) ? (L"> " + muteText + L" <") : (L"  " + muteText + L"  ");
+        RECT rectMute;
+        rectMute.left = 0;
+        rectMute.right = bufferWidth;
+        rectMute.top = 160;
+        rectMute.bottom = 190;
+        g->DrawTextRaw(muteOption.c_str(), rectMute, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        std::wstring menuOption = (pauseSelection == 1) ? L"> BACK TO MAIN MENU <" : L"  BACK TO MAIN MENU  ";
+        RECT rectMenu;
+        rectMenu.left = 0;
+        rectMenu.right = bufferWidth;
+        rectMenu.top = 220;
+        rectMenu.bottom = 250;
+        g->DrawTextRaw(menuOption.c_str(), rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
     ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
 
     // Layer 1: Background

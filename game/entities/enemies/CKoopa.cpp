@@ -63,7 +63,7 @@ void CKoopa::Render()
     {
         ani = "ANI_KOOPA_SHELL";
     }
-    CAnimations::GetInstance()->Render(ani, x, y, nx);
+    CAnimations::GetInstance()->Render(ani, x, y, -nx);
 }
 
 void CKoopa::GetBoundingBox(float &left, float &bottom, float &right, float &top)
