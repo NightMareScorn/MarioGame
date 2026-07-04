@@ -13,6 +13,7 @@ class CDecorBlock : public CGameObject {
 public:
     CDecorBlock(float x, float y, std::string aniName);
     void SetDrifting(bool d) { isDrifting = d; baseX = x; }
+    std::string GetAniName() const { return aniName; }
     virtual bool IsSolid() override { return false; }
     void Update(float dt) override;
     void Render() override;

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "../../game/scenes/CSceneManager.h"
 #include "../../game/scenes/play/CPlayScene.h"
+#include "../audio/CAudioManager.h"
 
 CPlayScene *scene = nullptr;
 static std::string selectedLevel = "content/levels/level_1_1.csv";
@@ -152,6 +153,7 @@ int Run(std::string level)
     selectedLevel = level;
     MSG msg;
     int done = 0;
+    bool exitedViaQuit = false;
 
     CTimer time(60.0f);
 
@@ -160,7 +162,10 @@ int Run(std::string level)
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             if (msg.message == WM_QUIT)
+            {
                 done = 1;
+                exitedViaQuit = true;
+            }
 
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -184,6 +189,12 @@ int Run(std::string level)
 
     CSceneManager::GetInstance()->SetScene(nullptr);
     scene = nullptr;
+    CAudioManager::GetInstance()->StopBGM();
+
+    if (exitedViaQuit)
+    {
+        PostQuitMessage(0);
+    }
 
     return 1;
 }

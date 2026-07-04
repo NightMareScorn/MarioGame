@@ -6,6 +6,16 @@
 #include "../../entities/player/CMario.h"
 #include "../../entities/blocks/CBlock.h"
 
+enum class ECastleClearState
+{
+    NONE,
+    BRIDGE_COLLAPSING,
+    BOWSER_FALLING,
+    MARIO_WALKING_TO_TOAD,
+    TOAD_TALKING,
+    FINISHED
+};
+
 class CPlayScene : public CScene
 {
     friend class CMapLoader;
@@ -37,6 +47,14 @@ class CPlayScene : public CScene
 
     // Game over
     bool isGameOver = false;
+
+    // Castle clear animation state
+    ECastleClearState castleClearState = ECastleClearState::NONE;
+    float castleClearTimer = 0.0f;
+    std::vector<class CBridge *> bridgeBlocks;
+    size_t nextBridgeBlockIndex = 0;
+    class CDecorBlock *toadNPC = nullptr;
+    float toadTextTimer = 0.0f;
 
 public:
     CPlayScene::CPlayScene(std::string levelPath) : levelPath(levelPath)
@@ -79,6 +97,7 @@ public:
     void AddItem(CGameObject *item) { items.push_back(item); }
     void AddEnemy(CGameObject *enemy) { pendingEnemies.push_back(enemy); }
     std::string GetCurrentMapPath() const { return currentMapPath; }
+    ECastleClearState GetCastleClearState() const { return castleClearState; }
     CMario *GetPlayer() { return mario; }
     std::string GetTheme() const { return theme; }
 

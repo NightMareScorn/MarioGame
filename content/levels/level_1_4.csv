@@ -36,6 +36,6 @@ bowser_fireball,2032,128,
 
 moving_platform,2208,101,direction=horizontal,speed=0.05,
 bowser,2176,144,
-npc_toad,2448,64,
+npc_toad,2448,187,
 
 axe,2320,144,

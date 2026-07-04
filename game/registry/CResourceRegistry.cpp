@@ -125,6 +125,11 @@ void CResourceRegistry::LoadResourcesForPlayScene() {
     audio->LoadSound("fireball", "content/audio/fireball.wav");
     audio->LoadSound("pipe", "content/audio/pipe.wav");
     audio->LoadSound("stage_clear", "content/audio/stage_clear.wav");
+    audio->LoadSound("bowserfalls", "content/audio/bowserfalls.wav");
+    audio->LoadSound("world_clear", "content/audio/world_clear.wav");
+    audio->LoadSound("castle_theme", "content/audio/castle_theme.wav");
+    audio->LoadSound("underworld_theme", "content/audio/underworld_theme.wav");
+    audio->LoadSound("overworld_theme", "content/audio/overworld_theme.wav");
 
     DebugOut(L"[INFO] PlayScene resources loading complete.\n");
 }

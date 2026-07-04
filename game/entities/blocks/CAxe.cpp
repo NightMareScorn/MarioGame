@@ -1,24 +1,50 @@
 #include "CAxe.h"
 #include "../../scenes/play/CPlayScene.h"
-#include "CCastleBridge.h"
+#include "CBridge.h"
+#include "CDecorBlock.h"
+#include "../enemies/CBowser.h"
 #include "../../../engine/audio/CAudioManager.h"
 #include "../../../engine/core/Game.h"
 #include "../../registry/CResourceRegistry.h"
+#include <algorithm>
 
 void CAxe::OnCollision(CGameObject *obj)
 {
     if (auto mario = dynamic_cast<CMario *>(obj))
     {
-        // 1. Tắt nhạc nền lâu đài và phát nhạc thắng màn
+        // 1. Tắt nhạc nền lâu đài và phát nhạc thắng màn world_clear.wav
         CAudioManager::GetInstance()->StopBGM();
-        CAudioManager::GetInstance()->Play("stage_clear");
+        CAudioManager::GetInstance()->PlayBGM("content/audio/world_clear.wav");
 
-        // 2. Kích hoạt sập cầu bằng cách đánh dấu xóa các block CCastleBridge
+        // 2. Kích hoạt sập cầu bằng cách thu thập và sắp xếp các block CCastleBridge
+        scene->castleClearState = ECastleClearState::BRIDGE_COLLAPSING;
+        scene->castleClearTimer = 0.0f;
+        scene->bridgeBlocks.clear();
+
         for (auto b : scene->blocks)
         {
-            if (auto bridge = dynamic_cast<CCastleBridge *>(b))
+            if (auto bridge = dynamic_cast<CBridge *>(b))
             {
-                bridge->SetIsDead(true); // Đánh dấu chết để CPlayScene::Update xóa
+                // Chỉ lấy cầu sắt lâu đài (ANI_WHITE_RED_STEEL_BRIDGE)
+                if (bridge->GetAniName() == "ANI_WHITE_RED_STEEL_BRIDGE")
+                    scene->bridgeBlocks.push_back(bridge);
+            }
+        }
+
+        // Sắp xếp các block cầu từ trái qua phải (theo trục x tăng dần)
+        std::sort(scene->bridgeBlocks.begin(), scene->bridgeBlocks.end(), [](CBridge *a, CBridge *b)
+                  { return a->x < b->x; });
+        scene->nextBridgeBlockIndex = 0;
+
+        // 2b. Đứt xích (ANI_CHAIN)
+        for (auto d : scene->decors)
+        {
+            if (auto decor = dynamic_cast<CDecorBlock *>(d))
+            {
+                if (decor->GetAniName() == "ANI_CHAIN")
+                {
+                    decor->SetIsDead(true);
+                }
             }
         }
 
@@ -27,10 +53,7 @@ void CAxe::OnCollision(CGameObject *obj)
         mario->vx = 0.0f;
         mario->vy = 0.0f;
 
-        // 4. Kích hoạt đếm ngược thắng màn để tự động chuyển tiếp sang World tiếp theo
-        scene->goalTimer = 6000.0f;
-
-        // 5. Ẩn rìu
+        // 4. Ẩn rìu
         this->SetIsDead(true);
     }
 }

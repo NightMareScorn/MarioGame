@@ -43,11 +43,35 @@ void CCastleBridge::Render()
 
 void CBowser::Update(float dt)
 {
+    CPlayScene *playScene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
+    if (playScene && playScene->GetCastleClearState() != ECastleClearState::NONE)
+    {
+        if (playScene->GetCastleClearState() == ECastleClearState::BRIDGE_COLLAPSING)
+        {
+            vx = 0.0f;
+            vy = 0.0f;
+            return;
+        }
+        else if (playScene->GetCastleClearState() == ECastleClearState::BOWSER_FALLING)
+        {
+            vx = 0.0f;
+            vy += -0.0005f * dt;
+            x += vx * dt;
+            y += vy * dt;
+            return;
+        }
+        else
+        {
+            vx = 0.0f;
+            vy = 0.0f;
+            return;
+        }
+    }
+
     // Áp dụng trọng lực nhẹ cho Bowser
     vy += -0.0005f * dt;
 
     // Hướng khuôn mặt Bowser luôn nhìn về phía Mario
-    CPlayScene *playScene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
     CMario *mario = playScene ? playScene->GetPlayer() : nullptr;
     if (mario)
     {

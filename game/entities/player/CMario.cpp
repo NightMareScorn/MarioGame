@@ -267,6 +267,7 @@ void CMario::Die()
     vx = 0;
     vy = MarioConfig::JUMP_FORCE;
     dieTimer = 2000.0f;
+    CAudioManager::GetInstance()->StopBGM();
     CAudioManager::GetInstance()->Play("die");
 }
 

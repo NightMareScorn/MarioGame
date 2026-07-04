@@ -11,6 +11,8 @@
 #include "../../entities/items/CFireFlower.h"
 #include "../../entities/items/CMushroom.h"
 #include "../../entities/blocks/CFlagpole.h"
+#include "../../entities/blocks/CDecorBlock.h"
+#include "../../entities/blocks/CBridge.h"
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
 #include "../../../engine/rendering/Textures.h"
@@ -24,6 +26,9 @@ void CPlayScene::Load()
 
 void CPlayScene::Load(const std::string &mapPath)
 {
+    // Reset background clear color to default NES sky blue
+    this->SetClearColor(D3DXCOLOR(92.0f / 255, 148.0f / 255, 252.0f / 255, 1.0f));
+
     scene = this; // Gán con trỏ scene toàn cục
     auto registry = CResourceRegistry::GetInstance();
     registry->LoadResourcesForPlayScene();
@@ -50,7 +55,20 @@ void CPlayScene::Load(const std::string &mapPath)
     DebugOut(L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
              mapPath.c_str(), (int)blocks.size(), (int)decors.size());
 
-    CAudioManager::GetInstance()->PlayBGM("content/audio/overworld_theme.wav");
+    std::string bgmPath = "content/audio/overworld_theme.wav";
+    if (mapPath.find("level_1_4.csv") != std::string::npos ||
+        mapPath.find("level_2_4.csv") != std::string::npos)
+    {
+        bgmPath = "content/audio/castle_theme.wav";
+    }
+    else if (mapPath.find("level_1_2") != std::string::npos ||
+             mapPath.find("level_1_1_hidden.csv") != std::string::npos ||
+             mapPath.find("level_2_1_hidden.csv") != std::string::npos ||
+             mapPath.find("level_2_2_hidden.csv") != std::string::npos)
+    {
+        bgmPath = "content/audio/underworld_theme.wav";
+    }
+    CAudioManager::GetInstance()->PlayBGM(bgmPath);
 }
 
 static bool IsInCameraView(float x, float y, float paddingX = 64.0f, float paddingY = 64.0f)
@@ -178,7 +196,8 @@ void CPlayScene::Update(float dt)
     }
 
     // --- LOGIC THẮNG MÀN (CỘT CỜ) ---
-    if (goalTimer > 0)
+    // Bỏ qua goalTimer nếu đang chạy hoạt cảnh lâu đài (castle clear)
+    if (goalTimer > 0 && castleClearState == ECastleClearState::NONE)
     {
         goalTimer -= dt;
         for (auto d : decors)
@@ -210,7 +229,6 @@ void CPlayScene::Update(float dt)
         if (goalTimer <= 0)
         {
             CMario::hasCheckpoint = false;
-            CMario::currentPower = EMarioPower::SMALL;
             std::string nextLevel = ResolveNextGoalMap();
 
             if (nextLevel.empty())
@@ -424,6 +442,20 @@ void CPlayScene::Update(float dt)
                           mRight >= pLeft - 2.0f && mRight <= pLeft + 4.0f &&
                           mTop > pBottom && mBottom < pTop;
         }
+        else if (pipe->GetEnterDirection() == "up")
+        {
+            bool pressUp = kb->IsKeyPressed('W') || kb->IsKeyPressed(VK_UP);
+            shouldEnter = pressUp &&
+                          mTop >= pBottom - 2.0f && mTop <= pBottom + 2.0f &&
+                          mLeft < pRight && mRight > pLeft;
+        }
+        else if (pipe->GetEnterDirection() == "left")
+        {
+            bool pressLeft = kb->IsKeyPressed('A') || kb->IsKeyPressed(VK_LEFT);
+            shouldEnter = pressLeft &&
+                          mLeft >= pRight - 4.0f && mLeft <= pRight + 2.0f &&
+                          mTop > pBottom && mBottom < pTop;
+        }
 
         if (shouldEnter)
         {
@@ -435,6 +467,118 @@ void CPlayScene::Update(float dt)
             std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
             TransitionToMap(dest);
             break;
+        }
+    }
+
+    // --- LOGIC HOẠT CẢNH THẮNG MÀN LÂU ĐÀI (CASTLE CLEAR STATE MACHINE) ---
+    if (castleClearState != ECastleClearState::NONE)
+    {
+        castleClearTimer += dt;
+        if (castleClearState == ECastleClearState::BRIDGE_COLLAPSING)
+        {
+            // Sập từng block cầu mỗi 150ms
+            if (castleClearTimer >= 150.0f)
+            {
+                castleClearTimer = 0.0f;
+                if (nextBridgeBlockIndex < bridgeBlocks.size())
+                {
+                    bridgeBlocks[nextBridgeBlockIndex]->SetIsDead(true);
+                    CAudioManager::GetInstance()->Play("break");
+                    nextBridgeBlockIndex++;
+                }
+                else
+                {
+                    // Đã sập hết cầu, chuyển sang trạng thái Bowser rơi xuống hồ
+                    castleClearState = ECastleClearState::BOWSER_FALLING;
+                }
+            }
+        }
+        else if (castleClearState == ECastleClearState::BOWSER_FALLING)
+        {
+            // Tìm Bowser để kiểm tra cao độ
+            CGameObject *bowser = nullptr;
+            for (auto e : enemies)
+            {
+                if (e->type == "bowser")
+                {
+                    bowser = e;
+                    break;
+                }
+            }
+
+            if (bowser)
+            {
+                // Khi Bowser rơi xuống dưới hố
+                if (bowser->y < -64.0f)
+                {
+                    bowser->SetIsDead(true);
+                    CAudioManager::GetInstance()->Play("bowserfalls");
+
+                    // Chuyển sang trạng thái Mario đi bộ đến chỗ Toad
+                    castleClearState = ECastleClearState::MARIO_WALKING_TO_TOAD;
+                    mario->SetInputLocked(true);
+                    mario->vx = 0.05f; // Mario tự động đi bộ sang phải
+                    mario->vy = 0.0f;
+                }
+            }
+            else
+            {
+                // Phòng trường hợp không tìm thấy Bowser, chuyển tiếp luôn
+                castleClearState = ECastleClearState::MARIO_WALKING_TO_TOAD;
+                mario->SetInputLocked(true);
+                mario->vx = 0.05f;
+                mario->vy = 0.0f;
+            }
+        }
+        else if (castleClearState == ECastleClearState::MARIO_WALKING_TO_TOAD)
+        {
+            mario->SetInputLocked(true);
+            mario->vx = 0.05f; // Luôn giữ Mario đi bộ sang phải
+            mario->vy = 0.0f;
+
+            // Tìm Toad NPC trong danh sách decors
+            if (!toadNPC)
+            {
+                for (auto d : decors)
+                {
+                    if (auto decor = dynamic_cast<CDecorBlock *>(d))
+                    {
+                        if (decor->GetAniName() == "ANI_NPC_TOAD")
+                        {
+                            toadNPC = decor;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (toadNPC)
+            {
+                // Nếu Mario đi gần sát Toad (khoảng cách 24px)
+                if (mario->x >= toadNPC->x - 24.0f)
+                {
+                    mario->vx = 0.0f; // Dừng Mario
+                    castleClearState = ECastleClearState::TOAD_TALKING;
+                    toadTextTimer = 0.0f;
+                }
+            }
+        }
+        else if (castleClearState == ECastleClearState::TOAD_TALKING)
+        {
+            mario->vx = 0.0f;
+            mario->vy = 0.0f;
+            toadTextTimer += dt;
+            if (toadTextTimer >= 5000.0f) // Hiển thị 5 giây
+            {
+                castleClearState = ECastleClearState::FINISHED;
+            }
+        }
+        else if (castleClearState == ECastleClearState::FINISHED)
+        {
+            CMario::currentPower = EMarioPower::SMALL;
+            CGame::GetInstance()->SetExitLevel(true);
+            castleClearState = ECastleClearState::NONE;
+            return;
         }
     }
 
@@ -454,12 +598,27 @@ void CPlayScene::Update(float dt)
         return false; }),
                   enemies.end());
 
-    // Dọn dẹp blocks bị chết (víду: gạch cầu bị sập)
+    // Trước tiên: xóa tham chiếu dead block khỏi foregrounds để tránh dangling pointer
+    // (blocks và foregrounds cùng trỏ đến đối tượng, nếu delete trong blocks trước
+    //  thì foregrounds giữ địa chỉ rác → crash khi Render gọi f->Render())
+    foregrounds.erase(std::remove_if(foregrounds.begin(), foregrounds.end(),
+                                     [](CGameObject *o)
+                                     { return o->IsDead(); }),
+                      foregrounds.end());
+
+    // Sau đó mới delete + xóa khỏi blocks
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](CBlock *o)
                                 { 
         if (o->IsDead()) { delete o; return true; } 
         return false; }),
                  blocks.end());
+
+    // Dọn dẹp decors bị chết (ví dụ: dây xích bị đứt)
+    decors.erase(std::remove_if(decors.begin(), decors.end(), [](CGameObject *o)
+                                { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                 decors.end());
 
     if (!pendingEnemies.empty())
     {
@@ -513,6 +672,34 @@ void CPlayScene::Render()
         rectMenu.top = 220;
         rectMenu.bottom = 250;
         g->DrawTextRaw(menuOption.c_str(), rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
+    // --- VẼ HỘI THOẠI CỦA TOAD ---
+    if (castleClearState == ECastleClearState::TOAD_TALKING && toadNPC)
+    {
+        CGame *g = CGame::GetInstance();
+        float cx, cy;
+        CCamera::GetInstance()->GetCamPos(cx, cy);
+
+        // Đổi tọa độ Toad sang tọa độ màn hình GDI
+        float screenX = toadNPC->x - cx;
+        float screenY = toadNPC->y - cy;
+
+        // Trong game, 0 là đáy và 240 là đỉnh. GDI ngược lại (0 là đỉnh).
+        float gdiY = 240.0f - (toadNPC->y + 24.0f); // 24px là chiều cao của Toad
+
+        float finalX = g->GetRenderOffsetX() + screenX * g->GetRenderScale();
+        float finalY = g->GetRenderOffsetY() + gdiY * g->GetRenderScale();
+
+        RECT rectText;
+        rectText.left = (int)(finalX + 8.0f * g->GetRenderScale() - 150);
+        rectText.right = (int)(finalX + 8.0f * g->GetRenderScale() + 150);
+        rectText.top = (int)(finalY - 50.0f * g->GetRenderScale());
+        rectText.bottom = (int)(finalY - 10.0f * g->GetRenderScale());
+
+        g->DrawTextRaw(L"Thank you Mario!\nBut our princess is in another castle!", rectText, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        // Stop further rendering to avoid overlap
         return;
     }
 
@@ -593,6 +780,7 @@ void CPlayScene::Unload()
     for (auto f : foregrounds)
         delete f;
     foregrounds.clear();
+    bridgeBlocks.clear();
 
-    CAudioManager::GetInstance()->StopBGM();
+    // CAudioManager::GetInstance()->StopBGM(); // keep win sound playing
 }
