@@ -34,6 +34,7 @@ class CPlayScene : public CScene
 
     std::string currentMapPath;
     std::string pendingMapPath;
+    std::string pendingDestPipe;
     float goalTimer = 0.0f;
 
     // HUD stats
@@ -66,7 +67,7 @@ public:
         CMario::checkpointY = 0.0f;
     }
     void Load() override;
-    void Load(const std::string &mapPath);
+    void Load(const std::string &mapPath, const std::string &targetPipe = "");
     void Update(float dt) override;
     void Render() override;
     void Unload() override;
@@ -123,7 +124,10 @@ public:
         return levelId;
     }
 
-    void TransitionToMap(const std::string &mapPath) { pendingMapPath = mapPath; }
+    void TransitionToMap(const std::string &mapPath, const std::string &destPipe = "") { 
+        pendingMapPath = mapPath; 
+        pendingDestPipe = destPipe;
+    }
 
     // Lọc các đối tượng trong khoảng 256 pixels quanh (x, y)
     template <typename T>

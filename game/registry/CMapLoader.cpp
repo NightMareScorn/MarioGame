@@ -447,9 +447,15 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
     float patrol_left = 0;
     float patrol_right = 0;
     std::string enemy_type = "green_walking";
+    std::string name = "";
+    std::string dest_pipe = "";
 
     for (size_t i = 3; i < parts.size(); ++i)
     {
+        if (parts[i].find("name=") == 0)
+            name = parts[i].substr(5);
+        if (parts[i].find("dest_pipe=") == 0)
+            dest_pipe = parts[i].substr(10);
         if (parts[i] == "hidden_in_block=true")
             hidden_in_block = true;
         if (parts[i] == "invisible_block=true")
@@ -666,7 +672,10 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
             pipeAni = "ANI_PIPE_2WAYS_ASSEMBLED";
             pipeHeight = 64.0f;
         }
-        scene->blocks.push_back(new CPipe(x, pipeBottomY, 32.0f, pipeHeight, pipeAni, dest_map, enter_direction));
+        CPipe *pipeObj = new CPipe(x, pipeBottomY, 32.0f, pipeHeight, pipeAni, dest_map, enter_direction);
+        pipeObj->SetName(name);
+        pipeObj->SetDestPipe(dest_pipe);
+        scene->blocks.push_back(pipeObj);
     }
     // Decorative background objects — no collision
     else if (type == "hill_small")

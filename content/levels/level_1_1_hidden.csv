@@ -20,7 +20,7 @@ background_color,black
 # OBJECTS
 type,x,y,extra
 mario,48,32,spawn_type=falling
-pipe,288,176,dest_map=level_1_1,enter_direction=down,is_solid=true
+pipe,288,176,dest_map=level_1_1,dest_pipe=exit_pipe,enter_direction=down,is_solid=true
 coin,128,80
 coin,128,112
 coin,128,144

@@ -44,3 +44,4 @@ hill_small,1792,192
 hill_big,2304,192
 hill_small,2560,192
 hill_big,3072,192
+pipe,1232,176,is_solid=true,name=exit_pipe

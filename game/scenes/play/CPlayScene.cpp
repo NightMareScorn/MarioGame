@@ -24,7 +24,7 @@ void CPlayScene::Load()
     Load(levelPath);
 }
 
-void CPlayScene::Load(const std::string &mapPath)
+void CPlayScene::Load(const std::string &mapPath, const std::string &targetPipe)
 {
     // Reset background clear color to default NES sky blue
     this->SetClearColor(D3DXCOLOR(92.0f / 255, 148.0f / 255, 252.0f / 255, 1.0f));
@@ -36,10 +36,30 @@ void CPlayScene::Load(const std::string &mapPath)
     levelPath = mapPath;
     currentMapPath = mapPath;
     pendingMapPath = "";
+    pendingDestPipe = "";
     goalTimer = 0.0f;
 
     mario = nullptr; // MapLoader sẽ khởi tạo Mario
     CMapLoader::GetInstance()->Load(mapPath, this);
+
+    // Điểm đến của pipe dịch chuyển: Định vị Mario trên đầu pipe có name == targetPipe
+    if (mario != nullptr && !targetPipe.empty())
+    {
+        for (auto b : blocks)
+        {
+            if (auto pipe = dynamic_cast<CPipe *>(b))
+            {
+                if (pipe->GetName() == targetPipe)
+                {
+                    mario->x = pipe->x;
+                    float pl, pb, pr, pt;
+                    pipe->GetBoundingBox(pl, pb, pr, pt);
+                    mario->y = pt + 2.0f; // Đặt Mario lên trên cống
+                    break;
+                }
+            }
+        }
+    }
 
     if (mario == nullptr)
     {
@@ -147,8 +167,9 @@ void CPlayScene::Update(float dt)
     if (!pendingMapPath.empty())
     {
         std::string nextMap = pendingMapPath;
+        std::string targetPipe = pendingDestPipe;
         Unload();
-        Load(nextMap);
+        Load(nextMap, targetPipe);
         return;
     }
 
@@ -465,7 +486,7 @@ void CPlayScene::Update(float dt)
             DebugOut(L"[INFO] Entering pipe to map: %hs\n",
                      pipe->GetDestMap().c_str());
             std::string dest = "content/levels/" + pipe->GetDestMap() + ".csv";
-            TransitionToMap(dest);
+            TransitionToMap(dest, pipe->GetDestPipe());
             break;
         }
     }
