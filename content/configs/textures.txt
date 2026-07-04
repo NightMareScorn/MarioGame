@@ -6,3 +6,4 @@
 5 content/textures/enemies-ground-ow.png
 6 content/textures/enemy.png
 7 content/textures/mario.png
+8 content/tilesets/misc-8.png
