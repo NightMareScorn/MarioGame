@@ -38,7 +38,4 @@ moving_platform,2208,101,direction=horizontal,speed=0.05,
 bowser,2176,144,
 npc_toad,2448,64,
 
-fire_bar,384,144,length=6,direction=clockwise
-fire_bar,704,96,length=6,direction=counter_clockwise
-fire_bar,1088,96,length=6,direction=clockwise
 axe,2320,144,

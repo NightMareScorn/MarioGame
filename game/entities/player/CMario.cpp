@@ -258,6 +258,8 @@ bool CMario::IsInvincible() const
 
 void CMario::Die()
 {
+    if (isGodMode)
+        return;
     if (state == EMarioState::DIE)
         return;
     state = EMarioState::DIE;
@@ -270,6 +272,8 @@ void CMario::Die()
 
 void CMario::Hurt()
 {
+    if (isGodMode)
+        return;
 
     if (IsInvincible() || state == EMarioState::DIE)
         return;

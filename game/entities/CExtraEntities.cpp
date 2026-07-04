@@ -7,13 +7,15 @@
 #include "../registry/CResourceRegistry.h"
 #include "items/CFireball.h"
 #include "../scenes/play/CPlayScene.h"
+#include "../scenes/CSceneManager.h"
+#include "enemies/CBowserFireball.h"
 
 #include <cmath>
 
 // --- Render Implementations ---
 void CBowser::Render()
 {
-    CResourceRegistry::GetInstance()->RenderAnimation("ANI_BOWSER_WALK", x, y, nx);
+    CResourceRegistry::GetInstance()->RenderAnimation("ANI_BOWSER_WALK", x, y, -nx);
 }
 
 void CFireBar::Render()
@@ -41,20 +43,50 @@ void CCastleBridge::Render()
 
 void CBowser::Update(float dt)
 {
+    // Áp dụng trọng lực nhẹ cho Bowser
+    vy += -0.0005f * dt;
+
+    // Hướng khuôn mặt Bowser luôn nhìn về phía Mario
+    CPlayScene *playScene = (CPlayScene *)CSceneManager::GetInstance()->GetCurrentScene();
+    CMario *mario = playScene ? playScene->GetPlayer() : nullptr;
+    if (mario)
+    {
+        if (mario->x < x)
+            nx = -1; // Mặt hướng qua trái
+        else
+            nx = 1;  // Mặt hướng qua phải
+    }
+
+    // Di chuyển qua lại quanh startX
     x += vx * dt;
     if (abs(x - startX) > 64.0f)
     {
         vx = -vx;
     }
 
+    // Cơ chế nhảy ngẫu nhiên từ 1-3 giây
+    jumpTimer += dt;
+    if (jumpTimer >= nextJumpTime)
+    {
+        jumpTimer = 0.0f;
+        nextJumpTime = 1000.0f + (float)(rand() % 2001); // Tính thời gian nhảy kế tiếp
+        if (isOnGround)
+        {
+            vy = 0.16f; // Vận tốc nhảy lên
+            isOnGround = false;
+        }
+    }
+
+    // Cự ly bắn đạn lửa tự động
     fireTimer += dt;
     if (fireTimer > 3000.0f)
     {
         fireTimer = 0;
-        // Tạo thực thể CFireball di chuyển chậm về phía bên trái để tấn công Mario
-        CFireball *fire = new CFireball(this->x - 16.0f, this->y + 8.0f, -1);
-        fire->vx = -0.08f;
-        scene->AddItem(fire); // Thêm đạn lửa vào màn chơi
+        // Bắn ra đạn lửa bay theo đúng hướng khuôn mặt của Bowser
+        CBowserFireball *fire = new CBowserFireball(this->x + (nx < 0 ? -16.0f : 32.0f), this->y + 8.0f);
+        fire->vx = 0.08f * (float)nx; // Vận tốc đạn bay theo nx
+        fire->SetState(1); // ACTIVE
+        scene->AddEnemy(fire);
     }
 }
 
@@ -169,4 +201,25 @@ void CCastleBridge::GetBoundingBox(float &left, float &bottom, float &right, flo
     bottom = y;
     right = x + 16;
     top = y + 16;
+}
+
+void CBowser::OnCollisionX(CGameObject *other, float nx)
+{
+    if (auto mario = dynamic_cast<CMario *>(other))
+    {
+        mario->Hurt();
+    }
+}
+
+void CBowser::OnCollisionY(CGameObject *other, float ny)
+{
+    if (ny < 0)
+    {
+        isOnGround = true; // Chạm đất
+        vy = 0;
+    }
+    if (auto mario = dynamic_cast<CMario *>(other))
+    {
+        mario->Hurt();
+    }
 }

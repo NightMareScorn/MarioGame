@@ -14,6 +14,7 @@
 #include "../../registry/CMapLoader.h"
 #include "../../registry/CResourceRegistry.h"
 #include "../../../engine/rendering/Textures.h"
+#include "../../entities/enemies/CFireBar.h"
 #include <algorithm>
 
 void CPlayScene::Load()
@@ -52,6 +53,17 @@ void CPlayScene::Load(const std::string &mapPath)
     CAudioManager::GetInstance()->PlayBGM("content/audio/overworld_theme.wav");
 }
 
+static bool IsInCameraView(float x, float y, float paddingX = 64.0f, float paddingY = 64.0f)
+{
+    float cx = CCamera::GetInstance()->GetCamX();
+    float cy = CCamera::GetInstance()->GetCamY();
+    float sw = (float)CGame::GetInstance()->GetViewportWidth();
+    float sh = (float)CGame::GetInstance()->GetViewportHeight();
+
+    return (x >= cx - paddingX && x <= cx + sw + paddingX &&
+            y >= cy - paddingY && y <= cy + sh + paddingY);
+}
+
 void CPlayScene::Update(float dt)
 {
     if (isGameOver)
@@ -67,6 +79,12 @@ void CPlayScene::Update(float dt)
     }
 
     auto kb = KeyboardManager::GetInstance();
+
+    if (kb->IsKeyPressed('9'))
+    {
+        mario->ToggleGodMode();
+        DebugOut(L"[INFO] God Mode toggled: %d\n", mario->IsGodMode());
+    }
 
     if (kb->IsKeyPressed('P') || kb->IsKeyPressed('p'))
     {
@@ -220,7 +238,12 @@ void CPlayScene::Update(float dt)
     for (auto b : blocks)
         b->Update(dt);
     for (auto e : enemies)
-        e->Update(dt);
+    {
+        if (dynamic_cast<CFireBar *>(e) || IsInCameraView(e->x, e->y, 64.0f, 64.0f))
+        {
+            e->Update(dt);
+        }
+    }
     for (auto i : items)
         i->Update(dt);
     for (auto d : decors)
@@ -312,6 +335,11 @@ void CPlayScene::Update(float dt)
     {
         if (e->IsDead())
             continue;
+
+        // Chỉ xử lý va chạm cho quái ở trong tầm kích hoạt của camera (ngoại trừ CFireBar luôn chạy)
+        if (!dynamic_cast<CFireBar *>(e) && !IsInCameraView(e->x, e->y, 64.0f, 64.0f))
+            continue;
+
         float old_vx = e->vx;
 
         auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
@@ -325,6 +353,9 @@ void CPlayScene::Update(float dt)
         coObjectsForEnemy.insert(coObjectsForEnemy.end(), enemiesAroundEnemy.begin(), enemiesAroundEnemy.end());
 
         CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
+
+        if (e->IsDead())
+            continue;
 
         // Quay đầu nếu đụng tường
         if (e->vx == 0 && old_vx != 0)
@@ -354,8 +385,16 @@ void CPlayScene::Update(float dt)
 
     if (mario->y < -64.0f)
     {
-        mario->Die();
-        return;
+        if (mario->IsGodMode())
+        {
+            mario->y = 192.0f; // Đưa Mario lên trên để tiếp tục chơi
+            mario->vy = 0.0f;
+        }
+        else
+        {
+            mario->Die();
+            return;
+        }
     }
 
     // Logic đi vào ống nước: hỗ trợ ống dọc và miệng cống ngang
@@ -421,6 +460,12 @@ void CPlayScene::Update(float dt)
         if (o->IsDead()) { delete o; return true; } 
         return false; }),
                  blocks.end());
+
+    if (!pendingEnemies.empty())
+    {
+        enemies.insert(enemies.end(), pendingEnemies.begin(), pendingEnemies.end());
+        pendingEnemies.clear();
+    }
 }
 
 void CPlayScene::Render()
@@ -498,7 +543,7 @@ void CPlayScene::Render()
             b->Render();
     }
     for (auto e : enemies)
-        if (!e->IsDead())
+        if (!e->IsDead() && IsInCameraView(e->x, e->y, 32.0f, 32.0f))
             e->Render();
     if (mario)
         mario->Render();
@@ -536,6 +581,10 @@ void CPlayScene::Unload()
     for (auto e : enemies)
         delete e;
     enemies.clear();
+
+    for (auto e : pendingEnemies) // Thêm dọn dẹp pendingEnemies
+        delete e;
+    pendingEnemies.clear();
 
     for (auto i : items)
         delete i;

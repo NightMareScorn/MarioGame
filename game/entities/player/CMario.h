@@ -42,6 +42,9 @@ public:
     void SetInputLocked(bool v) { inputLocked = v; }
     bool IsInputLocked() const { return inputLocked; }
 
+    void ToggleGodMode() { isGodMode = !isGodMode; }
+    bool IsGodMode() const { return isGodMode; }
+
     bool IsDeadState() const { return state == EMarioState::DIE; }
     float GetDieTimer() const { return dieTimer; }
     EMarioState GetState() const { return state; }
@@ -70,4 +73,5 @@ private:
 
     bool isPoweringUp = false;
     float powerUpTimer = 0.0f;
+    bool isGodMode = false;
 };

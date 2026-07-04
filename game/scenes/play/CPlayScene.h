@@ -15,6 +15,7 @@ class CPlayScene : public CScene
     std::vector<CBlock *> blocks;
     std::vector<CGameObject *> decors;
     std::vector<CGameObject *> enemies;
+    std::vector<CGameObject *> pendingEnemies;
     std::vector<CGameObject *> items;
     std::vector<CGameObject *> foregrounds;
     float mapWidth = 0.0f;
@@ -76,6 +77,7 @@ public:
     }
 
     void AddItem(CGameObject *item) { items.push_back(item); }
+    void AddEnemy(CGameObject *enemy) { pendingEnemies.push_back(enemy); }
     std::string GetCurrentMapPath() const { return currentMapPath; }
     CMario *GetPlayer() { return mario; }
     std::string GetTheme() const { return theme; }

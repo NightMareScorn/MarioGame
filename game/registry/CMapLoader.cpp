@@ -394,10 +394,16 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string> &lines, CPlaySce
             case 139: // Fire Circle (Used Lucky Block + 5 Fire Orbs)
             {
                 scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
-                // The FireBar update logic will handle rotation
+                
+                // Random chiều quay: -1.0f (clockwise) hoặc 1.0f (counter_clockwise)
+                float directionSign = (rand() % 2 == 0) ? -1.0f : 1.0f;
+                // Random tốc độ trong khoảng 0.0015f đến 0.003f
+                float baseSpeed = 0.0015f + ((float)(rand() % 151) / 100000.0f);
+                float speed = directionSign * baseSpeed;
+
                 for (int k = 0; k < 5; k++)
                 {
-                    CFireBar *orb = new CFireBar(x + 4, y + 4);
+                    CFireBar *orb = new CFireBar(x + 4, y + 4, speed);
                     orb->SetOffset((float)(k * 9)); // 9px apart for 8px orbs
                     scene->enemies.push_back(orb);
                 }
@@ -535,26 +541,25 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
     else if (type == "fire_circle")
     {
         std::string direction = "counter_clockwise";
+        float baseSpeed = 0.002f;
         for (auto p : parts)
+        {
             if (p.find("direction=") == 0)
                 direction = p.substr(10);
+            else if (p.find("speed=") == 0)
+                baseSpeed = std::stof(p.substr(6));
+        }
 
         // Tạo Lucky Block rỗng làm lõi quay
         scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
 
-        // Tạo 5 quả cầu lửa quay quanh lõi
-        for (int k = 0; k < 6; k++)
+        float speed = (direction == "clockwise") ? -baseSpeed : baseSpeed;
+
+        // Truyền thẳng tốc độ quay vào Constructor
+        for (int k = 0; k < 5; k++)
         {
-            CFireBar *orb = new CFireBar(x + 4, y + 4);
+            CFireBar *orb = new CFireBar(x + 4, y + 4, speed);
             orb->SetOffset((float)(k * 9));
-            if (direction == "clockwise")
-            {
-                orb->SetRotationSpeed(-0.002f); // Quay cùng chiều kim đồng hồ
-            }
-            else
-            {
-                orb->SetRotationSpeed(0.002f); // Quay ngược chiều kim đồng hồ
-            }
             scene->enemies.push_back(orb);
         }
     }
