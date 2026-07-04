@@ -1,64 +1,978 @@
 #include "CPlayScene.h"
-#include "../../registry/CResourceRegistry.h"
-#include "../../../engine/rendering/Camera.h"
-#include "../../entities/blocks/CBrick.h"
-#include "../../../engine/utils/debug.h"
+#include "../../../engine/core/Game.h"
+#include "../../../engine/input/KeyboardManager.h"
 #include "../../../engine/physics/CCollision.h"
+#include "../../../engine/rendering/Camera.h"
+#include "../../../engine/utils/debug.h"
+#include "../../../engine/utils/CScoreManager.h"
+#include "../../../engine/audio/CAudioManager.h"
+#include "../../entities/blocks/CPipe.h"
+#include "../../entities/items/CFireball.h"
+#include "../../entities/items/CFireFlower.h"
+#include "../../entities/items/CMushroom.h"
+#include "../../entities/blocks/CFlagpole.h"
+#include "../../entities/blocks/CDecorBlock.h"
+#include "../../entities/blocks/CBridge.h"
+#include "../../registry/CMapLoader.h"
+#include "../../registry/CResourceRegistry.h"
+#include "../../../engine/rendering/Textures.h"
+#include "../../entities/enemies/CFireBar.h"
+#include <algorithm>
 
-void CPlayScene::Load() {
+void CPlayScene::Load()
+{
+    Load(levelPath);
+}
+
+void CPlayScene::Load(const std::string &mapPath, const std::string &targetPipe)
+{
+    // Reset background clear color to default NES sky blue
+    this->SetClearColor(D3DXCOLOR(92.0f / 255, 148.0f / 255, 252.0f / 255, 1.0f));
+
+    scene = this; // Gán con trỏ scene toàn cục
     auto registry = CResourceRegistry::GetInstance();
     registry->LoadResourcesForPlayScene();
 
-    mario = new CMario();
-    mario->x = 100.0f;
-    mario->y = 150.0f; // Di chuyển Mario lại gần đầu map để xem cột
+    levelPath = mapPath;
+    currentMapPath = mapPath;
+    pendingMapPath = "";
+    pendingDestPipe = "";
+    goalTimer = 0.0f;
 
-    // 1. Mặt đất cơ bản (dài 45 ô)
-    for (int i = 0; i < 45; i++) {
-        blocks.push_back(new CBrick(i * 16.0f, 50.0f));
-    }
+    mario = nullptr; // MapLoader sẽ khởi tạo Mario
+    CMapLoader::GetInstance()->Load(mapPath, this);
 
-    // 2. Cột thẳng đứng bên trái (ở vị trí x = 0, chồng cao lên 7 ô)
-    for (int i = 1; i <= 7; i++) {
-        blocks.push_back(new CBrick(0.0f, 50.0f + i * 16.0f));
-    }
+    // Điểm đến của pipe dịch chuyển: Định vị Mario trên đầu pipe có name == targetPipe
+    if (mario != nullptr && !targetPipe.empty())
+    {
+        for (auto b : blocks)
+        {
+            if (auto pipe = dynamic_cast<CPipe *>(b))
+            {
+                if (pipe->GetName() == targetPipe)
+                {
+                    // Đặt Mario ở vị trí thụt sâu vào trong ống nước
+                    mario->x = pipe->x;
+                    float pl, pb, pr, pt;
+                    pipe->GetBoundingBox(pl, pb, pr, pt);
+                    mario->y = pt - 14.0f; // Đi sâu vào trong cống 14px để nhô lên từ từ
 
-    // 3. Cầu thang 5 bậc bên phải (bắt đầu từ cột 20)
-    int stairStartX = 20;
-    for (int step = 1; step <= 5; step++) {
-        for (int h = 1; h <= step; h++) {
-            blocks.push_back(new CBrick((stairStartX + step - 1) * 16.0f, 50.0f + h * 16.0f));
+                    // Bắt đầu hoạt cảnh trượt lên từ cống
+                    pipeState = EPipeState::EXITING;
+                    pipeAnimationTimer = 1000.0f;
+                    pipeSpeedX = 0.0f;
+                    pipeSpeedY = 0.02f; // Di chuyển chậm rãi đi lên
+                    mario->SetInputLocked(true);
+                    break;
+                }
+            }
         }
     }
-
-    // 4. Đoạn thẳng 5 ô nối sau bậc cao nhất của cầu thang
-    int flatStartX = stairStartX + 5;
-    for (int i = 0; i < 5; i++) {
-        for (int h = 1; h <= 5; h++) {
-            blocks.push_back(new CBrick((flatStartX + i) * 16.0f, 50.0f + h * 16.0f));
-        }
+    else if (mario != nullptr && mapPath.find("level_1_2_hidden.csv") != std::string::npos && targetPipe.empty())
+    {
+        // Khi vừa bước vào màn 1-2 ngầm (level_1_2_hidden) khởi đầu:
+        // Mario đi ra chậm rãi từ ống ngang bên trái
+        mario->x = 24.0f; // Đi sâu trong cống ngang
+        mario->y = 160.0f; // Độ cao ngang cống
+        pipeState = EPipeState::EXITING;
+        pipeAnimationTimer = 1000.0f;
+        pipeSpeedX = 0.03f; // Di chuyển chậm rãi sang phải sang màn
+        pipeSpeedY = 0.0f;
+        mario->SetInputLocked(true);
     }
-    DebugOut(L"[INFO] CPlayScene::Load complete. Blocks: %d\n", blocks.size());
+
+    if (mario == nullptr)
+    {
+        DebugOut(L"[WARNING] Mario not found, starting manual initialization.\n");
+        mario = new CMario();
+        mario->x = 100.0f;
+        mario->y = 150.0f;
+    }
+
+    CCamera::GetInstance()->SetCamPos(0, 0);
+    CCamera::GetInstance()->SetMapWidth(0);
+
+    DebugOut(L"[INFO] CPlayScene::Load completed. Map: %hs, Blocks: %d, Decors: %d\n",
+             mapPath.c_str(), (int)blocks.size(), (int)decors.size());
+
+    std::string bgmPath = "content/audio/overworld_theme.wav";
+    if (mapPath.find("level_1_4.csv") != std::string::npos ||
+        mapPath.find("level_2_4.csv") != std::string::npos)
+    {
+        bgmPath = "content/audio/castle_theme.wav";
+    }
+    else if (mapPath.find("level_1_2") != std::string::npos ||
+             mapPath.find("level_1_1_hidden.csv") != std::string::npos ||
+             mapPath.find("level_2_1_hidden.csv") != std::string::npos ||
+             mapPath.find("level_2_2_hidden.csv") != std::string::npos)
+    {
+        bgmPath = "content/audio/underworld_theme.wav";
+    }
+    
+    currentBgmPath = bgmPath;
+    CAudioManager::GetInstance()->StopBGM(); // Tắt nhạc khi đang màn hình đen nạp màn
+
+    isLoadingScreen = true;
+    loadingScreenTimer = 2000.0f; // 2 giây hiển thị mạng và điểm cao nhất
 }
 
-void CPlayScene::Update(float dt) {
+static bool IsInCameraView(float x, float y, float paddingX = 64.0f, float paddingY = 64.0f)
+{
+    float cx = CCamera::GetInstance()->GetCamX();
+    float cy = CCamera::GetInstance()->GetCamY();
+    float sw = (float)CGame::GetInstance()->GetViewportWidth();
+    float sh = (float)CGame::GetInstance()->GetViewportHeight();
+
+    return (x >= cx - paddingX && x <= cx + sw + paddingX &&
+            y >= cy - paddingY && y <= cy + sh + paddingY);
+}
+
+void CPlayScene::Update(float dt)
+{
+    // --- HOẠT CẢNH MÀN HÌNH NẠP ĐEN (LOADING SCREEN STATE MACHINE) ---
+    if (isLoadingScreen)
+    {
+        loadingScreenTimer -= dt;
+        mario->vx = 0.0f;
+        mario->vy = 0.0f;
+        
+        // Cập nhật Camera để tập trung vào vị trí bắt đầu của Mario ngay khi hết màn hình đen
+        CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+        
+        if (loadingScreenTimer <= 0.0f)
+        {
+            isLoadingScreen = false;
+            CAudioManager::GetInstance()->PlayBGM(currentBgmPath);
+        }
+        return; // Đóng băng mọi logic cập nhật khác khi đang nạp
+    }
+
+    // --- HOẠT CẢNH DỊCH CHUYỂN QUA ỐNG NƯỚC (PIPE TRANSITION STATE MACHINE) ---
+    if (pipeState == EPipeState::ENTERING)
+    {
+        pipeAnimationTimer -= dt;
+        mario->vx = pipeSpeedX;
+        mario->vy = pipeSpeedY;
+        mario->x += mario->vx * dt;
+        mario->y += mario->vy * dt;
+
+        if (pipeAnimationTimer <= 0.0f)
+        {
+            pipeState = EPipeState::NONE;
+            TransitionToMap(pendingTransitionMap, pendingTransitionPipe);
+        }
+        CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+        return; // Đóng băng mọi thực thể khác khi đang chui vào cống
+    }
+    else if (pipeState == EPipeState::EXITING)
+    {
+        pipeAnimationTimer -= dt;
+        mario->vx = pipeSpeedX;
+        mario->vy = pipeSpeedY;
+        mario->x += mario->vx * dt;
+        mario->y += mario->vy * dt;
+
+        if (pipeAnimationTimer <= 0.0f)
+        {
+            pipeState = EPipeState::NONE;
+            mario->SetInputLocked(false);
+            mario->vx = 0.0f;
+            mario->vy = 0.0f;
+        }
+        CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+        return; // Đóng băng mọi thực thể khác khi đang trồi ra khỏi cống
+    }
+
+    if (isGameOver)
+    {
+        if (KeyboardManager::GetInstance()->IsKeyPressed(VK_RETURN))
+        {
+            CMario::lives = 3;
+            CMario::hasCheckpoint = false;
+            CMario::currentPower = EMarioPower::SMALL;
+            CGame::GetInstance()->SetExitLevel(true);
+        }
+        return;
+    }
+
+    auto kb = KeyboardManager::GetInstance();
+
+    if (kb->IsKeyPressed('9'))
+    {
+        mario->ToggleGodMode();
+        DebugOut(L"[INFO] God Mode toggled: %d\n", mario->IsGodMode());
+    }
+
+    if (kb->IsKeyPressed('P') || kb->IsKeyPressed('p'))
+    {
+        isPaused = !isPaused;
+        if (isPaused)
+        {
+            mciSendStringA("pause bgm", NULL, 0, NULL); // Tạm dừng nhạc nền
+        }
+        else
+        {
+            mciSendStringA("resume bgm", NULL, 0, NULL); // Phát tiếp nhạc nền
+        }
+    }
+
+    if (isPaused)
+    {
+        if (kb->IsKeyPressed(VK_UP))
+        {
+            pauseSelection = 0; // Mute Game
+        }
+        else if (kb->IsKeyPressed(VK_DOWN))
+        {
+            pauseSelection = 1; // Back to Main Menu
+        }
+        if (kb->IsKeyPressed(VK_RETURN))
+        {
+            if (pauseSelection == 0)
+            {
+                bool newMute = !CAudioManager::GetInstance()->IsMuted();
+                CAudioManager::GetInstance()->SetMute(newMute);
+            }
+            else if (pauseSelection == 1)
+            {
+                isPaused = false;
+                CGame::GetInstance()->SetExitLevel(true);
+            }
+        }
+        return;
+    }
+
+    // Chuyển map pending
+    if (!pendingMapPath.empty())
+    {
+        std::string nextMap = pendingMapPath;
+        std::string targetPipe = pendingDestPipe;
+        Unload();
+        Load(nextMap, targetPipe);
+        return;
+    }
+
+    if (!mario)
+        return;
+
+    auto ResolveNextGoalMap = [this]() -> std::string
+    {
+        if (levelPath.find("level_1_1.csv") != std::string::npos)
+            return "content/levels/level_1_2_first_half.csv";
+        if (levelPath.find("level_1_2_second_half.csv") != std::string::npos)
+            return "content/levels/level_1_3.csv";
+        if (levelPath.find("level_1_3.csv") != std::string::npos)
+            return "content/levels/level_1_4.csv";
+        if (levelPath.find("level_1_4.csv") != std::string::npos)
+            return "content/levels/level_2_1.csv";
+        if (levelPath.find("level_2_1.csv") != std::string::npos)
+            return "content/levels/level_2_2.csv";
+        if (levelPath.find("level_2_2_second_half.csv") != std::string::npos)
+            return "content/levels/level_2_3.csv";
+        if (levelPath.find("level_2_3.csv") != std::string::npos)
+            return "content/levels/level_2_4.csv";
+        return "";
+    };
+
+    // --- LOGIC HỒI SINH KHI CHẾT ---
+    if (mario->IsDeadState())
+    {
+        mario->Update(dt);
+        if (mario->GetDieTimer() <= 0)
+        {
+            if (CMario::lives > 0)
+            {
+                this->TransitionToMap(currentMapPath);
+                this->timeLeft = 400.0f;
+            }
+            else
+            {
+                isGameOver = true;
+                CAudioManager::GetInstance()->StopBGM();
+                CAudioManager::GetInstance()->Stop();
+            }
+        }
+        return;
+    }
+
+    // --- LOGIC THẮNG MÀN (CỘT CỜ) ---
+    // Bỏ qua goalTimer nếu đang chạy hoạt cảnh lâu đài (castle clear)
+    if (goalTimer > 0 && castleClearState == ECastleClearState::NONE)
+    {
+        goalTimer -= dt;
+        for (auto d : decors)
+            d->Update(dt);
+
+        if (mario->GetState() == EMarioState::GOAL_SLIDE)
+        {
+            float baseHeight = 32.0f;
+            for (auto d : decors)
+            {
+                if (auto flagpole = dynamic_cast<CFlagpole *>(d))
+                {
+                    float dl, db, dr, dt_b;
+                    flagpole->GetBoundingBox(dl, db, dr, dt_b);
+                    baseHeight = db;
+                    break;
+                }
+            }
+            if (mario->y <= baseHeight + 0.5f)
+            {
+                mario->y = baseHeight;
+                mario->SetState(static_cast<int>(EMarioState::GOAL_WALK));
+            }
+        }
+        mario->Update(dt);
+        mario->SetOnGround(true);
+        CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+
+        if (goalTimer <= 0)
+        {
+            SaveCurrentScore();
+            CMario::hasCheckpoint = false;
+            std::string nextLevel = ResolveNextGoalMap();
+
+            if (nextLevel.empty())
+            {
+                CGame::GetInstance()->SetExitLevel(true);
+            }
+            else
+            {
+                this->TransitionToMap(nextLevel);
+                this->timeLeft = 400.0f;
+            }
+        }
+        return;
+    }
+
+    // 1. HUD logic update (timeLeft)
+    if (timeLeft > 0)
+    {
+        timeLeft -= (dt / 1000.0f);
+        if (timeLeft < 0)
+            timeLeft = 0;
+    }
+
+    // Update các entities
+    for (auto b : blocks)
+        b->Update(dt);
+    for (auto e : enemies)
+    {
+        if (dynamic_cast<CFireBar *>(e) || IsInCameraView(e->x, e->y, 64.0f, 64.0f))
+        {
+            e->Update(dt);
+        }
+    }
+    for (auto i : items)
+        i->Update(dt);
+    for (auto d : decors)
+        d->Update(dt);
+
+    // Sync Mario with moving platforms
+    for (auto b : blocks)
+    {
+        if (b->type == "platform")
+        {
+            float ml, mt, mr, mb;
+            mario->GetBoundingBox(ml, mt, mr, mb);
+            float pl, pt, pr, pb;
+            b->GetBoundingBox(pl, pt, pr, pb);
+
+            if (mr > pl && ml < pr && mb >= pb && mb <= pb + 4.0f && mario->vy <= 0)
+            {
+                mario->x += b->vx * dt;
+                mario->y += b->vy * dt;
+
+                if (b->vy < 0)
+                {
+                    mario->y = pb + 0.1f;
+                    mario->SetOnGround(true);
+                }
+            }
+        }
+    }
+
     mario->Update(dt);
-    for (auto b : blocks) b->Update(dt);
 
-    std::vector<CGameObject*> coObjects;
-    coObjects.reserve(blocks.size());
-    for (auto b : blocks) coObjects.push_back(b);
-    CCollision::ResolveCollision(mario, coObjects);
+    // Lọc đối tượng xung quanh Mario để tối ưu va chạm
+    auto nearbyBlocks = GetObjectsInRange(mario->x, mario->y, blocks);
+    auto nearbyEnemies = GetObjectsInRange(mario->x, mario->y, enemies);
+    auto nearbyItems = GetObjectsInRange(mario->x, mario->y, items);
+
+    std::vector<CGameObject *> coObjectsForMario;
+    coObjectsForMario.reserve(nearbyBlocks.size() + nearbyEnemies.size() + nearbyItems.size());
+    coObjectsForMario.insert(coObjectsForMario.end(), nearbyBlocks.begin(), nearbyBlocks.end());
+    coObjectsForMario.insert(coObjectsForMario.end(), nearbyEnemies.begin(), nearbyEnemies.end());
+    coObjectsForMario.insert(coObjectsForMario.end(), nearbyItems.begin(), nearbyItems.end());
+
+    CCollision::ResolveCollision(mario, dt, coObjectsForMario);
+
+    // --- LOGIC STAR MODE: Chạm vào quái là quái chết ---
+    if (mario->IsStarMode())
+    {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        for (auto e : nearbyEnemies)
+        {
+            if (e->IsDead())
+                continue;
+            float el, eb, er, et;
+            e->GetBoundingBox(el, eb, er, et);
+            if (CCollision::CheckAABB({ml, mb, mr, mt}, {el, eb, er, et}))
+            {
+                e->OnStomped();
+                this->AddScore(100);
+            }
+        }
+    }
+
+    // --- LOGIC FLAGPOLE (CỘT CỜ) ---
+    if (!mario->IsInputLocked())
+    {
+        float ml, mb, mr, mt;
+        mario->GetBoundingBox(ml, mb, mr, mt);
+        for (auto d : decors)
+        {
+            if (auto flagpole = dynamic_cast<CFlagpole *>(d))
+            {
+                float dl, db, dr, dt_b;
+                flagpole->GetBoundingBox(dl, db, dr, dt_b);
+                if (CCollision::CheckAABB({ml, mb, mr, mt}, {dl, db, dr, dt_b}))
+                {
+                    mario->x = dl - 4.0f;
+                    mario->HitGoal();
+                    flagpole->SetState(200); // Hạ cờ
+                    goalTimer = 4000.0f;     // 4 giây trượt cờ và chạy vào lâu đài
+                    break;
+                }
+            }
+        }
+    }
+
+    // Xử lý collision cho từng enemy
+    for (auto e : enemies)
+    {
+        if (e->IsDead())
+            continue;
+
+        // Chỉ xử lý va chạm cho quái ở trong tầm kích hoạt của camera (ngoại trừ CFireBar luôn chạy)
+        if (!dynamic_cast<CFireBar *>(e) && !IsInCameraView(e->x, e->y, 64.0f, 64.0f))
+            continue;
+
+        float old_vx = e->vx;
+
+        auto blocksAroundEnemy = GetObjectsInRange(e->x, e->y, blocks);
+        auto enemiesAroundEnemy = GetObjectsInRange(e->x, e->y, enemies);
+
+        auto it = std::find(enemiesAroundEnemy.begin(), enemiesAroundEnemy.end(), e);
+        if (it != enemiesAroundEnemy.end())
+            enemiesAroundEnemy.erase(it);
+
+        std::vector<CGameObject *> coObjectsForEnemy = blocksAroundEnemy;
+        coObjectsForEnemy.insert(coObjectsForEnemy.end(), enemiesAroundEnemy.begin(), enemiesAroundEnemy.end());
+
+        CCollision::ResolveCollision(e, dt, coObjectsForEnemy);
+
+        if (e->IsDead())
+            continue;
+
+        // Quay đầu nếu đụng tường
+        if (e->vx == 0 && old_vx != 0)
+        {
+            e->vx = -old_vx;
+            e->nx = (e->vx > 0) ? 1 : -1;
+        }
+    }
+
+    // Xử lý collision cho từng item (bao gồm cả CFireball để đạn nảy thực tế trên sàn/gạch)
+    for (auto i : items)
+    {
+        if (i->IsDead())
+            continue;
+        if (!dynamic_cast<CFireFlower *>(i))
+        {
+            auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
+            CCollision::ResolveCollision(i, dt, blocksAroundItem);
+        }
+    }
+
+    // --- VA CHẠM ĐẠN LỬA MARIO (FIREBALL) VS QUÁI (ENEMIES) ---
+    for (auto i : items)
+    {
+        if (auto fb = dynamic_cast<CFireball *>(i))
+        {
+            if (fb->IsDead())
+                continue;
+
+            float fl, fb_b, fr, ft;
+            fb->GetBoundingBox(fl, fb_b, fr, ft);
+
+            auto nearbyEnemies = GetObjectsInRange(fb->x, fb->y, enemies);
+            for (auto e : nearbyEnemies)
+            {
+                if (e->IsDead() || !e->IsEnemy())
+                    continue;
+
+                float el, eb, er, et;
+                e->GetBoundingBox(el, eb, er, et);
+
+                if (CCollision::CheckAABB({fl, fb_b, fr, ft}, {el, eb, er, et}))
+                {
+                    // Tiêu diệt quái và làm nổ cầu lửa
+                    e->OnStomped(); // Goomba dẹt, Koopa thu vỏ
+                    this->AddScore(100);
+                    fb->Kill();
+                    break;
+                }
+            }
+        }
+    }
+
+    mario->UpdateState();
+
+    if (mapWidth > 0 && mario->x > mapWidth - 16)
+        mario->x = mapWidth - 16;
+    mario->SetMapWidth(mapWidth);
+
+    if (mario->y < -64.0f)
+    {
+        if (mario->IsGodMode())
+        {
+            mario->y = 192.0f; // Đưa Mario lên trên để tiếp tục chơi
+            mario->vy = 0.0f;
+        }
+        else
+        {
+            mario->Die();
+            return;
+        }
+    }
+
+    // Logic đi vào ống nước: hỗ trợ ống dọc và miệng cống ngang
+    bool pressDown = kb->IsKeyPressed('S') || kb->IsKeyPressed(VK_DOWN);
+    bool pressRight = kb->IsKeyPressed('D') || kb->IsKeyPressed(VK_RIGHT);
+    for (auto b : blocks)
+    {
+        auto pipe = dynamic_cast<CPipe *>(b);
+        if (!pipe || !pipe->IsWarpPipe())
+            continue;
+
+        float mLeft, mBottom, mRight, mTop;
+        mario->GetBoundingBox(mLeft, mBottom, mRight, mTop);
+        float pLeft, pBottom, pRight, pTop;
+        pipe->GetBoundingBox(pLeft, pBottom, pRight, pTop);
+
+        bool shouldEnter = false;
+        if (pipe->GetEnterDirection() == "down")
+        {
+            shouldEnter = pressDown &&
+                          mBottom >= pTop - 2.0f && mBottom <= pTop + 2.0f &&
+                          mLeft < pRight && mRight > pLeft;
+        }
+        else if (pipe->GetEnterDirection() == "right")
+        {
+            shouldEnter = pressRight &&
+                          mRight >= pLeft - 2.0f && mRight <= pLeft + 4.0f &&
+                          mTop > pBottom && mBottom < pTop;
+        }
+        else if (pipe->GetEnterDirection() == "up")
+        {
+            bool pressUp = kb->IsKeyPressed('W') || kb->IsKeyPressed(VK_UP);
+            shouldEnter = pressUp &&
+                          mTop >= pBottom - 2.0f && mTop <= pBottom + 2.0f &&
+                          mLeft < pRight && mRight > pLeft;
+        }
+        else if (pipe->GetEnterDirection() == "left")
+        {
+            bool pressLeft = kb->IsKeyPressed('A') || kb->IsKeyPressed(VK_LEFT);
+            shouldEnter = pressLeft &&
+                          mLeft >= pRight - 4.0f && mLeft <= pRight + 2.0f &&
+                          mTop > pBottom && mBottom < pTop;
+        }
+
+        if (shouldEnter)
+        {
+            mario->SetInputLocked(true);
+            pipeState = EPipeState::ENTERING;
+            pipeAnimationTimer = 1000.0f; // 1 giây hoạt cảnh
+
+            // Xác định hướng di chuyển chậm rãi vào cống
+            pipeSpeedX = 0.0f;
+            pipeSpeedY = 0.0f;
+            if (pipe->GetEnterDirection() == "down")
+                pipeSpeedY = -0.02f;
+            else if (pipe->GetEnterDirection() == "right")
+                pipeSpeedX = 0.02f;
+            else if (pipe->GetEnterDirection() == "up")
+                pipeSpeedY = 0.02f;
+            else if (pipe->GetEnterDirection() == "left")
+                pipeSpeedX = -0.02f;
+
+            mario->vx = pipeSpeedX;
+            mario->vy = pipeSpeedY;
+
+            pendingTransitionMap = "content/levels/" + pipe->GetDestMap() + ".csv";
+            pendingTransitionPipe = pipe->GetDestPipe();
+            break;
+        }
+    }
+
+    // --- LOGIC HOẠT CẢNH THẮNG MÀN LÂU ĐÀI (CASTLE CLEAR STATE MACHINE) ---
+    if (castleClearState != ECastleClearState::NONE)
+    {
+        castleClearTimer += dt;
+        if (castleClearState == ECastleClearState::BRIDGE_COLLAPSING)
+        {
+            // Sập từng block cầu mỗi 150ms
+            if (castleClearTimer >= 150.0f)
+            {
+                castleClearTimer = 0.0f;
+                if (nextBridgeBlockIndex < bridgeBlocks.size())
+                {
+                    bridgeBlocks[nextBridgeBlockIndex]->SetIsDead(true);
+                    CAudioManager::GetInstance()->Play("break");
+                    nextBridgeBlockIndex++;
+                }
+                else
+                {
+                    // Đã sập hết cầu, chuyển sang trạng thái Bowser rơi xuống hồ
+                    castleClearState = ECastleClearState::BOWSER_FALLING;
+                }
+            }
+        }
+        else if (castleClearState == ECastleClearState::BOWSER_FALLING)
+        {
+            // Tìm Bowser để kiểm tra cao độ
+            CGameObject *bowser = nullptr;
+            for (auto e : enemies)
+            {
+                if (e->type == "bowser")
+                {
+                    bowser = e;
+                    break;
+                }
+            }
+
+            if (bowser)
+            {
+                // Khi Bowser rơi xuống dưới hố
+                if (bowser->y < -64.0f)
+                {
+                    bowser->SetIsDead(true);
+                    CAudioManager::GetInstance()->Play("bowserfalls");
+
+                    // Chuyển sang trạng thái Mario đi bộ đến chỗ Toad
+                    castleClearState = ECastleClearState::MARIO_WALKING_TO_TOAD;
+                    mario->SetInputLocked(true);
+                    mario->vx = 0.05f; // Mario tự động đi bộ sang phải
+                    mario->vy = 0.0f;
+                }
+            }
+            else
+            {
+                // Phòng trường hợp không tìm thấy Bowser, chuyển tiếp luôn
+                castleClearState = ECastleClearState::MARIO_WALKING_TO_TOAD;
+                mario->SetInputLocked(true);
+                mario->vx = 0.05f;
+                mario->vy = 0.0f;
+            }
+        }
+        else if (castleClearState == ECastleClearState::MARIO_WALKING_TO_TOAD)
+        {
+            mario->SetInputLocked(true);
+            mario->vx = 0.05f; // Luôn giữ Mario đi bộ sang phải
+            mario->vy = 0.0f;
+
+            // Tìm Toad NPC trong danh sách decors
+            if (!toadNPC)
+            {
+                for (auto d : decors)
+                {
+                    if (auto decor = dynamic_cast<CDecorBlock *>(d))
+                    {
+                        if (decor->GetAniName() == "ANI_NPC_TOAD")
+                        {
+                            toadNPC = decor;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (toadNPC)
+            {
+                // Nếu Mario đi gần sát Toad (khoảng cách 24px)
+                if (mario->x >= toadNPC->x - 24.0f)
+                {
+                    mario->vx = 0.0f; // Dừng Mario
+                    castleClearState = ECastleClearState::TOAD_TALKING;
+                    toadTextTimer = 0.0f;
+                }
+            }
+        }
+        else if (castleClearState == ECastleClearState::TOAD_TALKING)
+        {
+            mario->vx = 0.0f;
+            mario->vy = 0.0f;
+            toadTextTimer += dt;
+            if (toadTextTimer >= 5000.0f) // Hiển thị 5 giây
+            {
+                castleClearState = ECastleClearState::FINISHED;
+            }
+        }
+        else if (castleClearState == ECastleClearState::FINISHED)
+        {
+            SaveCurrentScore();
+            CMario::currentPower = EMarioPower::SMALL;
+            CGame::GetInstance()->SetExitLevel(true);
+            castleClearState = ECastleClearState::NONE;
+            return;
+        }
+    }
+
+    CCamera::GetInstance()->SetMapWidth(mapWidth);
     CCamera::GetInstance()->Update(mario->x, mario->y, (DWORD)dt);
+
+    // Dọn dẹp items & enemies bị chết
+    items.erase(std::remove_if(items.begin(), items.end(), [](CGameObject *o)
+                               { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                items.end());
+
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](CGameObject *o)
+                                 { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                  enemies.end());
+
+    // Trước tiên: xóa tham chiếu dead block khỏi foregrounds để tránh dangling pointer
+    // (blocks và foregrounds cùng trỏ đến đối tượng, nếu delete trong blocks trước
+    //  thì foregrounds giữ địa chỉ rác → crash khi Render gọi f->Render())
+    foregrounds.erase(std::remove_if(foregrounds.begin(), foregrounds.end(),
+                                     [](CGameObject *o)
+                                     { return o->IsDead(); }),
+                      foregrounds.end());
+
+    // Sau đó mới delete + xóa khỏi blocks
+    blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](CBlock *o)
+                                { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                 blocks.end());
+
+    // Dọn dẹp decors bị chết (ví dụ: dây xích bị đứt)
+    decors.erase(std::remove_if(decors.begin(), decors.end(), [](CGameObject *o)
+                                { 
+        if (o->IsDead()) { delete o; return true; } 
+        return false; }),
+                 decors.end());
+
+    if (!pendingEnemies.empty())
+    {
+        enemies.insert(enemies.end(), pendingEnemies.begin(), pendingEnemies.end());
+        pendingEnemies.clear();
+    }
 }
 
-void CPlayScene::Render() {
-    mario->Render();
-    for (auto b : blocks) b->Render();
+void CPlayScene::Render()
+{
+    // --- VẼ MÀN HÌNH NẠP ĐEN (LOADING SCREEN RENDERING) ---
+    if (isLoadingScreen)
+    {
+        CGame *g = CGame::GetInstance();
+        int bufferWidth = g->GetBackBufferWidth();
+
+        // 1. Lấy điểm số cao nhất của màn chơi hiện tại từ CScoreManager
+        std::string levelId = GetLevelId(); // vd: "1-1", "1-2"
+        auto best = CScoreManager::GetInstance()->GetBest(levelId);
+
+        wchar_t textTopScore[128];
+        swprintf_s(textTopScore, L"TOP - %06ld", best.score);
+        RECT rectTopScore = { 0, 150, bufferWidth, 190 };
+        g->DrawTextRaw(textTopScore, rectTopScore, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        // 2. Tên màn chơi (WORLD 1-1)
+        wchar_t textWorld[128];
+        std::wstring wlvl(levelId.begin(), levelId.end());
+        swprintf_s(textWorld, L"WORLD  %s", wlvl.c_str());
+        RECT rectWorld = { 0, 240, bufferWidth, 280 };
+        g->DrawTextRaw(textWorld, rectWorld, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        // 3. Số mạng sống của Mario (MARIO x 3)
+        wchar_t textLives[128];
+        swprintf_s(textLives, L"MARIO  x  %d", CMario::lives);
+        RECT rectLives = { 0, 310, bufferWidth, 350 };
+        g->DrawTextRaw(textLives, rectLives, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        return; // Không vẽ gì khác
+    }
+
+    if (isGameOver)
+    {
+        CGame *g = CGame::GetInstance();
+        int bufferWidth = g->GetBackBufferWidth();
+
+        RECT rectGameOver = {0, 200, bufferWidth, 260};
+        g->DrawTextRaw(L"GAME OVER", rectGameOver, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        RECT rectHelp = {0, 300, bufferWidth, 340};
+        g->DrawTextRaw(L"Press Enter to Back to Main Menu", rectHelp, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        return;
+    }
+
+    if (isPaused)
+    {
+        CGame *g = CGame::GetInstance();
+
+        int bufferWidth = g->GetBackBufferWidth();
+        RECT rectPause;
+        rectPause.left = 0;
+        rectPause.right = bufferWidth;
+        rectPause.top = 80;
+        rectPause.bottom = 120;
+        g->DrawTextRaw(L"GAME PAUSED", rectPause, D3DXCOLOR(1.0f, 1.0f, 0.0f, 1.0f));
+
+        bool isMuted = CAudioManager::GetInstance()->IsMuted();
+        std::wstring muteText = isMuted ? L"MUTED GAME" : L"MUTE GAME";
+        std::wstring muteOption = (pauseSelection == 0) ? (L"> " + muteText + L" <") : (L"  " + muteText + L"  ");
+        RECT rectMute;
+        rectMute.left = 0;
+        rectMute.right = bufferWidth;
+        rectMute.top = 160;
+        rectMute.bottom = 190;
+        g->DrawTextRaw(muteOption.c_str(), rectMute, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+
+        std::wstring menuOption = (pauseSelection == 1) ? L"> BACK TO MAIN MENU <" : L"  BACK TO MAIN MENU  ";
+        RECT rectMenu;
+        rectMenu.left = 0;
+        rectMenu.right = bufferWidth;
+        rectMenu.top = 220;
+        rectMenu.bottom = 250;
+        g->DrawTextRaw(menuOption.c_str(), rectMenu, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        return;
+    }
+
+    // --- VẼ HỘI THOẠI CỦA TOAD ---
+    if (castleClearState == ECastleClearState::TOAD_TALKING && toadNPC)
+    {
+        CGame *g = CGame::GetInstance();
+        float cx, cy;
+        CCamera::GetInstance()->GetCamPos(cx, cy);
+
+        // Đổi tọa độ Toad sang tọa độ màn hình GDI
+        float screenX = toadNPC->x - cx;
+        float screenY = toadNPC->y - cy;
+
+        // Trong game, 0 là đáy và 240 là đỉnh. GDI ngược lại (0 là đỉnh).
+        float gdiY = 240.0f - (toadNPC->y + 24.0f); // 24px là chiều cao của Toad
+
+        float finalX = g->GetRenderOffsetX() + screenX * g->GetRenderScale();
+        float finalY = g->GetRenderOffsetY() + gdiY * g->GetRenderScale();
+
+        RECT rectText;
+        rectText.left = (int)(finalX + 8.0f * g->GetRenderScale() - 150);
+        rectText.right = (int)(finalX + 8.0f * g->GetRenderScale() + 150);
+        rectText.top = (int)(finalY - 50.0f * g->GetRenderScale());
+        rectText.bottom = (int)(finalY - 10.0f * g->GetRenderScale());
+
+        g->DrawTextRaw(L"Thank you Mario!\nBut our princess is in another castle!", rectText, D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
+        // Stop further rendering to avoid overlap
+        return;
+    }
+
+    ID3DX10Sprite *spriteHandler = CGame::GetInstance()->GetSpriteHandler();
+
+    // Layer 1: Background
+    for (auto d : decors)
+        d->Render();
+    spriteHandler->Flush();
+
+    // Layer 2: blocks, items, enemies, mario
+    for (auto i : items)
+        if (!i->IsDead())
+            i->Render();
+    spriteHandler->Flush();
+    for (auto b : blocks)
+    {
+        bool isForeground = false;
+        for (auto f : foregrounds)
+        {
+            if (f == b)
+            {
+                isForeground = true;
+                break;
+            }
+        }
+        if (!isForeground)
+            b->Render();
+    }
+    for (auto e : enemies)
+        if (!e->IsDead() && IsInCameraView(e->x, e->y, 32.0f, 32.0f))
+            e->Render();
+    if (mario)
+        mario->Render();
+
+    // Layer 3: Foreground
+    for (auto f : foregrounds)
+        f->Render();
 }
 
-void CPlayScene::Unload() {
+void CPlayScene::Unload()
+{
     delete mario;
-    for (auto b : blocks) delete b;
+    mario = nullptr;
+
+    for (auto b : blocks)
+    {
+        bool inForegrounds = false;
+        for (auto f : foregrounds)
+        {
+            if (f == b)
+            {
+                inForegrounds = true;
+                break;
+            }
+        }
+        if (!inForegrounds)
+            delete b;
+    }
     blocks.clear();
+
+    for (auto d : decors)
+        delete d;
+    decors.clear();
+
+    for (auto e : enemies)
+        delete e;
+    enemies.clear();
+
+    for (auto e : pendingEnemies) // Thêm dọn dẹp pendingEnemies
+        delete e;
+    pendingEnemies.clear();
+
+    for (auto i : items)
+        delete i;
+    items.clear();
+
+    for (auto f : foregrounds)
+        delete f;
+    foregrounds.clear();
+    bridgeBlocks.clear();
+
+    // CAudioManager::GetInstance()->StopBGM(); // keep win sound playing
+}
+
+void CPlayScene::SaveCurrentScore()
+{
+    std::string levelId = GetLevelId();
+    int elapsedSec = 400 - (int)std::ceil(timeLeft);
+    if (elapsedSec < 0) elapsedSec = 0;
+    int mins = elapsedSec / 60;
+    int secs = elapsedSec % 60;
+    char timeBuffer[32];
+    sprintf_s(timeBuffer, "%02d:%02d", mins, secs);
+
+    CScoreManager::GetInstance()->UpdateBest(levelId, score, timeBuffer);
 }

@@ -4,12 +4,12 @@
 
 class CCollision {
 public:
-    struct Box { float l,t,r,b; };
+    struct Box { float left, bottom, right, top; };
 
-    static inline Box ToBox(float l,float t,float r,float b) { return Box{l,t,r,b}; }
+    static inline Box ToBox(float left, float bottom, float right, float top) { return Box{left, bottom, right, top}; }
 
     static bool CheckAABB(const Box &a, const Box &b);
 
     // Resolve collisions between `obj` and list of coObjects (static blocks etc.)
-    static void ResolveCollision(CGameObject* obj, const std::vector<CGameObject*>& coObjects);
+    static void ResolveCollision(CGameObject* obj, float dt, const std::vector<CGameObject*>& coObjects);
 };

@@ -38,24 +38,28 @@ void CSprite::Draw(float x, float y, int nx)
 	float cx, cy;
 	cam->GetCamPos(cx, cy);
 
-	cx = (FLOAT)floor(cx);
-	cy = (FLOAT)floor(cy);
-
-	x = (FLOAT)floor(x);
-	y = (FLOAT)floor(y);
-
 	D3DXMATRIX matTranslation;
 	CGame* g = CGame::GetInstance();	
 	
-	// D3DX10_SPRITE draws its quad with the origin at the CENTER of the image.
-	// To make the visual bounding box perfectly match the Physics Bounding Box [x, x + W] and [y, y + H],
-	// we must translate the center to x + width/2 and y + height/2.
 	int spriteWidth = (this->right - this->left + 1);
 	int spriteHeight = (this->bottom - this->top + 1);
-	D3DXMatrixTranslation(&matTranslation, (x - cx) + spriteWidth / 2.0f, (y - cy) + spriteHeight / 2.0f, 0.1f);
+
+	// Transform world coordinates to viewport coordinates
+	float screenX = x - cx;
+	float screenY = y - cy;
+
+	// Apply scale and offset for letterboxing
+	float finalX = g->GetRenderOffsetX() + screenX * g->GetRenderScale() + (spriteWidth * g->GetRenderScale()) / 2.0f;
+	float finalY = g->GetRenderOffsetY() + screenY * g->GetRenderScale() + (spriteHeight * g->GetRenderScale()) / 2.0f;
+
+	D3DXMatrixTranslation(&matTranslation, finalX, finalY, 0.1f);
 
 	D3DX10_SPRITE s = this->sprite;
-	s.matWorld = (this->matScaling * matTranslation);
+	
+	D3DXMATRIX matS;
+	D3DXMatrixScaling(&matS, (float)spriteWidth * g->GetRenderScale(), (float)spriteHeight * g->GetRenderScale(), 1.0f);
+	
+	s.matWorld = (matS * matTranslation);
 
 	D3DXMATRIX matOrtho;
 	D3DXMatrixOrthoOffCenterLH(&matOrtho, 0, (float)g->GetBackBufferWidth(), 0, (float)g->GetBackBufferHeight(), 0.1f, 10.0f);
@@ -68,5 +72,5 @@ void CSprite::Draw(float x, float y, int nx)
 		s.TexSize.x = -(this->right - this->left + 1) / texWidth;
 	}
 
-	CGame::GetInstance()->GetSpriteHandler()->DrawSpritesBuffered(&s, 1);
+	g->GetSpriteHandler()->DrawSpritesBuffered(&s, 1);
 }

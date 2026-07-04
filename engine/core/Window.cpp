@@ -1,5 +1,9 @@
 #include "Window.h"
+#include "Game.h"
 #include "../input/KeyboardManager.h"
+
+static ResizeCallback _resizeCallback = nullptr;
+void SetResizeCallback(ResizeCallback callback) { _resizeCallback = callback; }
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -10,6 +14,46 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_KEYUP:
         KeyboardManager::GetInstance()->SetKeyState((int)wParam, false);
         break;
+	case WM_SIZE:
+		if (CGame::GetInstance()) {
+			CGame::GetInstance()->ProcessResize(LOWORD(lParam), HIWORD(lParam));
+		}
+        if (_resizeCallback) {
+            _resizeCallback(LOWORD(lParam), HIWORD(lParam));
+        }
+		break;
+	case WM_SIZING:
+	{
+		LPRECT lpRect = (LPRECT)lParam;
+		
+		// Target client aspect
+		float targetAspect = 256.0f / 240.0f;
+
+		// Calculate window borders size
+		RECT windowRect = { 0, 0, 256, 240 };
+		AdjustWindowRectEx(&windowRect, WS_OVERLAPPEDWINDOW, FALSE, 0);
+		int borderWidth = (windowRect.right - windowRect.left) - 256;
+		int borderHeight = (windowRect.bottom - windowRect.top) - 240;
+
+		int currentWidth = (lpRect->right - lpRect->left) - borderWidth;
+		int currentHeight = (lpRect->bottom - lpRect->top) - borderHeight;
+
+		if (wParam == WMSZ_LEFT || wParam == WMSZ_RIGHT || wParam == WMSZ_LEFT + WMSZ_TOP || wParam == WMSZ_RIGHT + WMSZ_TOP) {
+			// Adjust height based on width
+			lpRect->bottom = lpRect->top + (int)(currentWidth / targetAspect) + borderHeight;
+		} else {
+			// Adjust width based on height
+			lpRect->right = lpRect->left + (int)(currentHeight * targetAspect) + borderWidth;
+		}
+	}
+	break;
+	case WM_GETMINMAXINFO:
+	{
+		LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
+		lpMMI->ptMinTrackSize.x = 800; // Original Width
+		lpMMI->ptMinTrackSize.y = 600; // Original Height
+	}
+	break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

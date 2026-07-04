@@ -2,6 +2,7 @@
 #include "../../engine/rendering/Textures.h"
 #include "../../engine/Graphics/Sprites.h"
 #include "../../engine/Graphics/Animations.h"
+#include "../../engine/audio/CAudioManager.h"
 #include "../../engine/utils/debug.h"
 #include <fstream>
 #include <sstream>
@@ -110,6 +111,25 @@ void CResourceRegistry::LoadResourcesForPlayScene() {
         }
         DebugOut(L"[INFO] Animations loaded from config.\n");
     }
+
+    // 4. Load Sounds
+    CAudioManager* audio = CAudioManager::GetInstance();
+    audio->LoadSound("jump", "content/audio/jump-small.wav");
+    audio->LoadSound("coin", "content/audio/coin.wav");
+    audio->LoadSound("break", "content/audio/breakblock.wav");
+    audio->LoadSound("die", "content/audio/mariodie.wav");
+    audio->LoadSound("powerup", "content/audio/powerup.wav");
+    audio->LoadSound("stomp", "content/audio/stomp.wav");
+    audio->LoadSound("kick", "content/audio/kick.wav");
+    audio->LoadSound("bump", "content/audio/bump.wav");
+    audio->LoadSound("fireball", "content/audio/fireball.wav");
+    audio->LoadSound("pipe", "content/audio/pipe.wav");
+    audio->LoadSound("stage_clear", "content/audio/stage_clear.wav");
+    audio->LoadSound("bowserfalls", "content/audio/bowserfalls.wav");
+    audio->LoadSound("world_clear", "content/audio/world_clear.wav");
+    audio->LoadSound("castle_theme", "content/audio/castle_theme.wav");
+    audio->LoadSound("underworld_theme", "content/audio/underworld_theme.wav");
+    audio->LoadSound("overworld_theme", "content/audio/overworld_theme.wav");
 
     DebugOut(L"[INFO] PlayScene resources loading complete.\n");
 }

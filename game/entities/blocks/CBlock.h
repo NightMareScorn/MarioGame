@@ -1,7 +1,8 @@
 #pragma once
 #include "../CGameObject.h"
 
-class CBlock : public CGameObject {
+class CBlock : public CGameObject
+{
 public:
     CBlock(float x, float y);
     virtual void Update(float dt) = 0;

@@ -1,0 +1,101 @@
+20 cột đầu tiên, 3 hàng trên cùng full of white brick, 5 hàng dưới full white brick
+cột thứ 1->3, sẽ có thêm 3 white brick ở trên 5 hàng ở dưới
+cột thứ 4->5, sẽ có thêm 2 white brick ở trên 5 hàng ở dưới
+cột thứ 6, sẽ có thêm 1 white brick ở trên 5 hàng ở dưới
+(Tức từ cột 1->6, trừ 5 hàng ở dưới cùng full brick ra thì sẽ tạo thành bậc thang đi xuống như mô tả ở trên)
+
+Từ cột 21->22, ở 2 hàng dưới cùng có dung nham, có bắn cầu lửa từ dung nham đến hàng 9 (cứ bắn mãi như vậy luôn - thèn cũ chạm đến trần (block 10) thì sẽ biến mất đợi 1s lại bắn tiếp) repeat = true ?, khối lửa là fire_lava_shoot
+
+Từ cột 23->24, ở 2 hàng dưới cùng có dung nham, ở hàng thứ 6 có 2 white brick
+
+Từ cột 25->26, ở 2 hàng dưới cùng có dung nham, có bắn cầu lửa từ dung nham đến hàng 9 (cứ bắn mãi như vậy luôn - thèn cũ chạm đến trần (block 10) thì sẽ biến mất đợi 1s lại bắn tiếp) repeat = true ?, khối lửa là fire_lava_shoot
+
+Từ cột 27->29, ở 2 hàng dưới cùng có dung nham, hàng 8 có pattern như sau [white brick, used lucky block (khối mới - lucky block sau khi đã sử dụng), white block]
+ở hàng thứ 12, cột 28, có 1 lucky block (đập sẽ rớt nấm)
+
+Từ cột 30->31, ở 2 hàng dưới cùng có dung nham, còn lại trống
+
+Từ cột 32->33, ở 2 hàng dưới cùng có dung nham, ở hàng thứ 6 có 2 white brick
+
+Từ cột 34->36, ở 2 hàng dưới cùng có dung nham, còn lại trống
+
+cột 37->38: 5 hàng dưới cùng là white brick, còn lại trống 
+
+cột 39 -> 41: 4 hàng trên đều là white brick
+
+2 hàng dưới cùng đều là white brick
+
+39 cột tiếp theo từ 42 -> 80: 4 hàng trên, 2 hàng dưới cùng, hàng thứ 6 sẽ là white brick tuy nhiên có các vị trị ngoại lệ như sau:
+
+cột 61, hàng 10 - cột 67, hàng 6 - cột 55, hàng 6 - cột 49, hàng 2, là khối bắn lửa (kết hợp giữa used luckyblock và khối lửa), theo đó sẽ có 5 khối lửa (bắt đầu từ chính giữa khối used luckyblock) nối tiếp nhau tạo thành đường thẳng, và đường thảng này sẽ xoay tròn với tâm là chính giữa khối used block --> Cần cập nhật maploader để làm được logic này
+
+cột 61 hàng 2, cột 73 hàng 2, cột 80 hàng 6 là used lucky block
+
+cột 81-86 sẽ có 4 hàng trên và 2 hàng dưới cùng là white brick
+
+cột 87-88 có 4 hàng trên và 5 hàng dưới cùng là white brick
+
+cột 89, có 4 hàng trên và 5 hàng dưới là white brick, hàng 9 là khối bắn lửa (như trước đó)- gọi là bắn nhưng khối này chỉ là kiểu như lửa xoay tròn chứ k có bắn ra
+
+
+
+cột 90, 5 hàng dưới là white brick
+
+3 cột tiếp theo --> trống
+
+cột 94, có 1 cây cột trắng + 2 máy nâng như trong hình (máy nâng đi lên - ở đây khi nó đi hết giới hạn trên (ngoài map) thì nó biến mất và có thèn mới đi từ dưới lên)- khoảng cách giữa 2 máy nâng sẽ = một nửa cao của map (của cột), 
+
+3 cột tiếp theo --> trống
+
+cột 98, có 1 cây cột trắng + 2 máy nâng như trong hình (máy nâng đi xuống - ở đây khi nó đi hết giới hạn dưới (ngoài map) thì nó biến mất và có thèn mới đi từ trên xuống)- khoảng cách giữa 2 máy nâng sẽ = một nửa cao của map (của cột) --> chiều cao ban đàu giữa 2 máy nâng ở cột 94 và cột 98 sẽ lệch nhau một cách ngẫu nhiên
+--> Cần update maploader
+
+3 cột tiếp theo --> trống
+
+cột 102, 4 ô dưới là white brick, hàng 5 là khối bắn lửa
+
+cột 103->108, 4 hàng trên, 5 hàng dưới là white brick
+
+cột 109 -> 111: 2 hàng dưới là white brick
+
+cột 112 -> 114: 2 hàng dưới là white brick, hàng 3 là coin, hàng 4 cột 113 có 1 used lucky block, , hàng 7 là coin.
+
+cột 115-117: 2 hàng dưới là white brick
+
+cột 118: 5 hàng dưới là white brick
+
+cột 119-120: 2 hàng dưới là dung nham
+
+cột 121-122: 5 hàng dưới là white brick
+
+cột 123-124: 2 hàng dưới là dung nham
+
+cột 125-130: 5 hàng dưới và 4 hàng trên là white brick
+
+cột 131-132: 2 hàng dưới, 4 hàng trên là white brick
+
+cột 133-134: 5 hàng dưới , 4 hàng trên là white brick
+
+cột 135-136: 2 hàng dưới , 4 hàng trên là white brick, 
+
+cột 137-138: 5 hàng dưới , 4 hàng trên là white brick
+
+cột 139-151: 2 hàng dưới là lava,hàng trên cùng là white brick, hàng 5 là khối block chưa rõ, tôi đặt tên nó là white_red_steel_bridge
+từ cột 139-144, hàng 10 sẽ là khối tôi đặt tên là white_furnace_brick
+ở cột 149, hàng 9 có 1 khối di chuyển (di chuyển qua lại, sang trái r sang phải)
+
+ở cột 150, có bowser đứng ở hàng 6 
+
+ở cột 151, hàng 6 có một dây xích
+
+ở cột 152, 5 hàng dưới và 1 hàng trên là white brick, hàng 6 là cây rìu 
+
+cột 153-154: 5 hàng dưới, 4 hàng trên là white brick
+
+17 cột tiếp theo có 2 hàng dưới và 1 hàng trên là white brick
+
+ở cột thứ 164 sẽ có npc đứng ở hàng 3, gọi là npc nấm đi --> Khi mario chạm vào thì map sẽ hiện dòng chữ ở khoảng trống này là:
+
+"THANK YOU MARIO!
+
+BUT OUR PRINCESS IS IN ANOTHER CASTLE!"
