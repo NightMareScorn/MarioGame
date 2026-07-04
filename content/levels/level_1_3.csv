@@ -33,7 +33,7 @@ goomba,1368,80
 koopa,640,160,type=red_flying
 koopa,2272,192
 
-decor,1900,192,ani=ANI_3FLOORS_CASTLE_ASSEMBLED
+decor,2560,192,ani=ANI_3FLOORS_CASTLE_ASSEMBLED
 
 coin,784,32
 coin,800,32

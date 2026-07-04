@@ -330,7 +330,7 @@ void CMapLoader::_ProcessTileMap(const std::vector<std::string> &lines, CPlaySce
                 scene->blocks.push_back(new CBrick(x, y, "ANI_RIGHT_GREEN_LEAF_BLOCK"));
                 break;
             case 40:
-                scene->blocks.push_back(new CBrick(x, y, "ANI_WOOD_BLOCK"));
+                scene->decors.push_back(new CDecorBlock(x, y, "ANI_WOOD_BLOCK"));
                 break;
 
             // --- WORLD 2-4 SPECIAL ASSETS ---
