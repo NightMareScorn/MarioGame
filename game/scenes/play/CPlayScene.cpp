@@ -404,15 +404,47 @@ void CPlayScene::Update(float dt)
         }
     }
 
-    // Xử lý collision cho từng item
+    // Xử lý collision cho từng item (bao gồm cả CFireball để đạn nảy thực tế trên sàn/gạch)
     for (auto i : items)
     {
         if (i->IsDead())
             continue;
-        if (!dynamic_cast<CFireFlower *>(i) && !dynamic_cast<CFireball *>(i))
+        if (!dynamic_cast<CFireFlower *>(i))
         {
             auto blocksAroundItem = GetObjectsInRange(i->x, i->y, blocks);
             CCollision::ResolveCollision(i, dt, blocksAroundItem);
+        }
+    }
+
+    // --- VA CHẠM ĐẠN LỬA MARIO (FIREBALL) VS QUÁI (ENEMIES) ---
+    for (auto i : items)
+    {
+        if (auto fb = dynamic_cast<CFireball *>(i))
+        {
+            if (fb->IsDead())
+                continue;
+
+            float fl, fb_b, fr, ft;
+            fb->GetBoundingBox(fl, fb_b, fr, ft);
+
+            auto nearbyEnemies = GetObjectsInRange(fb->x, fb->y, enemies);
+            for (auto e : nearbyEnemies)
+            {
+                if (e->IsDead() || !e->IsEnemy())
+                    continue;
+
+                float el, eb, er, et;
+                e->GetBoundingBox(el, eb, er, et);
+
+                if (CCollision::CheckAABB({fl, fb_b, fr, ft}, {el, eb, er, et}))
+                {
+                    // Tiêu diệt quái và làm nổ cầu lửa
+                    e->OnStomped(); // Goomba dẹt, Koopa thu vỏ
+                    this->AddScore(100);
+                    fb->Kill();
+                    break;
+                }
+            }
         }
     }
 
