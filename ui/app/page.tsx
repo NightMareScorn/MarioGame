@@ -111,7 +111,7 @@ export default function MenuScene() {
         className="z-10 flex flex-col items-center mb-12"
       >
         <h1 className="text-7xl font-bold text-[#E52521] text-retro tracking-wider uppercase italic">
-          Super UI World
+          Super Mario
         </h1>
       </motion.div>
 

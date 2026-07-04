@@ -59,10 +59,10 @@ coin,2224,192
 coin,2240,192
 coin,2256,192
 coin,2272,192
-pipe,1648,144,dest_map=level_1_2_hidden_2,enter_direction=down
+pipe,1648,144,dest_map=level_1_2_hidden_2,enter_direction=down,name=exit_pipe_hidden
 pipe,1840,160,is_solid=true
 pipe,1744,128,is_solid=true
-pipe,2848,144,dest_map=level_1_2_second_half,enter_direction=up
+pipe,2848,144,dest_map=level_1_2_second_half,dest_pipe=exit_pipe_surface,enter_direction=up
 # pipe,2912,144,dest_map=warp_1,enter_direction=down
 # pipe,2976,144,dest_map=warp_2,enter_direction=down
 goomba,400,192,patrol_left=350,patrol_right=450

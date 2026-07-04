@@ -21,7 +21,7 @@ theme,underground
 # OBJECTS
 type,x,y,extra
 mario,48,160
-pipe,240,0,dest_map=level_1_2_hidden,enter_direction=up
+pipe,240,0,dest_map=level_1_2_hidden,dest_pipe=exit_pipe_hidden,enter_direction=up
 coin,64,96
 coin,80,96
 coin,96,96

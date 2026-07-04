@@ -7,6 +7,7 @@
 #include <wrl.h>
 #include "WebView2.h"
 #include "engine/utils/CScoreManager.h"
+#include "engine/audio/CAudioManager.h"
 #include <iomanip>
 
 using namespace Microsoft::WRL;
@@ -18,6 +19,9 @@ static bool isGameStarted = false;
 static std::string selectedLevel = "";
 
 void InitializeWebView(HWND hWnd) {
+    // Set autoplay policy to bypass user gesture requirement
+    SetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", L"--autoplay-policy=no-user-gesture-required");
+
     CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [hWnd](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
@@ -27,6 +31,9 @@ void InitializeWebView(HWND hWnd) {
                             if (controller != nullptr) {
                                 webviewController = controller;
                                 webviewController->get_CoreWebView2(&webviewWindow);
+
+                                // Play background music when WebView2 is initialized
+                                CAudioManager::GetInstance()->PlayBGM("content/audio/overworld_theme.wav");
                             }
 
                             // Resize WebView to fit the bounds of the parent window
@@ -65,6 +72,9 @@ void InitializeWebView(HWND hWnd) {
                                             selectedLevel = msgStr;
                                             isGameStarted = true;
                                             webviewController->put_IsVisible(FALSE);
+
+                                            // Stop menu background music when game starts
+                                            CAudioManager::GetInstance()->StopBGM();
                                         }
                                         return S_OK;
                                     }).Get(), nullptr);
@@ -125,7 +135,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   // Application Loop
   while (true) {
       isGameStarted = false;
-      if (webviewController) webviewController->put_IsVisible(TRUE);
+      if (webviewController) {
+          webviewController->put_IsVisible(TRUE);
+          // Play background music when returning to menu
+          CAudioManager::GetInstance()->PlayBGM("content/audio/overworld_theme.wav");
+      }
       CGame::GetInstance()->SetExitLevel(false);
 
       // Main Message Loop for Menu

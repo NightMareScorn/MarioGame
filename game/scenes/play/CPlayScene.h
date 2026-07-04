@@ -16,6 +16,12 @@ enum class ECastleClearState
     FINISHED
 };
 
+enum class EPipeState {
+    NONE,
+    ENTERING,
+    EXITING
+};
+
 class CPlayScene : public CScene
 {
     friend class CMapLoader;
@@ -36,6 +42,17 @@ class CPlayScene : public CScene
     std::string pendingMapPath;
     std::string pendingDestPipe;
     float goalTimer = 0.0f;
+
+    EPipeState pipeState = EPipeState::NONE;
+    float pipeAnimationTimer = 0.0f;
+    float pipeSpeedX = 0.0f;
+    float pipeSpeedY = 0.0f;
+    std::string pendingTransitionMap = "";
+    std::string pendingTransitionPipe = "";
+
+    bool isLoadingScreen = false;
+    float loadingScreenTimer = 0.0f;
+    std::string currentBgmPath = "";
 
     // HUD stats
     int score = 0;
@@ -92,6 +109,8 @@ public:
     }
     D3DXCOLOR GetClearColor()
     {
+        if (isLoadingScreen)
+            return D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
         return D3DXCOLOR(bgR / 255.0f, bgG / 255.0f, bgB / 255.0f, 1.0f);
     }
 
@@ -123,6 +142,7 @@ public:
         }
         return levelId;
     }
+    void SaveCurrentScore();
 
     void TransitionToMap(const std::string &mapPath, const std::string &destPipe = "") { 
         pendingMapPath = mapPath; 

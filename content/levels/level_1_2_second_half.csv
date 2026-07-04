@@ -20,7 +20,7 @@ theme,surface
 # OBJECTS
 type,x,y,extra
 mario,48,160
-pipe,96,176,is_solid=true
+pipe,96,176,is_solid=true,name=exit_pipe_surface
 pipe,304,192,is_solid=true
 pipe,320,176,is_solid=true
 pipe,336,160,is_solid=true

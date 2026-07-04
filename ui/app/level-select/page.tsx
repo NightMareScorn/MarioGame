@@ -63,7 +63,7 @@ export default function LevelSelectScene() {
       {/* Header */}
       <div className="absolute top-10 left-10">
         <h2 className="text-gray-500 font-bold text-sm uppercase tracking-widest">
-          Map Selection - Super UI World
+          Map Selection - Super Mario
         </h2>
       </div>
 
