@@ -115,6 +115,9 @@ void CLuckyBlock::Update(float dt)
 
 void CLuckyBlock::Render()
 {
+    if (isInvisible)
+        return;
+
     if (state == ELuckyBlockState::EMPTY)
     {
         CAnimations::GetInstance()->Render("ANI_LUCKY_BOX_OW_AFTER_HIT", x, y);
@@ -137,6 +140,11 @@ void CLuckyBlock::GetBoundingBox(float &left, float &bottom, float &right, float
 
 void CLuckyBlock::OnHitFromBelow(CGameObject *hitter)
 {
+    if (isInvisible)
+    {
+        isInvisible = false;
+    }
+
     if (state != ELuckyBlockState::IDLE)
         return;
 

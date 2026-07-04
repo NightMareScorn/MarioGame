@@ -3,12 +3,16 @@
 
 #include "../CGameObject.h"
 
-class CFireBar : public CGameObject {
+class CFireBar : public CGameObject
+{
     float centerX, centerY;
     float offset;
     float angle;
+    float rotationSpeed = 0.002f;
+
 public:
-    CFireBar(float x, float y) : CGameObject(x, y) {
+    CFireBar(float x, float y) : CGameObject(x, y)
+    {
         this->type = "firebar";
         this->spriteName = "ANI_FIRE_BAR_ORB";
         this->centerX = x;
@@ -19,10 +23,12 @@ public:
     void SetOffset(float o) { offset = o; }
     void SetAngle(float a) { angle = a; }
     virtual bool IsSolid() override { return false; }
-    virtual void OnCollision(CGameObject* other) override;
+    virtual void OnCollision(CGameObject *other) override;
     virtual void Update(float dt) override;
     virtual void Render() override;
-    virtual void GetBoundingBox(float& l, float& t, float& r, float& b) override;
+    virtual void GetBoundingBox(float &l, float &t, float &r, float &b) override;
+
+    void SetRotationSpeed(float speed) { rotationSpeed = speed; }
 };
 
 #endif

@@ -26,6 +26,7 @@
 #include "../entities/blocks/CAxe.h"
 #include "../../engine/utils/debug.h"
 #include <algorithm>
+#include "../entities/enemies/CBowserFireball.h"
 
 CMapLoader *CMapLoader::__instance = nullptr;
 
@@ -531,6 +532,37 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
         spawnedObj = new CBowser(x, y);
         scene->enemies.push_back(spawnedObj);
     }
+    else if (type == "fire_circle")
+    {
+        std::string direction = "counter_clockwise";
+        for (auto p : parts)
+            if (p.find("direction=") == 0)
+                direction = p.substr(10);
+
+        // Tạo Lucky Block rỗng làm lõi quay
+        scene->blocks.push_back(new CLuckyBlock(x, y, true)); // true = EMPTY
+
+        // Tạo 5 quả cầu lửa quay quanh lõi
+        for (int k = 0; k < 6; k++)
+        {
+            CFireBar *orb = new CFireBar(x + 4, y + 4);
+            orb->SetOffset((float)(k * 9));
+            if (direction == "clockwise")
+            {
+                orb->SetRotationSpeed(-0.002f); // Quay cùng chiều kim đồng hồ
+            }
+            else
+            {
+                orb->SetRotationSpeed(0.002f); // Quay ngược chiều kim đồng hồ
+            }
+            scene->enemies.push_back(orb);
+        }
+    }
+    else if (type == "bowser_fireball")
+    {
+        spawnedObj = new CBowserFireball(x, y);
+        scene->enemies.push_back(spawnedObj);
+    }
     else if (type == "podoboo")
     {
         spawnedObj = new CPodoboo(x, y);
@@ -667,25 +699,46 @@ void CMapLoader::_ParseObjectLine(const std::string &line, CPlayScene *scene)
 
     if (spawnedObj && hidden_in_block)
     {
-        // Móc item vào Lucky Block tại cùng vị trí x, y
-        for (auto b : scene->blocks)
+        if (invisible_block)
         {
-            if (auto lucky = dynamic_cast<CLuckyBlock *>(b))
+            // Tạo khối Lucky Block ẩn tại cùng vị trí với đồng xu/nấm
+            CLuckyBlock *lucky = new CLuckyBlock(x, y);
+            lucky->SetInvisible(true);
+            lucky->SetHiddenItem(spawnedObj);
+            scene->blocks.push_back((CBlock *)lucky);
+
+            // Khóa trạng thái vật phẩm ẩn
+            if (auto m = dynamic_cast<CMushroom *>(spawnedObj))
+                m->SetState(MUSHROOM_STATE_HIDDEN);
+            if (auto s = dynamic_cast<CStar *>(spawnedObj))
+                s->SetState(STAR_STATE_HIDDEN);
+            if (auto f = dynamic_cast<CFireFlower *>(spawnedObj))
+                f->SetState(FLOWER_STATE_HIDDEN);
+            if (auto c = dynamic_cast<CCoin *>(spawnedObj))
+                c->SetState(COIN_STATE_HIDDEN);
+        }
+        else
+        {
+            // Móc item vào Lucky Block tại cùng vị trí x, y
+            for (auto b : scene->blocks)
             {
-                // Do sai số float, dùng khoảng cách
-                if (abs(lucky->x - x) < 2.0f && abs(lucky->y - y) < 2.0f)
+                if (auto lucky = dynamic_cast<CLuckyBlock *>(b))
                 {
-                    lucky->SetHiddenItem(spawnedObj);
-                    // Force item state to hidden
-                    if (auto m = dynamic_cast<CMushroom *>(spawnedObj))
-                        m->SetState(MUSHROOM_STATE_HIDDEN);
-                    if (auto s = dynamic_cast<CStar *>(spawnedObj))
-                        s->SetState(STAR_STATE_HIDDEN);
-                    if (auto f = dynamic_cast<CFireFlower *>(spawnedObj))
-                        f->SetState(FLOWER_STATE_HIDDEN);
-                    if (auto c = dynamic_cast<CCoin *>(spawnedObj))
-                        c->SetState(COIN_STATE_HIDDEN);
-                    break;
+                    // Do sai số float, dùng khoảng cách
+                    if (abs(lucky->x - x) < 2.0f && abs(lucky->y - y) < 2.0f)
+                    {
+                        lucky->SetHiddenItem(spawnedObj);
+                        // Force item state to hidden
+                        if (auto m = dynamic_cast<CMushroom *>(spawnedObj))
+                            m->SetState(MUSHROOM_STATE_HIDDEN);
+                        if (auto s = dynamic_cast<CStar *>(spawnedObj))
+                            s->SetState(STAR_STATE_HIDDEN);
+                        if (auto f = dynamic_cast<CFireFlower *>(spawnedObj))
+                            f->SetState(FLOWER_STATE_HIDDEN);
+                        if (auto c = dynamic_cast<CCoin *>(spawnedObj))
+                            c->SetState(COIN_STATE_HIDDEN);
+                        break;
+                    }
                 }
             }
         }

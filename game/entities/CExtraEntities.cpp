@@ -68,7 +68,7 @@ void CBowser::GetBoundingBox(float &left, float &bottom, float &right, float &to
 
 void CFireBar::Update(float dt)
 {
-    angle += 0.002f * dt;
+    angle += rotationSpeed * dt;
     x = centerX + offset * cos(angle);
     y = centerY + offset * sin(angle);
 }
